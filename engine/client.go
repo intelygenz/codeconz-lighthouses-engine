@@ -10,6 +10,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+const (
+	timeoutToResponse = 100 * time.Millisecond
+)
+
 type GameClient struct {
 }
 
@@ -24,7 +28,7 @@ func (gc *GameClient) requestTurn(p *coms.NewPlayer, t *coms.NewTurn) *coms.NewA
 
 	npjc := coms.NewGameServiceClient(grpcClient)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutToResponse)
 	defer cancel()
 
 	playerAction, err := npjc.Turn(ctx, t)

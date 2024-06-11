@@ -13,6 +13,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+const (
+	timeoutToResponse = 100 * time.Millisecond
+)
+
 type GameState struct {
 	botName                      string
 	myAddress, gameServerAddress string
@@ -28,7 +32,7 @@ func askToJoinGame(gs *GameState) {
 
 	npjc := coms.NewGameServiceClient(grpcClient)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutToResponse)
 	defer cancel()
 
 	player := &coms.NewPlayer{
@@ -51,6 +55,7 @@ func (gs *ClientServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.Ne
 }
 
 func (gs *ClientServer) Turn(ctx context.Context, req *coms.NewTurn) (*coms.NewAction, error) {
+	fmt.Println("Received new turn", req)
 	nt := req
 	fmt.Println("Received new turn", nt)
 

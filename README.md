@@ -13,6 +13,6 @@ I have updated from his original Python 2.7 code, to a Go 1.22 languaje and also
 - My "Reloaded" version
   - Go 1.22
   - No Visualization layer
-  - Based on TCP communication
+  - Based on gRPC/Protobuf communication
   - Focused on allowing many players in the same game
-  - Container first
+  - Container first approach, game server is a container, each bot is a container (no matter which language)
