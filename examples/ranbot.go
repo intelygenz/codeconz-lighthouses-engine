@@ -17,15 +17,15 @@ const (
 	timeoutToResponse = 100 * time.Millisecond
 )
 
-type GameState struct {
+type BotState struct {
 	botName                      string
 	myAddress, gameServerAddress string
 	initialState                 *coms.NewPlayerInitialState
 }
 
-func askToJoinGame(gs *GameState) {
+func (ps *BotState) askToJoinGame() {
 	grpcOpt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	grpcClient, err := grpc.NewClient(gs.gameServerAddress, grpcOpt)
+	grpcClient, err := grpc.NewClient(ps.gameServerAddress, grpcOpt)
 	if err != nil {
 		panic(err)
 	}
@@ -36,42 +36,21 @@ func askToJoinGame(gs *GameState) {
 	defer cancel()
 
 	player := &coms.NewPlayer{
-		Name:          gs.botName,
-		ServerAddress: gs.myAddress,
+		Name:          ps.botName,
+		ServerAddress: ps.myAddress,
 	}
 	initialState, err := npjc.Join(ctx, player)
 	if err != nil {
 		panic(err)
 	}
 
-	gs.initialState = initialState
+	ps.initialState = initialState
 }
 
-type ClientServer struct{}
+func (ps *BotState) startListening() {
+	fmt.Println("Starting to listen on", ps.myAddress)
 
-// Join(context.Context, *NewPlayer) (*NewPlayerAccepted, error)
-func (gs *ClientServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.NewPlayerInitialState, error) {
-	return nil, fmt.Errorf("game server does not implement Join sercvice")
-}
-
-func (gs *ClientServer) Turn(ctx context.Context, req *coms.NewTurn) (*coms.NewAction, error) {
-	fmt.Println("Received new turn", req)
-	nt := req
-	fmt.Println("Received new turn", nt)
-
-	randomAction := &coms.NewAction{
-		Action: coms.Action_MOVE,
-		Destination: &coms.Position{
-			X: int32(rand.Intn(10)),
-			Y: int32(rand.Intn(10)),
-		},
-	}
-	return randomAction, nil
-}
-
-func startListening(gs *GameState) {
-
-	lis, err := net.Listen("tcp", gs.myAddress)
+	lis, err := net.Listen("tcp", ps.myAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -85,10 +64,30 @@ func startListening(gs *GameState) {
 	}
 }
 
-func main() {
-	botName := flag.String("bn", "", "bot name")
-	listenAddress := flag.String("la", "", "my listen address")
-	gameServerAddress := flag.String("gs", "", "game server address")
+type ClientServer struct{}
+
+func (gs *ClientServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.NewPlayerInitialState, error) {
+	return nil, fmt.Errorf("game server does not implement Join sercvice")
+}
+
+func (gs *ClientServer) Turn(ctx context.Context, req *coms.NewTurn) (*coms.NewAction, error) {
+	nt := req
+	fmt.Printf("Received turn request %s\n", nt)
+
+	randomAction := &coms.NewAction{
+		Action: coms.Action_MOVE,
+		Destination: &coms.Position{
+			X: int32(rand.Intn(10)),
+			Y: int32(rand.Intn(10)),
+		},
+	}
+	return randomAction, nil
+}
+
+func ensureParams() (botName *string, listenAddress *string, gameServerAddress *string) {
+	botName = flag.String("bn", "", "bot name")
+	listenAddress = flag.String("la", "", "my listen address")
+	gameServerAddress = flag.String("gs", "", "game server address")
 	flag.Parse()
 
 	if *botName == "" {
@@ -100,17 +99,20 @@ func main() {
 	if *gameServerAddress == "" {
 		panic("game server address is required")
 	}
+	return botName, listenAddress, gameServerAddress
+}
 
-	gs := &GameState{
+func main() {
+	botName, listenAddress, gameServerAddress := ensureParams()
+
+	bot := &BotState{
 		botName:           *botName,
 		myAddress:         *listenAddress,
 		gameServerAddress: *gameServerAddress,
 	}
 
-	askToJoinGame(gs)
-
-	fmt.Println("Received message from server", gs.initialState)
-
-	startListening(gs)
+	bot.askToJoinGame()
+	fmt.Println("Received message from server", bot.initialState)
+	bot.startListening()
 
 }

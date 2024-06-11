@@ -33,7 +33,7 @@ func (gc *GameClient) requestTurn(p *coms.NewPlayer, t *coms.NewTurn) *coms.NewA
 
 	playerAction, err := npjc.Turn(ctx, t)
 	if err != nil {
-		panic(err)
+		fmt.Println("Error requesting turn", err)
 	}
 	return playerAction
 }
