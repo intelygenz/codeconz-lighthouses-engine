@@ -14,40 +14,66 @@ import (
 )
 
 const (
-	timeoutToResponse = 100 * time.Millisecond
+	timeoutToResponse = 1 * time.Second
 )
 
-type BotState struct {
+type BotGame struct {
+	turnStates []*coms.NewTurn
+}
+
+func (bg *BotGame) NewTurnState(turn *coms.NewTurn) {
+	bg.turnStates = append(bg.turnStates, turn)
+}
+
+func (bg *BotGame) RandomAction() coms.NewAction {
+	return coms.NewAction{
+		Action: coms.Action_MOVE,
+		Destination: &coms.Position{
+			X: int32(rand.Intn(10)),
+			Y: int32(rand.Intn(10)),
+		},
+	}
+}
+
+type BotComs struct {
 	botName                      string
 	myAddress, gameServerAddress string
 	initialState                 *coms.NewPlayerInitialState
 }
 
-func (ps *BotState) askToJoinGame() {
+func (ps *BotComs) waitToJoinGame() {
 	grpcOpt := grpc.WithTransportCredentials(insecure.NewCredentials())
 	grpcClient, err := grpc.NewClient(ps.gameServerAddress, grpcOpt)
 	if err != nil {
-		panic(err)
+		fmt.Printf("grpc client ERROR: %v\n", err)
+		panic("could not create a grpc client")
 	}
 
 	npjc := coms.NewGameServiceClient(grpcClient)
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutToResponse)
-	defer cancel()
 
 	player := &coms.NewPlayer{
 		Name:          ps.botName,
 		ServerAddress: ps.myAddress,
 	}
-	initialState, err := npjc.Join(ctx, player)
-	if err != nil {
-		panic(err)
+
+	for {
+		ctx, cancel := context.WithTimeout(context.Background(), timeoutToResponse)
+		initialState, err := npjc.Join(ctx, player)
+		// time.Sleep(timeoutToResponse)
+		if err != nil {
+			fmt.Printf("could not join game ERROR: %v\n", err)
+			cancel()
+			continue
+		} else {
+			fmt.Println("Joined game with", initialState)
+			ps.initialState = initialState
+			break
+		}
 	}
 
-	ps.initialState = initialState
 }
 
-func (ps *BotState) startListening() {
+func (ps *BotComs) startListening() {
 	fmt.Println("Starting to listen on", ps.myAddress)
 
 	lis, err := net.Listen("tcp", ps.myAddress)
@@ -71,17 +97,12 @@ func (gs *ClientServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.Ne
 }
 
 func (gs *ClientServer) Turn(ctx context.Context, req *coms.NewTurn) (*coms.NewAction, error) {
-	nt := req
-	fmt.Printf("Received turn request %s\n", nt)
+	bg := &BotGame{}
 
-	randomAction := &coms.NewAction{
-		Action: coms.Action_MOVE,
-		Destination: &coms.Position{
-			X: int32(rand.Intn(10)),
-			Y: int32(rand.Intn(10)),
-		},
-	}
-	return randomAction, nil
+	bg.NewTurnState(req)
+	randomAction := bg.RandomAction()
+
+	return &randomAction, nil
 }
 
 func ensureParams() (botName *string, listenAddress *string, gameServerAddress *string) {
@@ -105,13 +126,13 @@ func ensureParams() (botName *string, listenAddress *string, gameServerAddress *
 func main() {
 	botName, listenAddress, gameServerAddress := ensureParams()
 
-	bot := &BotState{
+	bot := &BotComs{
 		botName:           *botName,
 		myAddress:         *listenAddress,
 		gameServerAddress: *gameServerAddress,
 	}
 
-	bot.askToJoinGame()
+	bot.waitToJoinGame()
 	fmt.Println("Received message from server", bot.initialState)
 	bot.startListening()
 
