@@ -27,9 +27,9 @@ type BotGame struct {
 	turnStates   []BotGameTurn
 }
 
-func (bg *BotGame) NewTurnAction(turn *coms.NewTurn) coms.NewAction {
+func (bg *BotGame) NewTurnAction(turn *coms.NewTurn) *coms.NewAction {
 
-	action := coms.NewAction{
+	action := &coms.NewAction{
 		Action: coms.Action_MOVE,
 		Destination: &coms.Position{
 			X: int32(rand.Intn(10)),
@@ -39,7 +39,7 @@ func (bg *BotGame) NewTurnAction(turn *coms.NewTurn) coms.NewAction {
 
 	bgt := BotGameTurn{
 		turn:   turn,
-		action: &action,
+		action: action,
 	}
 	bg.turnStates = append(bg.turnStates, bgt)
 
@@ -112,7 +112,7 @@ func (gs *ClientServer) Turn(ctx context.Context, turn *coms.NewTurn) (*coms.New
 
 	action := bg.NewTurnAction(turn)
 
-	return &action, nil
+	return action, nil
 }
 
 func ensureParams() (botName *string, listenAddress *string, gameServerAddress *string) {
