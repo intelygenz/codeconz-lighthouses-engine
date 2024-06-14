@@ -65,14 +65,7 @@ func (gs *GameServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.NewP
 
 	fmt.Printf("New player joined %s\n", np.Name)
 
-	lighthouseExample := &coms.Lighthouse{Position: &coms.Position{X: 1, Y: 1}}
-	return &coms.NewPlayerInitialState{
-		PlayerNum:   0,
-		PlayerCount: 2,
-		Position:    &coms.Position{X: 1, Y: 2},
-		Map:         []*coms.MapRow{{Row: []int32{0, 0, 0, 0, 0}}},
-		Lighthouses: []*coms.Lighthouse{lighthouseExample},
-	}, nil
+	return gs.game.CreateInitialState(np), nil
 }
 
 func (gs *GameServer) Turn(ctx context.Context, req *coms.NewTurn) (*coms.NewAction, error) {

@@ -17,22 +17,33 @@ const (
 	timeoutToResponse = 1 * time.Second
 )
 
+type BotGameTurn struct {
+	turn   *coms.NewTurn
+	action *coms.NewAction
+}
+
 type BotGame struct {
-	turnStates []*coms.NewTurn
+	initialState *coms.NewPlayerInitialState
+	turnStates   []BotGameTurn
 }
 
-func (bg *BotGame) NewTurnState(turn *coms.NewTurn) {
-	bg.turnStates = append(bg.turnStates, turn)
-}
+func (bg *BotGame) NewTurnAction(turn *coms.NewTurn) coms.NewAction {
 
-func (bg *BotGame) RandomAction() coms.NewAction {
-	return coms.NewAction{
+	action := coms.NewAction{
 		Action: coms.Action_MOVE,
 		Destination: &coms.Position{
 			X: int32(rand.Intn(10)),
 			Y: int32(rand.Intn(10)),
 		},
 	}
+
+	bgt := BotGameTurn{
+		turn:   turn,
+		action: &action,
+	}
+	bg.turnStates = append(bg.turnStates, bgt)
+
+	return action
 }
 
 type BotComs struct {
@@ -96,13 +107,12 @@ func (gs *ClientServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.Ne
 	return nil, fmt.Errorf("game server does not implement Join sercvice")
 }
 
-func (gs *ClientServer) Turn(ctx context.Context, req *coms.NewTurn) (*coms.NewAction, error) {
+func (gs *ClientServer) Turn(ctx context.Context, turn *coms.NewTurn) (*coms.NewAction, error) {
 	bg := &BotGame{}
 
-	bg.NewTurnState(req)
-	randomAction := bg.RandomAction()
+	action := bg.NewTurnAction(turn)
 
-	return &randomAction, nil
+	return &action, nil
 }
 
 func ensureParams() (botName *string, listenAddress *string, gameServerAddress *string) {

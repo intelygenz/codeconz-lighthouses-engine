@@ -25,6 +25,10 @@ proto:
 	--go_opt=paths=source_relative \
 	--go-grpc_out=./coms \
 	--go-grpc_opt=paths=source_relative,require_unimplemented_servers=false \
+	--py-out=./coms \
+	--py_opt=paths=source_relative \
+	--grpc_python_out=./coms \
+	--grpc_python_opt=paths=source_relative \
 	./proto/*.proto
 
 .PHONY: build run test proto
