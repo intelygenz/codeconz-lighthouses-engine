@@ -25,7 +25,7 @@ state_current = {
     ],
 }
 
-# I propose this state, which contains the information included in the "initial state" and removes the reward
+# The state could include the information included in the "initial state" and not include the points 
 state_proposed = {
     "player_num": 1,
     "player_count": 2,
@@ -54,7 +54,7 @@ reward_total_proposed = {
     "score": 36
 }
 
-# Not sure how the structure will be for the actions.
+# May need to be changed depending on final structure of actions
 actions = {
     "pass": (0,0), 
     "move" : {
