@@ -54,7 +54,7 @@ reward_total_proposed = {
     "score": 36
 }
 
-# Not sure how the structure will be for the actions. This is my first proposal.
+# Not sure how the structure will be for the actions.
 actions = {
     "pass": (0,0), 
     "move" : {
@@ -67,14 +67,13 @@ actions = {
         "move_down_left": (-1,-1),
         "move_down_right": (-1,1),
     },
-    "attack": 80, #amount = user_func(), (need to specify amount, ex. amt = max(0, 10 + energy_faro), user must define function)
-    "connect": [1,1], #coords = user_func(), (location of lighthouse you want to connect with, user must define function to give this)
+    "attack": 80, # example, user must define this
+    "connect": [1,1], # example, user must define this
     }
 
 
 class RandBot:
-    def __init__(self, state_proposed, actions, map, env=None): # env should be specified and state_proposed removed
-        # I think we should include all this information in the state that each player receives each turn
+    def __init__(self, state_proposed, actions, map, env=None): # I think env should be specified and state_proposed/actions removed
         self.env = env
         self.state = state_proposed # env.state
         self.actions = actions # env.actions
@@ -86,7 +85,11 @@ class RandBot:
 
     def play(self):
         """ 
-        Select an action to take. If the player is on a lighthouse cell, choose if take an action.
+        Select an action to take. If the player is on a lighthouse cell, choose if player takes an action with 
+        the lighthouse or moves to another cell.
+
+        Returns:
+            dict: The command and the value(s) to use for the command        
         """
         # If on lighthouse cell, 60% probability will connect or recharge. Otherwise select a move.
         if (self.cx, self.cy) in self.lighthouses:
@@ -104,9 +107,6 @@ class RandBot:
         """
         Choose an action for the agent to take.
         The agent chooses an action randomly.
-        
-        Args:
-            state: The current state of the agent.
         
         Returns:
             dict (command, x, y): The command and the move values
@@ -126,6 +126,9 @@ class RandBot:
     def lighthouse_action(self):
         """ 
         If player is on a lighthouse cell, choose what player should do.
+
+        Returns:
+            dict: The command and the value(s) to use for the command   
         """
         # Check if there are any possible connections if the lighthouse is owned by the player
         if self.lighthouses[(self.cx, self.cy)]["owner"] == self.state.player_num:
