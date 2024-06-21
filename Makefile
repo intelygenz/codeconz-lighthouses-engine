@@ -4,7 +4,7 @@ build:
 
 # Run the application
 rungs:
-	go run main.go -la=:3000
+	go run ./cmd/main.go -la=:3000
 
 # Run bot 1
 runbot1:
@@ -14,6 +14,10 @@ runbot1:
 runbot2:
 	go run ./examples/ranbot.go -bn=bot2 -la=:3002  -gs=localhost:3000
 
+# Run linter
+lint:
+	golangci-lint run
+
 # Run tests
 test:
 	go test -v ./...
@@ -21,13 +25,13 @@ test:
 # Generate protobuf files
 proto:
 	protoc -I=./proto \
-	--go_out=./coms \
+	--go_out=./internal/handler/coms \
 	--go_opt=paths=source_relative \
-	--go-grpc_out=./coms \
+	--go-grpc_out=./internal/handler/coms \
 	--go-grpc_opt=paths=source_relative,require_unimplemented_servers=false \
-	--py-out=./coms \
+	--py-out=./internal/handler/coms \
 	--py_opt=paths=source_relative \
-	--grpc_python_out=./coms \
+	--grpc_python_out=./internal/handler/coms \
 	--grpc_python_opt=paths=source_relative \
 	./proto/*.proto
 

@@ -3,7 +3,7 @@ syntax = "proto3";
 option go_package = "github.com/jonasdacruz/lighthouses_aicontest/coms";
 
 message NewPlayer {	
-	string name = 1;
+	int32 ID = 1;
 	string serverAddress = 2;
 }
 

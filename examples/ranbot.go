@@ -3,11 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	coms2 "github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 	"math/rand"
 	"net"
 	"time"
 
-	"github.com/jonasdacruz/lighthouses_aicontest/coms"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -18,20 +18,20 @@ const (
 )
 
 type BotGameTurn struct {
-	turn   *coms.NewTurn
-	action *coms.NewAction
+	turn   *coms2.NewTurn
+	action *coms2.NewAction
 }
 
 type BotGame struct {
-	initialState *coms.NewPlayerInitialState
+	initialState *coms2.NewPlayerInitialState
 	turnStates   []BotGameTurn
 }
 
-func (bg *BotGame) NewTurnAction(turn *coms.NewTurn) *coms.NewAction {
+func (bg *BotGame) NewTurnAction(turn *coms2.NewTurn) *coms2.NewAction {
 
-	action := &coms.NewAction{
-		Action: coms.Action_MOVE,
-		Destination: &coms.Position{
+	action := &coms2.NewAction{
+		Action: coms2.Action_MOVE,
+		Destination: &coms2.Position{
 			X: int32(rand.Intn(10)),
 			Y: int32(rand.Intn(10)),
 		},
@@ -49,7 +49,7 @@ func (bg *BotGame) NewTurnAction(turn *coms.NewTurn) *coms.NewAction {
 type BotComs struct {
 	botName                      string
 	myAddress, gameServerAddress string
-	initialState                 *coms.NewPlayerInitialState
+	initialState                 *coms2.NewPlayerInitialState
 }
 
 func (ps *BotComs) waitToJoinGame() {
@@ -60,9 +60,9 @@ func (ps *BotComs) waitToJoinGame() {
 		panic("could not create a grpc client")
 	}
 
-	npjc := coms.NewGameServiceClient(grpcClient)
+	npjc := coms2.NewGameServiceClient(grpcClient)
 
-	player := &coms.NewPlayer{
+	player := &coms2.NewPlayer{
 		Name:          ps.botName,
 		ServerAddress: ps.myAddress,
 	}
@@ -94,7 +94,7 @@ func (ps *BotComs) startListening() {
 
 	grpcServer := grpc.NewServer()
 	cs := &ClientServer{}
-	coms.RegisterGameServiceServer(grpcServer, cs)
+	coms2.RegisterGameServiceServer(grpcServer, cs)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		panic(err)
@@ -103,11 +103,11 @@ func (ps *BotComs) startListening() {
 
 type ClientServer struct{}
 
-func (gs *ClientServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.NewPlayerInitialState, error) {
+func (gs *ClientServer) Join(ctx context.Context, req *coms2.NewPlayer) (*coms2.NewPlayerInitialState, error) {
 	return nil, fmt.Errorf("game server does not implement Join sercvice")
 }
 
-func (gs *ClientServer) Turn(ctx context.Context, turn *coms.NewTurn) (*coms.NewAction, error) {
+func (gs *ClientServer) Turn(ctx context.Context, turn *coms2.NewTurn) (*coms2.NewAction, error) {
 	bg := &BotGame{}
 
 	action := bg.NewTurnAction(turn)

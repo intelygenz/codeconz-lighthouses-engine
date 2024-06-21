@@ -1,11 +1,13 @@
-package engine
+package handler
 
 import (
 	"context"
 	"fmt"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/game"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 	"time"
 
-	"github.com/jonasdacruz/lighthouses_aicontest/coms"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )
@@ -39,21 +41,20 @@ func StreamLoggingInterceptor(
 }
 
 type GameServer struct {
-	game *Game
+	game *game.Game
 }
 
-func NewGameServer(ge *Game) *GameServer {
+func NewGameServer(ge *game.Game) *GameServer {
 	return &GameServer{
 		game: ge,
 	}
 }
 
-// Join(context.Context, *NewPlayer) (*NewPlayerAccepted, error)
 func (gs *GameServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.NewPlayerInitialState, error) {
 	fmt.Printf("New player ask to join %s\n", req.Name)
 
-	np := Player{
-		Name:          req.Name,
+	np := player.Player{
+		ID:            req.Name,
 		ServerAddress: req.ServerAddress,
 	}
 

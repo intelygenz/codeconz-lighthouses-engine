@@ -1,11 +1,11 @@
-package engine
+package handler
 
 import (
 	"context"
 	"fmt"
+	coms2 "github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 	"time"
 
-	"github.com/jonasdacruz/lighthouses_aicontest/coms"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -17,7 +17,7 @@ const (
 type GameClient struct {
 }
 
-func (gc *GameClient) requestTurn(p *coms.NewPlayer, t *coms.NewTurn) *coms.NewAction {
+func (gc *GameClient) RequestTurn(p *coms2.NewPlayer, t *coms2.NewTurn) *coms2.NewAction {
 	fmt.Printf("Asking to Player %s to address %v\n", p.Name, p.ServerAddress)
 
 	grpcOpt := grpc.WithTransportCredentials(insecure.NewCredentials())
@@ -26,7 +26,7 @@ func (gc *GameClient) requestTurn(p *coms.NewPlayer, t *coms.NewTurn) *coms.NewA
 		panic(err)
 	}
 
-	npjc := coms.NewGameServiceClient(grpcClient)
+	npjc := coms2.NewGameServiceClient(grpcClient)
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutToResponse)
 	defer cancel()
