@@ -8,7 +8,7 @@
         <div class="player-data">
           <div class="player-name">{{ player.name }}</div>
           <div class="player-stats">
-            <span><i class="fa-solid fa-medal"></i> Points: <strong>{{ player.points }}</strong></span>
+            <span><i class="fa-solid fa-medal"></i> Score: <strong>{{ player.score }}</strong></span>
             <span><i class="fa-solid fa-bolt energy"></i> Energy: <strong>{{ player.energy }}</strong></span>
           </div>
         </div>
