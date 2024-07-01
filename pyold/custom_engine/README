@@ -14,7 +14,7 @@ Considerations:
 This version of the game is a one-process version where the bots actions are executed sequentially one by one, without subprocesses communication.
 The goal of this version is to execute the game easily to collect as many data as possible to implement AI bots.
 
-For modifying the game specifications, the map and the number/class of bots can be modified within the main function of pyold/custom_engine/randbot.py file.
+For modifying the game specifications, the map and the number/class of bots can be modified within the main function of pyold/custom_engine/main.py file.
 
 Usage:
-$ python3.x pyold/custom_engine/randbot.py
+$ python3.x pyold/custom_engine/main.py
