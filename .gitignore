@@ -3,3 +3,4 @@ node_nodules
 .idea
 dist
 .gitconfig
+.DS_Store
