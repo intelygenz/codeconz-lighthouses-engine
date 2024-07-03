@@ -4,6 +4,9 @@
 import engine, interface
 
 from randbot import RandBot
+from reinforce import REINFORCE
+
+import ipdb
 
 # ==============================================================================
 # MAIN
@@ -15,10 +18,12 @@ if __name__ == "__main__":
     cfg_file = "maps/grid.txt"
     
     # Set the bots to play the game
-    bots = [RandBot(), RandBot(), RandBot()]
+    #bots = [RandBot(), RandBot(), RandBot()]
+    bots = [REINFORCE(), RandBot()]
 
     config = engine.GameConfig(cfg_file)
     game = engine.Game(config, len(bots))
 
     iface = interface.Interface(game, bots)
-    iface.run()
+    iface.train_reinforce()
+    #iface.run()

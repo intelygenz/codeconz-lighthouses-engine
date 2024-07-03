@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import engine, view
+from collections import deque
+import numpy as np
 
 # ==============================================================================
 # ROBOT
@@ -136,6 +138,30 @@ class Interface(object):
             self.bots[player_idx].lighthouses = map(tuple, 
                                                     list(self.game.lighthouses.keys()))
 
+            if self.bots[player_idx].NAME[0] == 'REINFORCE':
+                player = self.game.players[player_idx]
+                lighthouses = []
+                for lh in self.game.lighthouses.values():
+                    connections = [next(l for l in c if l is not lh.pos)
+                                    for c in self.game.conns if lh.pos in c]
+                    lighthouses.append({
+                        "position": lh.pos,
+                        "owner": lh.owner,
+                        "energy": lh.energy,
+                        "connections": connections,
+                        "have_key": lh.pos in player.keys,
+                    })
+
+                state =  {
+                    "position": player.pos,
+                    "score": player.score,
+                    "energy": player.energy,
+                    "view": self.game.island.get_view(player.pos),
+                    "lighthouses": lighthouses
+                }
+
+                bot.initialize_game(state)
+
             player_idx += 1
 
         round = 0
@@ -192,3 +218,118 @@ class Interface(object):
             # print(s)
             
             round += 1
+
+    def train_reinforce(self, n_training_episodes=10, max_t=10, print_every=1, save_model=True, use_saved_model=False):
+        self.max_t = max_t
+        scores_deque = deque(maxlen=100)
+        scores = []
+
+        for i_episode in range(1, n_training_episodes+1):
+            game_view = view.GameView(self.game)
+
+            # Send initial state to every bot
+            player_idx = 0
+            for bot in self.bots:
+                # Every bot receives initial state
+                self.bots[player_idx].player_num = self.game.players[player_idx].num
+                self.bots[player_idx].player_count = len(self.game.players)
+                self.bots[player_idx].position = self.game.players[player_idx].pos
+                self.bots[player_idx].map = self.game.island.map
+                self.bots[player_idx].lighthouses = map(tuple, 
+                                                        list(self.game.lighthouses.keys()))
+
+                if self.bots[player_idx].NAME[0] == 'REINFORCE':
+                    train_idx = player_idx
+                    player = self.game.players[player_idx]
+                    lighthouses = []
+                    for lh in self.game.lighthouses.values():
+                        connections = [next(l for l in c if l is not lh.pos)
+                                        for c in self.game.conns if lh.pos in c]
+                        lighthouses.append({
+                            "position": lh.pos,
+                            "owner": lh.owner,
+                            "energy": lh.energy,
+                            "connections": connections,
+                            "have_key": lh.pos in player.keys,
+                        })
+
+                    state =  {
+                        "position": player.pos,
+                        "score": player.score,
+                        "energy": player.energy,
+                        "view": self.game.island.get_view(player.pos),
+                        "lighthouses": lighthouses
+                    }
+
+                    bot.initialize_game(state)
+
+                player_idx += 1
+
+            round = 0
+            self.saved_log_probs = []
+            self.rewards = []
+            for t in range(max_t):
+                self.game.pre_round()
+                game_view.update()
+                
+                player_idx = 0
+                for bot in self.bots:
+                    player = self.game.players[player_idx]
+
+                    lighthouses = []
+                    for lh in self.game.lighthouses.values():
+                        connections = [next(l for l in c if l is not lh.pos)
+                                        for c in self.game.conns if lh.pos in c]
+                        lighthouses.append({
+                            "position": lh.pos,
+                            "owner": lh.owner,
+                            "energy": lh.energy,
+                            "connections": connections,
+                            "have_key": lh.pos in player.keys,
+                        })
+
+                    state =  {
+                        "position": player.pos,
+                        "score": player.score,
+                        "energy": player.energy,
+                        "view": self.game.island.get_view(player.pos),
+                        "lighthouses": lighthouses
+                    }
+                    if player_idx == train_idx:
+                        move, log_prob = bot.play_train(state)
+                        self.saved_log_probs.append(log_prob)
+                    else:
+                        move = bot.play(state)
+
+                    status = self.turn(player, move)
+
+                    if status["success"]:
+                        bot.success()
+                    else:
+                        bot.error(status["message"], move)
+
+                    game_view.update()
+                    player_idx += 1
+
+                self.game.post_round()
+                
+                # Print the scores after each round
+                #reward = self.game.players[train_idx].score
+                reward = self.game.players[train_idx].energy
+                print(self.game.players[0].energy)
+                print(self.game.players[1].energy)
+                self.rewards.append(reward)    
+                round += 1
+            scores_deque.append(sum(self.rewards))
+            scores.append(sum(self.rewards))
+            if bot.NAME == 'REINFORCE':
+                bot.update_policy(self.rewards, max_t, self.saved_log_probs)
+
+            if i_episode % print_every == 0:
+                print('Episode{}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_deque)))
+            
+        if save_model:
+            pass
+            # bot.save_model()
+
+        print(scores)
