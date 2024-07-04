@@ -54,14 +54,15 @@ class Policy(nn.Module):
     
         valid_moves = [(x,y) for x,y in ACTIONS if map[cy+y][cx+x]]
         valid_indices = [ACTIONS.index(i) for i in ACTIONS if i in valid_moves]
-        m = Categorical(probs)
+        indices = torch.tensor(valid_indices)
+        probs = probs[0]
+        probs_valid = probs[indices]
+        is_all_zeros = torch.all(probs_valid == 0)
+        if is_all_zeros.item():
+            probs_valid = probs_valid + 0.0000001
+        m = Categorical(probs_valid)
         action = m.sample()
-        while action not in valid_indices:
-            if action < 7:
-                action = action + random.randint(1,4)
-            if action == 7: 
-                action = action - random.randint(1,5)
-        return action.item(), m.log_prob(action)
+        return valid_indices[action.item()], m.log_prob(action)
     
     # Create training loop
 class REINFORCE(interface.Bot):
