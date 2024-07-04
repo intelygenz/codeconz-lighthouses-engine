@@ -1,7 +1,6 @@
 package bootstrap
 
 import (
-	"flag"
 	"fmt"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/game"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler"
@@ -22,16 +21,13 @@ func NewBootstrap() *Bootstrap {
 func (b *Bootstrap) Run() {
 	b.initializeConfiguration()
 
-	listenAddress := flag.String("la", "", "game server listen address")
-	flag.Parse()
+	fmt.Println("Game server starting on", viper.GetString("game.listen_address"))
 
-	fmt.Println("Game server starting on", *listenAddress)
-
-	if *listenAddress == "" {
+	if viper.GetString("game.listen_address") == "" {
 		panic("addr is required")
 	}
 
-	lis, err := net.Listen("tcp", *listenAddress)
+	lis, err := net.Listen("tcp", viper.GetString("game.listen_address"))
 	if err != nil {
 		panic(err)
 	}
@@ -41,13 +37,13 @@ func (b *Bootstrap) Run() {
 		grpc.StreamInterceptor(handler.StreamLoggingInterceptor),
 	)
 
-	ge := game.NewGame("/Users/dovixman/Workspace/Work/Programs/SecretEvent/lighthouses_aicontest/maps/square_xl.txt", 10)
+	ge := game.NewGame(viper.GetString("game.board_path"), viper.GetInt("game.turns"))
 	gs := handler.NewGameServer(ge)
 
 	coms.RegisterGameServiceServer(grpcServer, gs)
 
 	go func() {
-		<-time.After(viper.GetDuration("game.jointimeout"))
+		<-time.After(viper.GetDuration("game.join_timeout"))
 		grpcServer.Stop()
 	}()
 
@@ -63,5 +59,9 @@ func (b *Bootstrap) Run() {
 }
 
 func (b *Bootstrap) initializeConfiguration() {
-	viper.SetDefault("game.jointimeout", 10*time.Second)
+	viper.SetDefault("game.listen_address", ":50051")
+	viper.SetDefault("game.join_timeout", 10*time.Second)
+	viper.SetDefault("game.turn_request_timeout", 100*time.Millisecond)
+	viper.SetDefault("game.turns", 10)
+	viper.SetDefault("game.board_path", "/Users/dovixman/Workspace/Work/Programs/SecretEvent/lighthouses_aicontest/maps/square_xl.txt")
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/game"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
+	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
@@ -41,10 +42,10 @@ func StreamLoggingInterceptor(
 }
 
 type GameServer struct {
-	game *game.Game
+	game game.GameI
 }
 
-func NewGameServer(ge *game.Game) *GameServer {
+func NewGameServer(ge game.GameI) *GameServer {
 	return &GameServer{
 		game: ge,
 	}
@@ -53,20 +54,25 @@ func NewGameServer(ge *game.Game) *GameServer {
 func (gs *GameServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.NewPlayerInitialState, error) {
 	fmt.Printf("New player ask to join %s\n", req.Name)
 
-	np := player.Player{
-		ID:            req.Name,
-		ServerAddress: req.ServerAddress,
+	playerID, err := strconv.Atoi(req.Name)
+	if err != nil {
+		fmt.Printf("Error converting player ID %s\n", err)
+		return nil, err
 	}
 
-	err := gs.game.AddNewPlayer(np)
+	np := player.NewPlayer(req.ServerAddress, playerID)
+
+	err = gs.game.AddNewPlayer(*np)
 	if err != nil {
 		fmt.Printf("Error adding new player %s\n", err)
 		return nil, err
 	}
 
-	fmt.Printf("New player joined %s\n", np.Name)
+	fmt.Printf("New player joined %d\n", np.ID)
 
-	return gs.game.CreateInitialState(np), nil
+	mapper := Mapper{}
+
+	return mapper.MapPlayerInitialStateToComPlayerInitialState(gs.game.CreateInitialState(*np)), nil //TODO cannot do this as we don't have the players information yet
 }
 
 func (gs *GameServer) Turn(ctx context.Context, req *coms.NewTurn) (*coms.NewAction, error) {

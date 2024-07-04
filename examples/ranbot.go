@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	coms2 "github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
-	"math/rand"
+	"google.golang.org/grpc/status"
 	"net"
 	"time"
 
@@ -28,13 +28,13 @@ type BotGame struct {
 }
 
 func (bg *BotGame) NewTurnAction(turn *coms2.NewTurn) *coms2.NewAction {
-
+	position := &coms2.Position{
+		X: turn.Position.X + 1,
+		Y: turn.Position.Y + 1,
+	}
 	action := &coms2.NewAction{
-		Action: coms2.Action_MOVE,
-		Destination: &coms2.Position{
-			X: int32(rand.Intn(10)),
-			Y: int32(rand.Intn(10)),
-		},
+		Action:      coms2.Action_MOVE,
+		Destination: position,
 	}
 
 	bgt := BotGameTurn{
@@ -92,13 +92,44 @@ func (ps *BotComs) startListening() {
 		panic(err)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(UnaryLoggingInterceptor),
+		grpc.StreamInterceptor(StreamLoggingInterceptor),
+	)
 	cs := &ClientServer{}
 	coms2.RegisterGameServiceServer(grpcServer, cs)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		panic(err)
 	}
+}
+
+func UnaryLoggingInterceptor(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (resp interface{}, err error) {
+	start := time.Now()
+	resp, err = handler(ctx, req)
+	duration := time.Since(start)
+	st, _ := status.FromError(err)
+	fmt.Printf("unary call: %s, Duration: %v, Error: %v\n", info.FullMethod, duration, st.Message())
+	return resp, err
+}
+
+func StreamLoggingInterceptor(
+	srv interface{},
+	ss grpc.ServerStream,
+	info *grpc.StreamServerInfo,
+	handler grpc.StreamHandler,
+) error {
+	start := time.Now()
+	err := handler(srv, ss)
+	duration := time.Since(start)
+	st, _ := status.FromError(err)
+	fmt.Printf("stream call: %s, Duration: %v, Error: %v\n", info.FullMethod, duration, st.Message())
+	return err
 }
 
 type ClientServer struct{}

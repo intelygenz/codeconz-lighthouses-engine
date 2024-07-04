@@ -210,7 +210,7 @@ func (x *Position) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Position.ProtoReflect.Descriptor instead.
+// Deprecated: Use Destination.ProtoReflect.Descriptor instead.
 func (*Position) Descriptor() ([]byte, []int) {
 	return file_game_proto_rawDescGZIP(), []int{2}
 }
@@ -234,7 +234,7 @@ type Lighthouse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Position    *Position   `protobuf:"bytes,1,opt,name=Position,proto3" json:"Position,omitempty"`
+	Position    *Position   `protobuf:"bytes,1,opt,name=Destination,proto3" json:"Destination,omitempty"`
 	Owner       int32       `protobuf:"varint,2,opt,name=Owner,proto3" json:"Owner,omitempty"`
 	Energy      int32       `protobuf:"varint,3,opt,name=Energy,proto3" json:"Energy,omitempty"`
 	Connections []*Position `protobuf:"bytes,4,rep,name=Connections,proto3" json:"Connections,omitempty"`
@@ -315,7 +315,7 @@ type NewPlayerInitialState struct {
 
 	PlayerNum   int32         `protobuf:"varint,1,opt,name=PlayerNum,proto3" json:"PlayerNum,omitempty"`
 	PlayerCount int32         `protobuf:"varint,2,opt,name=PlayerCount,proto3" json:"PlayerCount,omitempty"`
-	Position    *Position     `protobuf:"bytes,3,opt,name=Position,proto3" json:"Position,omitempty"`
+	Position    *Position     `protobuf:"bytes,3,opt,name=Destination,proto3" json:"Destination,omitempty"`
 	Map         []*MapRow     `protobuf:"bytes,4,rep,name=Map,proto3" json:"Map,omitempty"`
 	Lighthouses []*Lighthouse `protobuf:"bytes,5,rep,name=Lighthouses,proto3" json:"Lighthouses,omitempty"`
 }
@@ -392,7 +392,7 @@ type NewTurn struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Position    *Position     `protobuf:"bytes,1,opt,name=Position,proto3" json:"Position,omitempty"`
+	Position    *Position     `protobuf:"bytes,1,opt,name=Destination,proto3" json:"Destination,omitempty"`
 	Score       int32         `protobuf:"varint,2,opt,name=Score,proto3" json:"Score,omitempty"`
 	Energy      int32         `protobuf:"varint,3,opt,name=Energy,proto3" json:"Energy,omitempty"`
 	View        []*MapRow     `protobuf:"bytes,4,rep,name=View,proto3" json:"View,omitempty"`
@@ -616,23 +616,23 @@ var file_game_proto_goTypes = []interface{}{
 	(Action)(0),                   // 0: Action
 	(*NewPlayer)(nil),             // 1: NewPlayer
 	(*MapRow)(nil),                // 2: MapRow
-	(*Position)(nil),              // 3: Position
+	(*Position)(nil),              // 3: Destination
 	(*Lighthouse)(nil),            // 4: Lighthouse
 	(*NewPlayerInitialState)(nil), // 5: NewPlayerInitialState
 	(*NewTurn)(nil),               // 6: NewTurn
 	(*NewAction)(nil),             // 7: NewAction
 }
 var file_game_proto_depIdxs = []int32{
-	3,  // 0: Lighthouse.Position:type_name -> Position
-	3,  // 1: Lighthouse.Connections:type_name -> Position
-	3,  // 2: NewPlayerInitialState.Position:type_name -> Position
+	3,  // 0: Lighthouse.Destination:type_name -> Destination
+	3,  // 1: Lighthouse.Connections:type_name -> Destination
+	3,  // 2: NewPlayerInitialState.Destination:type_name -> Destination
 	2,  // 3: NewPlayerInitialState.Map:type_name -> MapRow
 	4,  // 4: NewPlayerInitialState.Lighthouses:type_name -> Lighthouse
-	3,  // 5: NewTurn.Position:type_name -> Position
+	3,  // 5: NewTurn.Destination:type_name -> Destination
 	2,  // 6: NewTurn.View:type_name -> MapRow
 	4,  // 7: NewTurn.Lighthouses:type_name -> Lighthouse
 	0,  // 8: NewAction.Action:type_name -> Action
-	3,  // 9: NewAction.Destination:type_name -> Position
+	3,  // 9: NewAction.Destination:type_name -> Destination
 	1,  // 10: GameService.Join:input_type -> NewPlayer
 	6,  // 11: GameService.Turn:input_type -> NewTurn
 	5,  // 12: GameService.Join:output_type -> NewPlayerInitialState

@@ -1,67 +1,78 @@
 package game
 
 import (
-	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
-	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler"
-	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
-	"strconv"
+	"fmt"
+	"github.com/twpayne/go-geom"
+	"github.com/twpayne/go-geom/xy"
 	"time"
+
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
 )
 
 func (e *Game) StartGame() {
 	e.gameStartAt = time.Now()
-	/*
-		viewExample := &coms.MapRow{
-			Row: []int32{0, 0, 0, 0, 0},
-		}
-		lighthouseExample := &coms.Lighthouse{
-			Position: &coms.Position{
-				X: 1,
-				Y: 1,
-			},
-			Energy: 100,
-		}
-
-		newTurnExample := &coms.NewTurn{
-			Position: &coms.Position{
-				X: 1,
-				Y: 1,
-			},
-			Score:       10,
-			Energy:      100,
-			View:        []*coms.MapRow{viewExample},
-			Lighthouses: []*coms.Lighthouse{lighthouseExample},
-		}*/
 
 	for i := 0; i < e.turns; i++ {
-		// TODO: calc new turn state
-		// e.gameMap.CalcEnergy()
+		e.gameMap.CalcEnergy()
 		for _, p := range e.players {
-			gc := &handler.GameClient{}
-			comPlayer := &coms.NewPlayer{
-				Name:          strconv.Itoa(p.ID), //TODO: replace name with ID
-				ServerAddress: p.ServerAddress,
-			}
+			// TODO: calc the energy of the player
+
 			// TODO: calc the new turn with the last state of the game
-			na := gc.RequestTurn(comPlayer, nil /*e.gameMap.getPlayerView(p)*/)
+			na, err := p.RequestNewTurn(player.Turn{
+				Position:    p.Position,
+				Score:       int32(p.Score),
+				Energy:      int32(p.Energy),
+				View:        [][]int32{{0, 1, 0, 0, 1}, {0, 1, 0, 0, 1}, {0, 1, 0, 0, 1}, {0, 1, 0, 0, 1}}, // TODO generate turn view
+				Lighthouses: []geom.Coord{},
+			})
+			if err != nil {
+				// handle error
+				fmt.Printf("Player %d has error %v", p.ID, err)
+				break
+			}
 			_ = na
 			// TODO: apply the action to change the state of the game
-			e.movePlayer(p, na)
+			err = e.movePlayer(p, na)
 		}
 		// e.CalcPlayersScores()
 		// TODO: calc players scores
+		e.gameMap.PrettyPrintMap(e.players)
 	}
+	//for i := 0; i < e.turns; i++ {
+	//	// TODO: calc new turn state
+	//	e.gameMap.CalcEnergy()
+	//	for _, p := range e.players {
+	//		///*gc := &handler.GameClient{}
+	//		//comPlayer := &coms.NewPlayer{
+	//		//	Name:          strconv.Itoa(p.ID), //TODO: replace name with ID
+	//		//	ServerAddress: p.ServerAddress,
+	//		//}
+	//		//// TODO: calc the new turn with the last state of the game
+	//		//// na := gc.RequestTurn(comPlayer, nil /*e.gameMap.getPlayerView(p)*/)
+	//		//// TODO: apply the action to change the state of the game
+	//		//// e.movePlayer(p, na)*/
+	//	}
+	//	// e.CalcPlayersScores()
+	//	// TODO: calc players scores
+	//}
 }
 
-func (e *Game) movePlayer(p player.Player, na *coms.NewAction) {
-	switch na.Action {
-	case coms.Action_MOVE:
+func (e *Game) movePlayer(p *player.Player, action *player.Action) error {
+	fmt.Printf("Player %d action %v\n", p.ID, action)
 
-	case coms.Action_PASS:
+	switch action.Action {
+	case player.ActionMove:
+		if xy.Distance(p.Position, action.Destination) >= 2 {
+			return fmt.Errorf("player %d can't move to %v", p.ID, action.Destination)
+		}
 
-	case coms.Action_ATTACK:
-
-	case coms.Action_CONNECT:
+		fmt.Printf("Player %d moving from %v to %v\n", p.ID, p.Position, action.Destination)
+		p.Position = action.Destination
+	case player.ActionAttack:
+	case player.ActionConnect:
+	case player.ActionPass:
 
 	}
+
+	return nil
 }

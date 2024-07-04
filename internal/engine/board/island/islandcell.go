@@ -1,9 +1,12 @@
-package board
+package island
 
-import "github.com/twpayne/go-geom"
+import (
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board/cell"
+	"github.com/twpayne/go-geom"
+)
 
 type Island struct {
-	Cell
+	cell.Cell
 	Energy int
 }
 
@@ -15,15 +18,15 @@ func (i Island) GetY() int {
 	return int(i.Location.Y())
 }
 
-func (i Island) GetType() CellType {
+func (i Island) GetType() cell.CellType {
 	return i.Type
 }
 
 func NewIslandCell(x, y int) *Island {
 	return &Island{
-		Cell: Cell{
+		Cell: cell.Cell{
 			Location: geom.Coord{float64(x), float64(y)},
-			Type:     IslandCell,
+			Type:     cell.IslandCell,
 		},
 		Energy: 0,
 	}

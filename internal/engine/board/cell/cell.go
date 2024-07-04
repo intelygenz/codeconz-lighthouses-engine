@@ -1,6 +1,16 @@
-package board
+package cell
 
-import "github.com/twpayne/go-geom"
+import (
+	"github.com/twpayne/go-geom"
+)
+
+type CellType int
+
+const (
+	WaterCell CellType = iota
+	IslandCell
+	LighthouseCell
+)
 
 type Cell struct {
 	Location geom.Coord
@@ -19,8 +29,8 @@ func (c Cell) GetType() CellType {
 	return c.Type
 }
 
-func NewEmptyCell(x, y int) Cell {
-	return Cell{
+func NewEmptyCell(x, y int) *Cell {
+	return &Cell{
 		Location: geom.Coord{float64(x), float64(y)},
 		Type:     WaterCell,
 	}
