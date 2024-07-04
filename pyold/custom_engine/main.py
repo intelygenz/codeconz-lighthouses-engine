@@ -25,5 +25,5 @@ if __name__ == "__main__":
     game = engine.Game(config, len(bots))
 
     iface = interface.Interface(game, bots)
-    iface.train_reinforce()
+    iface.train_reinforce(n_training_episodes=10, max_t=100,)
     #iface.run()
