@@ -316,8 +316,6 @@ class Interface(object):
                 # Print the scores after each round
                 #reward = self.game.players[train_idx].score
                 reward = self.game.players[train_idx].energy
-                print(self.game.players[0].energy)
-                print(self.game.players[1].energy)
                 self.rewards.append(reward)    
                 round += 1
             scores_deque.append(sum(self.rewards))

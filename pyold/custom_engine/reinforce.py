@@ -21,7 +21,7 @@ import interface
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Actions for moving
-ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1))
+ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "connect")
 
 
 # Define the neural network for the policy
@@ -45,15 +45,16 @@ class Policy(nn.Module):
             x = layer(x)
         return torch.softmax(x, dim=-1)
     
-    def act(self, state, map, cx, cy):
+    def act(self, state, map, cx, cy, lighthouses):
         """
         Given a state, take action
         """
         state = torch.from_numpy(state).float().unsqueeze(0).to(device)
         probs = self.forward(state).cpu()
-    
-        valid_moves = [(x,y) for x,y in ACTIONS if map[cy+y][cx+x]]
+        valid_moves = [(x,y) for x,y in ACTIONS[:8] if map[cy+y][cx+x]]
         valid_indices = [ACTIONS.index(i) for i in ACTIONS if i in valid_moves]
+        if (cx, cy) in lighthouses:
+            valid_indices = valid_indices + [8,9]
         indices = torch.tensor(valid_indices)
         probs = probs[0]
         probs_valid = probs[indices]
@@ -63,6 +64,7 @@ class Policy(nn.Module):
         m = Categorical(probs_valid)
         action = m.sample()
         return valid_indices[action.item()], m.log_prob(action)
+
     
     # Create training loop
 class REINFORCE(interface.Bot):
@@ -85,7 +87,7 @@ class REINFORCE(interface.Bot):
         self.use_saved_model = False
     
     def initialize_game(self, state):
-        state, _, _ = self.convert_state(state)
+        state = self.convert_state(state)
         self.s_size = len(state)
         self.policy = Policy(self.s_size, self.a_size, self.layers_data).to(self.device)
         self.optimizer = optim.Adam(self.policy.parameters(), lr=self.lr[0])
@@ -103,19 +105,39 @@ class REINFORCE(interface.Bot):
             lighthouses.append(lh['energy'])
         new_state = np.array([state['position'][0], state['position'][1], state['energy'], len(state['lighthouses'])] + lighthouses)
 
-        return new_state, cx, cy
+        return new_state
 
 
     def play(self, state):
-        state, cx, cy = self.convert_state(state)
-        action, _ = self.policy.act(state, self.map, cx, cy)
-        return self.move(*ACTIONS[action])
+        #lighthouses = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
+        cx = state['position'][0]
+        cy = state['position'][1]
+        lighthouses = [(tuple(lh['position'])) for lh in state["lighthouses"]]
+        new_state = self.convert_state(state)
+        action, _ = self.policy.act(new_state, self.map, cx, cy, lighthouses)
+        if ACTIONS[action] != "attack" and ACTIONS[action] != "connect":
+            return self.move(*ACTIONS[action])
+        elif ACTIONS[action] == "attack":
+            energy = random.randrange(state["energy"] + 1)
+            return self.attack(energy)
+        elif ACTIONS[action] == "connect":
+            return self.connect(random.choice(lighthouses))
     
 
     def play_train(self, state):
-        state, cx, cy = self.convert_state(state)
-        action, log_prob = self.policy.act(state, self.map, cx, cy)
-        return self.move(*ACTIONS[action]), log_prob
+         #lighthouses = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
+        cx = state['position'][0]
+        cy = state['position'][1]
+        lighthouses = [(tuple(lh['position'])) for lh in state["lighthouses"]]
+        new_state = self.convert_state(state)
+        action, log_prob = self.policy.act(new_state, self.map, cx, cy, lighthouses)
+        if ACTIONS[action] != "attack" and ACTIONS[action] != "connect":
+            return self.move(*ACTIONS[action]), log_prob
+        elif ACTIONS[action] == "attack":
+            energy = random.randrange(state["energy"] + 1)
+            return self.attack(energy), log_prob
+        elif ACTIONS[action] == "connect":
+            return self.connect(random.choice(lighthouses)), log_prob
     
 
     def load_saved_model(self):
