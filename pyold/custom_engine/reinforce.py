@@ -96,20 +96,17 @@ class REINFORCE(interface.Bot):
 
 
     def convert_state(self, state):
-        cx = state['position'][0]
-        cy = state['position'][1]
         lighthouses =[]
         for lh in state['lighthouses']:
             lighthouses.append(lh['position'][0])
             lighthouses.append(lh['position'][1])
             lighthouses.append(lh['energy'])
         new_state = np.array([state['position'][0], state['position'][1], state['energy'], len(state['lighthouses'])] + lighthouses)
-
         return new_state
 
 
     def play(self, state):
-        #lighthouses = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
+         #TODO: improve selection of energy for attacking and connecting lighthouses
         cx = state['position'][0]
         cy = state['position'][1]
         lighthouses = [(tuple(lh['position'])) for lh in state["lighthouses"]]
@@ -125,7 +122,7 @@ class REINFORCE(interface.Bot):
     
 
     def play_train(self, state):
-         #lighthouses = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
+        #TODO: improve selection of energy for attacking and connecting lighthouses
         cx = state['position'][0]
         cy = state['position'][1]
         lighthouses = [(tuple(lh['position'])) for lh in state["lighthouses"]]
