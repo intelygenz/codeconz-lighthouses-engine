@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	coms2 "github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 	"google.golang.org/grpc/status"
 	"net"
 	"time"
@@ -18,22 +18,22 @@ const (
 )
 
 type BotGameTurn struct {
-	turn   *coms2.NewTurn
-	action *coms2.NewAction
+	turn   *coms.NewTurn
+	action *coms.NewAction
 }
 
 type BotGame struct {
-	initialState *coms2.NewPlayerInitialState
+	initialState *coms.NewPlayerInitialState
 	turnStates   []BotGameTurn
 }
 
-func (bg *BotGame) NewTurnAction(turn *coms2.NewTurn) *coms2.NewAction {
-	position := &coms2.Position{
+func (bg *BotGame) NewTurnAction(turn *coms.NewTurn) *coms.NewAction {
+	position := &coms.Position{
 		X: turn.Position.X + 1,
 		Y: turn.Position.Y + 1,
 	}
-	action := &coms2.NewAction{
-		Action:      coms2.Action_MOVE,
+	action := &coms.NewAction{
+		Action:      coms.Action_MOVE,
 		Destination: position,
 	}
 
@@ -47,9 +47,10 @@ func (bg *BotGame) NewTurnAction(turn *coms2.NewTurn) *coms2.NewAction {
 }
 
 type BotComs struct {
+	botID                        int
 	botName                      string
 	myAddress, gameServerAddress string
-	initialState                 *coms2.NewPlayerInitialState
+	initialState                 *coms.NewPlayerInitialState
 }
 
 func (ps *BotComs) waitToJoinGame() {
@@ -60,24 +61,24 @@ func (ps *BotComs) waitToJoinGame() {
 		panic("could not create a grpc client")
 	}
 
-	npjc := coms2.NewGameServiceClient(grpcClient)
+	npjc := coms.NewGameServiceClient(grpcClient)
 
-	player := &coms2.NewPlayer{
+	player := &coms.NewPlayer{
 		Name:          ps.botName,
 		ServerAddress: ps.myAddress,
 	}
 
 	for {
 		ctx, cancel := context.WithTimeout(context.Background(), timeoutToResponse)
-		initialState, err := npjc.Join(ctx, player)
+		playerID, err := npjc.Join(ctx, player)
 		// time.Sleep(timeoutToResponse)
 		if err != nil {
 			fmt.Printf("could not join game ERROR: %v\n", err)
 			cancel()
 			continue
 		} else {
-			fmt.Println("Joined game with", initialState)
-			ps.initialState = initialState
+			fmt.Printf("Joined game with id %d\n", int(playerID.PlayerID))
+			ps.botID = int(playerID.PlayerID)
 			break
 		}
 	}
@@ -97,10 +98,36 @@ func (ps *BotComs) startListening() {
 		grpc.StreamInterceptor(StreamLoggingInterceptor),
 	)
 	cs := &ClientServer{}
-	coms2.RegisterGameServiceServer(grpcServer, cs)
+	coms.RegisterGameServiceServer(grpcServer, cs)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		panic(err)
+	}
+}
+
+func (ps *BotComs) getInitialState() {
+	fmt.Println("Retrieving initial state", ps.myAddress)
+	grpcOpt := grpc.WithTransportCredentials(insecure.NewCredentials())
+	grpcClient, err := grpc.NewClient(ps.gameServerAddress, grpcOpt)
+	if err != nil {
+		fmt.Printf("grpc client ERROR: %v\n", err)
+		panic("could not create a grpc client")
+	}
+
+	npjc := coms.NewGameServiceClient(grpcClient)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutToResponse)
+	initialState, err := npjc.InitialState(ctx, &coms.PlayerID{PlayerID: int32(ps.botID)})
+	// time.Sleep(timeoutToResponse)
+	if err != nil {
+		fmt.Printf("could not get initial state ERROR: %v\n", err)
+		cancel()
+		return
+	} else {
+		fmt.Printf("Got initial state %v", initialState)
+		ps.initialState = initialState
+		cancel()
+		return
 	}
 }
 
@@ -134,12 +161,25 @@ func StreamLoggingInterceptor(
 
 type ClientServer struct{}
 
-func (gs *ClientServer) Join(ctx context.Context, req *coms2.NewPlayer) (*coms2.NewPlayerInitialState, error) {
+func (gs *ClientServer) Join(_ context.Context, _ *coms.NewPlayer) (*coms.PlayerID, error) {
 	return nil, fmt.Errorf("game server does not implement Join sercvice")
 }
 
-func (gs *ClientServer) Turn(ctx context.Context, turn *coms2.NewTurn) (*coms2.NewAction, error) {
+func (gs *ClientServer) InitialState(_ context.Context, _ *coms.PlayerID) (*coms.NewPlayerInitialState, error) {
+	return nil, fmt.Errorf("game server does not implement InitialState service")
+}
+
+func (gs *ClientServer) Turn(_ context.Context, turn *coms.NewTurn) (*coms.NewAction, error) {
 	bg := &BotGame{}
+
+	for _, row := range turn.View {
+		for _, cell := range row.Row {
+			fmt.Printf("%d ", cell)
+		}
+		fmt.Println()
+	}
+
+	fmt.Printf("Player Energy: %d\n", int(turn.Energy))
 
 	action := bg.NewTurnAction(turn)
 
@@ -147,7 +187,7 @@ func (gs *ClientServer) Turn(ctx context.Context, turn *coms2.NewTurn) (*coms2.N
 }
 
 func ensureParams() (botName *string, listenAddress *string, gameServerAddress *string) {
-	botName = flag.String("bn", "", "bot name")
+	botName = flag.String("bn", "random-bot", "bot name")
 	listenAddress = flag.String("la", "", "my listen address")
 	gameServerAddress = flag.String("gs", "", "game server address")
 	flag.Parse()
@@ -174,7 +214,10 @@ func main() {
 	}
 
 	bot.waitToJoinGame()
+
+	bot.getInitialState()
 	fmt.Println("Received message from server", bot.initialState)
+
 	bot.startListening()
 
 }

@@ -9,20 +9,23 @@ type CellType int
 const (
 	WaterCell CellType = iota
 	IslandCell
-	LighthouseCell
 )
 
 type Cell struct {
-	Location geom.Coord
+	Position geom.Coord
 	Type     CellType
 }
 
 func (c Cell) GetX() int {
-	return int(c.Location.X())
+	return int(c.Position.X())
 }
 
 func (c Cell) GetY() int {
-	return int(c.Location.Y())
+	return int(c.Position.Y())
+}
+
+func (c Cell) GetPosition() geom.Coord {
+	return c.Position
 }
 
 func (c Cell) GetType() CellType {
@@ -31,7 +34,7 @@ func (c Cell) GetType() CellType {
 
 func NewEmptyCell(x, y int) *Cell {
 	return &Cell{
-		Location: geom.Coord{float64(x), float64(y)},
+		Position: geom.Coord{float64(x), float64(y)},
 		Type:     WaterCell,
 	}
 }

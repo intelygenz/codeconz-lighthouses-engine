@@ -29,10 +29,9 @@ proto:
 	--go_opt=paths=source_relative \
 	--go-grpc_out=./internal/handler/coms \
 	--go-grpc_opt=paths=source_relative,require_unimplemented_servers=false \
-	--py-out=./internal/handler/coms \
-	--py_opt=paths=source_relative \
+	--python_out=./internal/handler/coms \
+	--pyi_out=./internal/handler/coms \
 	--grpc_python_out=./internal/handler/coms \
-	--grpc_python_opt=paths=source_relative \
 	./proto/*.proto
 
 .PHONY: build run test proto

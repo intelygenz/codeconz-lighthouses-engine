@@ -6,7 +6,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board/cell"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board/island"
-	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board/lighthouse"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/lighthouse"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/xy"
@@ -14,21 +14,27 @@ import (
 	"math"
 	"math/rand"
 	"os"
-	"os/exec"
 )
 
 const (
 	PlayerInitialPositionRune = '0'
-	WaterCellRune             = 'x'
+	WaterCellRune             = '#'
 	IslandCellRune            = ' '
 	LighthouseCellRune        = '!'
 )
 
 type BoardI interface {
-	GetLightHouses() []lighthouse.Lighthouse
+	GetLightHouses() []*lighthouse.Lighthouse
 	GetPlayableMap() [][]bool
-	GetRandomIslandLocation() geom.Coord
-	CalcEnergy()
+	GetPlayerView(player *player.Player) [][]int
+	GetRandomPlayerInitialPosition() geom.Coord
+
+	CalcIslandEnergy()
+	CalcLighthouseEnergy()
+	CalcPlayerEnergy(players []*player.Player, currentPlayer *player.Player)
+
+	CanMoveTo(coord geom.Coord) bool
+
 	PrettyPrintBoolMap()
 	PrettyPrintMap(players []*player.Player)
 }
@@ -36,17 +42,26 @@ type BoardI interface {
 type CellI interface {
 	GetX() int
 	GetY() int
+	GetPosition() geom.Coord
 	GetType() cell.CellType
 }
 
 type Board struct {
-	Width  int
-	Height int
-	Cells  [][]CellI
+	Width                  int
+	Height                 int
+	cells                  [][]CellI
+	lighthouses            []*lighthouse.Lighthouse
+	playerInitialPositions []*island.Island
 }
 
 func NewBoard(boardPath string) BoardI {
-	board := Board{}
+	board := Board{
+		Width:                  0,
+		Height:                 0,
+		cells:                  nil,
+		playerInitialPositions: make([]*island.Island, 0),
+		lighthouses:            make([]*lighthouse.Lighthouse, 0),
+	}
 	board.load(boardPath)
 
 	return &board
@@ -76,38 +91,31 @@ func (m *Board) load(path string) {
 	// Imprimir la matriz de caracteres
 	m.Width = len(lines[0])
 	m.Height = len(lines)
-	m.Cells = make([][]CellI, m.Height)
-	for i := range m.Cells {
-		m.Cells[i] = make([]CellI, m.Width)
+	m.cells = make([][]CellI, m.Height)
+	for i := range m.cells {
+		m.cells[i] = make([]CellI, m.Width)
 	}
 
 	for i, line := range lines {
 		for j, char := range line {
 			switch char {
 			case IslandCellRune:
-				m.Cells[i][j] = island.NewIslandCell(i, j)
+				m.cells[i][j] = island.NewIslandCell(i, j)
 			case WaterCellRune:
-				m.Cells[i][j] = cell.NewEmptyCell(i, j)
+				m.cells[i][j] = cell.NewEmptyCell(i, j)
 			case LighthouseCellRune:
-				m.Cells[i][j] = lighthouse.NewLightHouseCell(i, j)
+				m.cells[i][j] = island.NewIslandCell(i, j)
+				m.lighthouses = append(m.lighthouses, lighthouse.NewLightHouse(i, j))
 			default:
-				// These are supposed to be initial player Cells
-				m.Cells[i][j] = cell.NewEmptyCell(i, j)
+				m.cells[i][j] = island.NewIslandCell(i, j)
+				m.playerInitialPositions = append(m.playerInitialPositions, m.cells[i][j].(*island.Island))
 			}
 		}
 	}
 }
 
-func (m *Board) GetLightHouses() []lighthouse.Lighthouse {
-	var lighthouses []lighthouse.Lighthouse
-	for i := 0; i < m.Height; i++ {
-		for j := 0; j < m.Width; j++ {
-			if m.Cells[i][j].GetType() == cell.LighthouseCell {
-				lighthouses = append(lighthouses, *m.Cells[i][j].(*lighthouse.Lighthouse))
-			}
-		}
-	}
-	return lighthouses
+func (m *Board) GetLightHouses() []*lighthouse.Lighthouse {
+	return m.lighthouses
 }
 
 func (m *Board) GetPlayableMap() [][]bool {
@@ -115,7 +123,7 @@ func (m *Board) GetPlayableMap() [][]bool {
 	for i := 0; i < m.Height; i++ {
 		playableMap[i] = make([]bool, m.Width)
 		for j := 0; j < m.Width; j++ {
-			if m.isPlayableCell(m.Cells[i][j]) {
+			if m.cells[i][j].GetType() == cell.IslandCell {
 				playableMap[i][j] = true
 			}
 		}
@@ -123,31 +131,49 @@ func (m *Board) GetPlayableMap() [][]bool {
 	return playableMap
 }
 
-func (m *Board) isPlayableCell(c CellI) bool {
-	return c.GetType() == cell.IslandCell || c.GetType() == cell.LighthouseCell
+func (m *Board) GetRandomPlayerInitialPosition() geom.Coord {
+	return m.playerInitialPositions[rand.Intn(len(m.playerInitialPositions))].Position
 }
 
-func (m *Board) GetRandomIslandLocation() geom.Coord {
-	for {
-		i := rand.Intn(m.Height)
-		j := rand.Intn(m.Width)
-		if m.Cells[i][j].GetType() == cell.IslandCell {
-			return m.Cells[i][j].(*island.Island).Location
+func (m *Board) GetPlayerView(player *player.Player) [][]int {
+	view := make([][]int, 7)
+	maxX := 6
+	maxY := 6
+
+	// Loop from (0, 0) to (maxX, maxY)
+	for x := 0; x <= maxX; x++ {
+		view[x] = make([]int, 7)
+		for y := 0; y <= maxY; y++ {
+			// Map the new loop indices back to the original range
+			i := x + int(player.Position.X()-3)
+			j := y + int(player.Position.Y()-3)
+
+			if i < 0 || i >= m.Height || j < 0 || j >= m.Width {
+				view[x][y] = -1
+			} else {
+				if m.cells[i][j].GetType() == cell.IslandCell &&
+					xy.Distance(player.Position, m.cells[i][j].GetPosition()) <= 3 {
+					view[x][y] = m.cells[i][j].(*island.Island).Energy
+				} else {
+					view[x][y] = -1
+				}
+			}
 		}
 	}
+
+	return view
 }
 
-func (m *Board) CalcEnergy() {
-
+func (m *Board) CalcIslandEnergy() {
 	//Calculate energy for the island and lighthouse cells
 	for i := 0; i < m.Height; i++ {
 		for j := 0; j < m.Width; j++ {
-			if m.Cells[i][j].GetType() == cell.IslandCell {
-				islandCell := m.Cells[i][j].(*island.Island)
+			if m.cells[i][j].GetType() == cell.IslandCell {
+				islandCell := m.cells[i][j].(*island.Island)
 
 				// calculate the energy of the island based on the formula: energia += floor(5 - distancia_a_faro)
-				for _, lighthouse := range m.GetLightHouses() {
-					distance := xy.Distance(islandCell.Location, lighthouse.Location)
+				for _, lighthouseCell := range m.GetLightHouses() {
+					distance := xy.Distance(islandCell.Position, lighthouseCell.Position)
 					islandCell.Energy += int(math.Max(math.Floor(5-distance), 0))
 				}
 
@@ -156,26 +182,49 @@ func (m *Board) CalcEnergy() {
 					islandCell.Energy = 100
 				}
 			}
+		}
+	}
+}
 
-			// Remove energy from lighthouses
-			if m.Cells[i][j].GetType() == cell.LighthouseCell {
-				lighthouseCell := m.Cells[i][j].(*lighthouse.Lighthouse)
-				lighthouseCell.Energy -= 10
+func (m *Board) CalcLighthouseEnergy() {
+	// Remove energy from lighthouses
+	for _, lg := range m.lighthouses {
+		lg.Energy -= 10
 
-				// Set min energy to 0
-				if lighthouseCell.Energy <= 0 {
-					lighthouseCell.Energy = 0
+		if lg.Energy <= 0 {
+			lg.Energy = 0
+			lg.Owner = -1
+			lg.Connections = make([]lighthouse.Lighthouse, 0)
+		}
+	}
+}
 
-					//TODO: remove connections and the ownership of the lighthouse
-				}
-			}
+func (m *Board) CalcPlayerEnergy(players []*player.Player, currentPlayer *player.Player) {
+	playersOnPosition := make([]*player.Player, 0)
+	for _, p := range players {
+		if currentPlayer.Position.Equal(geom.XY, p.Position) {
+			playersOnPosition = append(playersOnPosition, p)
 		}
 	}
 
-	//TODO: Give energy to players, maybe not here
-	/*for _, player := range m. {
+	islandCell := m.cells[int(currentPlayer.Position.X())][int(currentPlayer.Position.Y())].(*island.Island)
+	currentPlayer.Energy += int(math.Floor(float64(islandCell.Energy / len(playersOnPosition))))
 
-	}*/
+	islandCell.Energy = 0
+}
+
+func (m *Board) CanMoveTo(coord geom.Coord) bool {
+
+	fmt.Printf("CanMoveTo coord: %v\n", coord)
+	fmt.Printf("Height: %d, Width: %d\n", m.Height, m.Width)
+
+	if coord.X() < 0 || coord.X() >= float64(m.Height) || coord.Y() < 0 || coord.Y() >= float64(m.Width) {
+		return false
+	}
+
+	fmt.Printf("Cell type: %v\n", m.cells[int(coord.X())][int(coord.Y())].GetType())
+
+	return m.cells[int(coord.X())][int(coord.Y())].GetType() == cell.IslandCell
 }
 
 func (m *Board) PrettyPrintBoolMap() {
@@ -195,28 +244,50 @@ func (m *Board) PrettyPrintBoolMap() {
 }
 
 func (m *Board) PrettyPrintMap(players []*player.Player) {
-	cmd := exec.Command("clear") //Linux example, its tested
-	cmd.Stdout = os.Stdout
-	cmd.Run()
-
 	fmt.Println()
 	for i := 0; i < m.Height; i++ {
 		for j := 0; j < m.Width; j++ {
+			playerCell := (*player.Player)(nil)
+
 			// check if the cell is an island
 			for _, p := range players {
-				if p.Position.Equal(geom.XY, geom.Coord{float64(m.Cells[i][j].GetX()), float64(m.Cells[i][j].GetY())}) {
-					color.New(color.BgMagenta).Print(fmt.Sprintf("[%d]", p.ID))
+				if p.Position.Equal(geom.XY, geom.Coord{float64(m.cells[i][j].GetX()), float64(m.cells[i][j].GetY())}) {
+					playerCell = p
 					break
 				}
 			}
 
-			switch m.Cells[i][j].GetType() {
-			case cell.IslandCell:
-				color.New(color.BgBlue).Print(fmt.Sprintf("|%d|", m.Cells[i][j].(*island.Island).Energy))
-			case cell.LighthouseCell:
-				color.New(color.BgYellow).Print(fmt.Sprintf("|%d|", m.Cells[i][j].(*lighthouse.Lighthouse).Energy))
-			case cell.WaterCell:
-				color.New(color.BgBlack).Print(" x ")
+			if playerCell != nil {
+				color.New(color.BgMagenta).Print(fmt.Sprintf("[%d]", playerCell.ID))
+			} else {
+				switch m.cells[i][j].GetType() {
+				case cell.IslandCell:
+					isLighthouse := false
+					isInitialPlayerPosition := false
+					for _, lighthouseCell := range m.lighthouses {
+						if lighthouseCell.Position.Equal(geom.XY, geom.Coord{float64(m.cells[i][j].GetX()), float64(m.cells[i][j].GetY())}) {
+							isLighthouse = true
+						}
+					}
+
+					if isLighthouse {
+						color.New(color.BgYellow).Print(fmt.Sprintf("|%d|", m.cells[i][j].(*island.Island).Energy))
+					} else {
+						for _, initialPlayerPosition := range m.playerInitialPositions {
+							if initialPlayerPosition.Position.Equal(geom.XY, geom.Coord{float64(m.cells[i][j].GetX()), float64(m.cells[i][j].GetY())}) {
+								isInitialPlayerPosition = true
+							}
+						}
+
+						if isInitialPlayerPosition {
+							color.New(color.BgGreen).Print(fmt.Sprintf("|%d|", m.cells[i][j].(*island.Island).Energy))
+						} else {
+							color.New(color.BgBlue).Print(fmt.Sprintf("|%d|", m.cells[i][j].(*island.Island).Energy))
+						}
+					}
+				case cell.WaterCell:
+					color.New(color.BgBlack).Print(" x ")
+				}
 			}
 		}
 		fmt.Println()

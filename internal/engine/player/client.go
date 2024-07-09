@@ -22,33 +22,41 @@ func (p *Player) RequestNewTurn(t Turn) (*Action, error) {
 	npjc := coms.NewGameServiceClient(grpcClient)
 
 	lighthouses := make([]*coms.Lighthouse, 0)
-	for _, lighthouse := range p.LighthouseKeys {
+	for _, lighthouse := range t.Lighthouses {
 		lighthouses = append(lighthouses, &coms.Lighthouse{
 			Position: &coms.Position{
-				X: int32(lighthouse.Location.X()),
-				Y: int32(lighthouse.Location.Y()),
+				X: int32(lighthouse.Position.X()),
+				Y: int32(lighthouse.Position.Y()),
 			},
-			// TODO add the rest of the fields
+			Owner:  int32(lighthouse.Owner),
+			Energy: int32(lighthouse.Energy),
+			//Connections: lighthouse.Connections, // TODO map connections
+			//HaveKey: lighthouse.HaveKey, // TODO map have key
 		})
 	}
 
-	// TODO reomve this sample
-	sampleRows := make([]*coms.MapRow, 0)
-	sampleRows = append(sampleRows, &coms.MapRow{Row: []int32{0, 1, 0, 1}})
-	sampleRows = append(sampleRows, &coms.MapRow{Row: []int32{0, 1, 1, 1}})
-	sampleRows = append(sampleRows, &coms.MapRow{Row: []int32{0, 0, 0, 1}})
+	playerView := make([]*coms.MapRow, 0)
+	for _, row := range t.View {
+		cells := make([]int32, 0)
+		for _, cell := range row {
+			cells = append(cells, int32(cell))
+		}
+		playerView = append(playerView, &coms.MapRow{
+			Row: cells,
+		})
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("game.turn_request_timeout"))
 	defer cancel()
 
 	playerAction, err := npjc.Turn(ctx, &coms.NewTurn{
 		Position: &coms.Position{
-			X: int32(p.Position.X()),
-			Y: int32(p.Position.Y()),
+			X: int32(t.Position.X()),
+			Y: int32(t.Position.Y()),
 		},
-		Score:       int32(p.Score),
-		Energy:      int32(p.Energy),
-		View:        sampleRows, // TODO generate turn view
+		Score:       int32(t.Score),
+		Energy:      int32(t.Energy),
+		View:        playerView,
 		Lighthouses: lighthouses,
 	})
 	if err != nil {
@@ -57,8 +65,8 @@ func (p *Player) RequestNewTurn(t Turn) (*Action, error) {
 	}
 
 	return &Action{
-		Action:      int32(playerAction.Action),
+		Action:      int(playerAction.Action),
 		Destination: geom.Coord{float64(playerAction.Destination.X), float64(playerAction.Destination.Y)},
-		Energy:      playerAction.Energy,
+		Energy:      int(playerAction.Energy),
 	}, err
 }

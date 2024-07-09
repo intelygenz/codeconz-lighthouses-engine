@@ -6,7 +6,6 @@ import (
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/game"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
-	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
@@ -51,18 +50,12 @@ func NewGameServer(ge game.GameI) *GameServer {
 	}
 }
 
-func (gs *GameServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.NewPlayerInitialState, error) {
+func (gs *GameServer) Join(_ context.Context, req *coms.NewPlayer) (*coms.PlayerID, error) {
 	fmt.Printf("New player ask to join %s\n", req.Name)
 
-	playerID, err := strconv.Atoi(req.Name)
-	if err != nil {
-		fmt.Printf("Error converting player ID %s\n", err)
-		return nil, err
-	}
+	np := player.NewPlayer(req.ServerAddress, req.GetName())
 
-	np := player.NewPlayer(req.ServerAddress, playerID)
-
-	err = gs.game.AddNewPlayer(*np)
+	err := gs.game.AddNewPlayer(np)
 	if err != nil {
 		fmt.Printf("Error adding new player %s\n", err)
 		return nil, err
@@ -70,11 +63,24 @@ func (gs *GameServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.NewP
 
 	fmt.Printf("New player joined %d\n", np.ID)
 
-	mapper := Mapper{}
-
-	return mapper.MapPlayerInitialStateToComPlayerInitialState(gs.game.CreateInitialState(*np)), nil //TODO cannot do this as we don't have the players information yet
+	return &coms.PlayerID{PlayerID: int32(np.ID)}, nil
 }
 
-func (gs *GameServer) Turn(ctx context.Context, req *coms.NewTurn) (*coms.NewAction, error) {
+func (gs *GameServer) InitialState(_ context.Context, playerID *coms.PlayerID) (*coms.NewPlayerInitialState, error) {
+	fmt.Printf("New player ask for initial state %d\n", playerID.PlayerID)
+
+	p := gs.game.GetPlayerByID(int(playerID.PlayerID))
+
+	if p == nil {
+		return nil, fmt.Errorf("player not found")
+	}
+
+	mapper := Mapper{}
+	playerInitialState := gs.game.CreateInitialState(*p)
+
+	return mapper.MapPlayerInitialStateToComPlayerInitialState(playerInitialState), nil
+}
+
+func (gs *GameServer) Turn(_ context.Context, _ *coms.NewTurn) (*coms.NewAction, error) {
 	return nil, fmt.Errorf("game server does not implement Turn sercvice")
 }

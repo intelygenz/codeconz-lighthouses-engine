@@ -1,7 +1,7 @@
 package player
 
 import (
-	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board/lighthouse"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/lighthouse"
 	"github.com/twpayne/go-geom"
 )
 
@@ -13,32 +13,34 @@ const (
 )
 
 type Action struct {
-	Action      int32
+	Action      int
 	Destination geom.Coord
-	Energy      int32
+	Energy      int
 }
 
 type Turn struct {
 	Position    geom.Coord
-	Score       int32
-	Energy      int32
-	View        [][]int32
-	Lighthouses []geom.Coord
+	Score       int
+	Energy      int
+	View        [][]int
+	Lighthouses []*lighthouse.Lighthouse
 }
 
 type Player struct {
 	ServerAddress  string
 	ID             int
+	Name           string
 	Score          int
 	Energy         int
 	Position       geom.Coord
 	LighthouseKeys []lighthouse.Lighthouse
 }
 
-func NewPlayer(serverAddress string, id int) *Player {
+func NewPlayer(serverAddress string, name string) *Player {
 	return &Player{
 		ServerAddress:  serverAddress,
-		ID:             id,
+		ID:             -1,
+		Name:           name,
 		Score:          0,
 		Energy:         0,
 		Position:       geom.Coord{0, 0},

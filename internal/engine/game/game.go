@@ -7,7 +7,9 @@ import (
 )
 
 type GameI interface {
-	AddNewPlayer(np player.Player) error
+	AddNewPlayer(np *player.Player) error
+	GetPlayers() []*player.Player
+	GetPlayerByID(id int) *player.Player
 	CreateInitialState(p player.Player) *PlayerInitialState
 	StartGame()
 }
@@ -28,11 +30,22 @@ func NewGame(islandPath string, turns int) GameI {
 	}
 }
 
-func (e *Game) AddNewPlayer(np player.Player) error {
+func (e *Game) AddNewPlayer(np *player.Player) error {
 	np.ID = len(e.players)
+	np.Position = e.gameMap.GetRandomPlayerInitialPosition()
+	e.players = append(e.players, np)
+	return nil
+}
 
-	np.Position = e.gameMap.GetRandomIslandLocation()
+func (e *Game) GetPlayers() []*player.Player {
+	return e.players
+}
 
-	e.players = append(e.players, &np)
+func (e *Game) GetPlayerByID(id int) *player.Player {
+	for _, p := range e.players {
+		if p.ID == id {
+			return p
+		}
+	}
 	return nil
 }

@@ -11,11 +11,11 @@ type Island struct {
 }
 
 func (i Island) GetX() int {
-	return int(i.Location.X())
+	return int(i.Position.X())
 }
 
 func (i Island) GetY() int {
-	return int(i.Location.Y())
+	return int(i.Position.Y())
 }
 
 func (i Island) GetType() cell.CellType {
@@ -25,7 +25,7 @@ func (i Island) GetType() cell.CellType {
 func NewIslandCell(x, y int) *Island {
 	return &Island{
 		Cell: cell.Cell{
-			Location: geom.Coord{float64(x), float64(y)},
+			Position: geom.Coord{float64(x), float64(y)},
 			Type:     cell.IslandCell,
 		},
 		Energy: 0,

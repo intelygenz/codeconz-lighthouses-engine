@@ -2,9 +2,13 @@ package game
 
 import (
 	"fmt"
+	"math"
+	"os"
+	"os/exec"
+	"time"
+
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/xy"
-	"time"
 
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
 )
@@ -13,48 +17,38 @@ func (e *Game) StartGame() {
 	e.gameStartAt = time.Now()
 
 	for i := 0; i < e.turns; i++ {
-		e.gameMap.CalcEnergy()
+		time.Sleep(4 * time.Second)
+		e.gameMap.CalcIslandEnergy()
+		e.gameMap.CalcLighthouseEnergy()
 		for _, p := range e.players {
-			// TODO: calc the energy of the player
+			e.gameMap.CalcPlayerEnergy(e.GetPlayers(), p)
 
-			// TODO: calc the new turn with the last state of the game
 			na, err := p.RequestNewTurn(player.Turn{
 				Position:    p.Position,
-				Score:       int32(p.Score),
-				Energy:      int32(p.Energy),
-				View:        [][]int32{{0, 1, 0, 0, 1}, {0, 1, 0, 0, 1}, {0, 1, 0, 0, 1}, {0, 1, 0, 0, 1}}, // TODO generate turn view
-				Lighthouses: []geom.Coord{},
+				Score:       p.Score,
+				Energy:      p.Energy,
+				View:        e.gameMap.GetPlayerView(p),
+				Lighthouses: e.gameMap.GetLightHouses(),
 			})
 			if err != nil {
 				// handle error
 				fmt.Printf("Player %d has error %v", p.ID, err)
 				break
 			}
-			_ = na
+
 			// TODO: apply the action to change the state of the game
+			cmd := exec.Command("clear") //Linux example, its tested
+			cmd.Stdout = os.Stdout
+			cmd.Run()
 			err = e.movePlayer(p, na)
+			if err != nil {
+				fmt.Printf("Player %d has error %v", p.ID, err)
+			}
 		}
 		// e.CalcPlayersScores()
 		// TODO: calc players scores
 		e.gameMap.PrettyPrintMap(e.players)
 	}
-	//for i := 0; i < e.turns; i++ {
-	//	// TODO: calc new turn state
-	//	e.gameMap.CalcEnergy()
-	//	for _, p := range e.players {
-	//		///*gc := &handler.GameClient{}
-	//		//comPlayer := &coms.NewPlayer{
-	//		//	Name:          strconv.Itoa(p.ID), //TODO: replace name with ID
-	//		//	ServerAddress: p.ServerAddress,
-	//		//}
-	//		//// TODO: calc the new turn with the last state of the game
-	//		//// na := gc.RequestTurn(comPlayer, nil /*e.gameMap.getPlayerView(p)*/)
-	//		//// TODO: apply the action to change the state of the game
-	//		//// e.movePlayer(p, na)*/
-	//	}
-	//	// e.CalcPlayersScores()
-	//	// TODO: calc players scores
-	//}
 }
 
 func (e *Game) movePlayer(p *player.Player, action *player.Action) error {
@@ -62,17 +56,64 @@ func (e *Game) movePlayer(p *player.Player, action *player.Action) error {
 
 	switch action.Action {
 	case player.ActionMove:
-		if xy.Distance(p.Position, action.Destination) >= 2 {
-			return fmt.Errorf("player %d can't move to %v", p.ID, action.Destination)
-		}
-
-		fmt.Printf("Player %d moving from %v to %v\n", p.ID, p.Position, action.Destination)
-		p.Position = action.Destination
+		return e.moveToPosition(p, action)
 	case player.ActionAttack:
+		return e.attackPosition(p, action)
 	case player.ActionConnect:
+		return e.connectLighthouses()
 	case player.ActionPass:
-
+		fmt.Printf("Player %d pass\n", p.ID)
 	}
 
+	return nil
+}
+
+func (e *Game) moveToPosition(p *player.Player, action *player.Action) error {
+	fmt.Printf("Player %d moving from %v to %v\n", p.ID, p.Position, action.Destination)
+	if xy.Distance(p.Position, action.Destination) >= 2 {
+		return fmt.Errorf("player %d can't move to %v", p.ID, action.Destination)
+	}
+
+	if e.gameMap.CanMoveTo(action.Destination) == false {
+		return fmt.Errorf("player %d can't move to %v", p.ID, action.Destination)
+	}
+
+	fmt.Printf("Player %d moving from %v to %v\n", p.ID, p.Position, action.Destination)
+	p.Position = action.Destination
+	return nil
+}
+
+func (e *Game) attackPosition(p *player.Player, action *player.Action) error {
+	fmt.Printf("Player %d attack\n", p.ID)
+
+	if action.Energy > p.Energy {
+		return fmt.Errorf("player %d has no energy to attack", p.ID)
+	}
+
+	for _, l := range e.gameMap.GetLightHouses() {
+		if l.Position.Equal(geom.XY, action.Destination) {
+			if l.Owner == p.ID {
+				l.Energy += action.Energy
+			}
+
+			lighthouseEnergy := l.Energy - action.Energy
+
+			if lighthouseEnergy == 0 {
+				l.Energy = 0
+				l.Owner = -1
+			}
+
+			if lighthouseEnergy < 0 {
+				l.Energy = int(math.Abs(float64(lighthouseEnergy)))
+				l.Owner = p.ID
+			}
+			break
+		}
+	}
+	return nil
+}
+
+func (e *Game) connectLighthouses() error {
+	// TODO: implement connect action and calculate connections
 	return nil
 }

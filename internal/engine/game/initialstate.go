@@ -1,7 +1,7 @@
 package game
 
 import (
-	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board/lighthouse"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/lighthouse"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
 	"github.com/twpayne/go-geom"
 )
@@ -11,7 +11,7 @@ type PlayerInitialState struct {
 	PlayerCount int
 	Position    geom.Coord
 	Map         [][]bool
-	Lighthouses []lighthouse.Lighthouse
+	Lighthouses []*lighthouse.Lighthouse
 }
 
 func (e *Game) CreateInitialState(p player.Player) *PlayerInitialState {

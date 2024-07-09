@@ -62,6 +62,6 @@ func (b *Bootstrap) initializeConfiguration() {
 	viper.SetDefault("game.listen_address", ":50051")
 	viper.SetDefault("game.join_timeout", 10*time.Second)
 	viper.SetDefault("game.turn_request_timeout", 100*time.Millisecond)
-	viper.SetDefault("game.turns", 10)
+	viper.SetDefault("game.turns", 20)
 	viper.SetDefault("game.board_path", "/Users/dovixman/Workspace/Work/Programs/SecretEvent/lighthouses_aicontest/maps/square_xl.txt")
 }

@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board/lighthouse"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/game"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/lighthouse"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 )
 
@@ -11,7 +11,7 @@ type Mapper struct {
 
 func (m *Mapper) MapPlayerInitialStateToComPlayerInitialState(playerInitialState *game.PlayerInitialState) *coms.NewPlayerInitialState {
 	return &coms.NewPlayerInitialState{
-		PlayerNum:   int32(playerInitialState.PlayerID),
+		PlayerID:    int32(playerInitialState.PlayerID),
 		PlayerCount: int32(playerInitialState.PlayerCount),
 		Position: &coms.Position{
 			X: int32(playerInitialState.Position.X()),
@@ -40,15 +40,15 @@ func (m *Mapper) MapPlayableBoolMapToMapRowList(island [][]bool) []*coms.MapRow 
 	return rows
 }
 
-func (m *Mapper) MapLighthousesToComLighthouses(lighthouseList []lighthouse.Lighthouse) []*coms.Lighthouse {
+func (m *Mapper) MapLighthousesToComLighthouses(lighthouseList []*lighthouse.Lighthouse) []*coms.Lighthouse {
 	lighthouses := make([]*coms.Lighthouse, 0)
 	for _, l := range lighthouseList {
 		lighthouses = append(
 			lighthouses,
 			&coms.Lighthouse{
 				Position: &coms.Position{
-					X: int32(l.Location.X()),
-					Y: int32(l.Location.Y()),
+					X: int32(l.Position.X()),
+					Y: int32(l.Position.Y()),
 					// TODO add owner, connections, etc...
 				},
 			},
