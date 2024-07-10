@@ -19,11 +19,12 @@ type Action struct {
 }
 
 type Turn struct {
-	Position    geom.Coord
-	Score       int
-	Energy      int
-	View        [][]int
-	Lighthouses []*lighthouse.Lighthouse
+	Position           geom.Coord
+	Score              int
+	Energy             int
+	View               [][]int
+	Lighthouses        []*lighthouse.Lighthouse
+	UserLighthouseKeys []*lighthouse.Lighthouse
 }
 
 type Player struct {
@@ -33,7 +34,7 @@ type Player struct {
 	Score          int
 	Energy         int
 	Position       geom.Coord
-	LighthouseKeys []lighthouse.Lighthouse
+	LighthouseKeys []*lighthouse.Lighthouse
 }
 
 func NewPlayer(serverAddress string, name string) *Player {
@@ -44,7 +45,7 @@ func NewPlayer(serverAddress string, name string) *Player {
 		Score:          0,
 		Energy:         0,
 		Position:       geom.Coord{0, 0},
-		LighthouseKeys: make([]lighthouse.Lighthouse, 0),
+		LighthouseKeys: make([]*lighthouse.Lighthouse, 0),
 	}
 }
 
@@ -57,5 +58,14 @@ func (p *Player) GetPosition() (x, y int) {
 }
 
 func (p *Player) AddLighthouseKey(lighthouse lighthouse.Lighthouse) {
-	p.LighthouseKeys = append(p.LighthouseKeys, lighthouse)
+	p.LighthouseKeys = append(p.LighthouseKeys, &lighthouse)
+}
+
+func (p *Player) RemoveLighthouseKey(lighthouse lighthouse.Lighthouse) {
+	for i, l := range p.LighthouseKeys {
+		if l.Position.Equal(geom.XY, lighthouse.Position) {
+			p.LighthouseKeys = append(p.LighthouseKeys[:i], p.LighthouseKeys[i+1:]...)
+			break
+		}
+	}
 }

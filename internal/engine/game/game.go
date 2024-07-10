@@ -49,3 +49,15 @@ func (e *Game) GetPlayerByID(id int) *player.Player {
 	}
 	return nil
 }
+
+func (e *Game) CalcPlayersScores() {
+	for _, p := range e.players {
+		for _, l := range e.gameMap.GetLightHouses() {
+			if l.Owner == p.ID {
+				p.Score += 2
+				p.Score += 2 * len(l.Connections)
+				// TODO: add 1 point for each cell inside connected triangles
+			}
+		}
+	}
+}

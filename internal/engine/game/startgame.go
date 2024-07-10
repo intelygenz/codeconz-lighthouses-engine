@@ -24,11 +24,12 @@ func (e *Game) StartGame() {
 			e.gameMap.CalcPlayerEnergy(e.GetPlayers(), p)
 
 			na, err := p.RequestNewTurn(player.Turn{
-				Position:    p.Position,
-				Score:       p.Score,
-				Energy:      p.Energy,
-				View:        e.gameMap.GetPlayerView(p),
-				Lighthouses: e.gameMap.GetLightHouses(),
+				Position:           p.Position,
+				Score:              p.Score,
+				Energy:             p.Energy,
+				View:               e.gameMap.GetPlayerView(p),
+				Lighthouses:        e.gameMap.GetLightHouses(),
+				UserLighthouseKeys: p.LighthouseKeys,
 			})
 			if err != nil {
 				// handle error
@@ -45,8 +46,7 @@ func (e *Game) StartGame() {
 				fmt.Printf("Player %d has error %v", p.ID, err)
 			}
 		}
-		// e.CalcPlayersScores()
-		// TODO: calc players scores
+		e.CalcPlayersScores()
 		e.gameMap.PrettyPrintMap(e.players)
 	}
 }
@@ -60,7 +60,7 @@ func (e *Game) movePlayer(p *player.Player, action *player.Action) error {
 	case player.ActionAttack:
 		return e.attackPosition(p, action)
 	case player.ActionConnect:
-		return e.connectLighthouses()
+		return e.connectLighthouses(p, action) //TODO: add connections logic
 	case player.ActionPass:
 		fmt.Printf("Player %d pass\n", p.ID)
 	}
@@ -80,6 +80,15 @@ func (e *Game) moveToPosition(p *player.Player, action *player.Action) error {
 
 	fmt.Printf("Player %d moving from %v to %v\n", p.ID, p.Position, action.Destination)
 	p.Position = action.Destination
+
+	for _, l := range e.gameMap.GetLightHouses() {
+		if l.Position.Equal(geom.XY, action.Destination) {
+			fmt.Printf("Player %d obtained lighthouse key for lighthouse %v\n", p.ID, l.Position)
+			p.LighthouseKeys = append(p.LighthouseKeys, l)
+			break
+		}
+	}
+
 	return nil
 }
 
@@ -107,13 +116,49 @@ func (e *Game) attackPosition(p *player.Player, action *player.Action) error {
 				l.Energy = int(math.Abs(float64(lighthouseEnergy)))
 				l.Owner = p.ID
 			}
+
+			p.Energy -= action.Energy
 			break
 		}
 	}
 	return nil
 }
 
-func (e *Game) connectLighthouses() error {
-	// TODO: implement connect action and calculate connections
+func (e *Game) connectLighthouses(p *player.Player, action *player.Action) error {
+	curLighthousePos := p.Position
+	destLighthousePos := action.Destination
+
+	if curLighthousePos.Equal(geom.XY, destLighthousePos) {
+		return fmt.Errorf("player %d can't connect to the same lighthouse", p.ID)
+	}
+
+	curLighthouse, err := e.gameMap.GetLightHouse(curLighthousePos)
+	if err != nil {
+		return err
+	}
+
+	destLighthouse, err := e.gameMap.GetLightHouse(destLighthousePos)
+	if err != nil {
+		return err
+	}
+
+	if curLighthouse.Owner != p.ID {
+		return fmt.Errorf("player %d does not own lighthouse %v", p.ID, curLighthousePos)
+	}
+
+	if destLighthouse.Owner != p.ID {
+		return fmt.Errorf("player %d does not own lighthouse %v", p.ID, destLighthousePos)
+	}
+
+	// TODO: check the connection does not cross another connection
+	// TODO: check the connection does not cross any lighthouse
+
+	err = curLighthouse.Connect(destLighthouse)
+	if err != nil {
+		return err
+	}
+
+	p.RemoveLighthouseKey(*destLighthouse)
+
 	return nil
 }

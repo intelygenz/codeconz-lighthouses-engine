@@ -25,6 +25,7 @@ const (
 
 type BoardI interface {
 	GetLightHouses() []*lighthouse.Lighthouse
+	GetLightHouse(position geom.Coord) (*lighthouse.Lighthouse, error)
 	GetPlayableMap() [][]bool
 	GetPlayerView(player *player.Player) [][]int
 	GetRandomPlayerInitialPosition() geom.Coord
@@ -34,6 +35,9 @@ type BoardI interface {
 	CalcPlayerEnergy(players []*player.Player, currentPlayer *player.Player)
 
 	CanMoveTo(coord geom.Coord) bool
+	IsLighthouse(position geom.Coord) bool
+	IsIsland(position geom.Coord) bool
+	IsWater(position geom.Coord) bool
 
 	PrettyPrintBoolMap()
 	PrettyPrintMap(players []*player.Player)
@@ -116,6 +120,15 @@ func (m *Board) load(path string) {
 
 func (m *Board) GetLightHouses() []*lighthouse.Lighthouse {
 	return m.lighthouses
+}
+
+func (m *Board) GetLightHouse(position geom.Coord) (*lighthouse.Lighthouse, error) {
+	for _, l := range m.lighthouses {
+		if l.Position.Equal(geom.XY, position) {
+			return l, nil
+		}
+	}
+	return nil, fmt.Errorf("lighthouse not found")
 }
 
 func (m *Board) GetPlayableMap() [][]bool {
@@ -225,6 +238,32 @@ func (m *Board) CanMoveTo(coord geom.Coord) bool {
 	fmt.Printf("Cell type: %v\n", m.cells[int(coord.X())][int(coord.Y())].GetType())
 
 	return m.cells[int(coord.X())][int(coord.Y())].GetType() == cell.IslandCell
+}
+
+func (m *Board) IsLighthouse(position geom.Coord) bool {
+	for _, lighthouseCell := range m.lighthouses {
+		if lighthouseCell.Position.Equal(geom.XY, position) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m *Board) IsIsland(position geom.Coord) bool {
+	return m.isCellOfType(position, cell.IslandCell)
+}
+
+func (m *Board) IsWater(position geom.Coord) bool {
+	return m.isCellOfType(position, cell.WaterCell)
+}
+
+func (m *Board) isCellOfType(position geom.Coord, cellType cell.CellType) bool {
+	if position.X() < 0 || position.X() >= float64(m.Height) || position.Y() < 0 || position.Y() >= float64(m.Width) {
+		return false
+	}
+
+	return m.cells[int(position.X())][int(position.Y())].GetType() == cellType
 }
 
 func (m *Board) PrettyPrintBoolMap() {
