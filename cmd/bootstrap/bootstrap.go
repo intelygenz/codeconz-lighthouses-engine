@@ -2,13 +2,14 @@ package bootstrap
 
 import (
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/game"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
-	"net"
-	"time"
 )
 
 type Bootstrap struct {
@@ -63,5 +64,5 @@ func (b *Bootstrap) initializeConfiguration() {
 	viper.SetDefault("game.join_timeout", 10*time.Second)
 	viper.SetDefault("game.turn_request_timeout", 100*time.Millisecond)
 	viper.SetDefault("game.turns", 20)
-	viper.SetDefault("game.board_path", "/Users/dovixman/Workspace/Work/Programs/SecretEvent/lighthouses_aicontest/maps/square_xl.txt")
+	viper.SetDefault("game.board_path", "./maps/island.txt")
 }

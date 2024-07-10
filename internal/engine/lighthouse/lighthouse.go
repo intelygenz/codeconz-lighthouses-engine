@@ -2,6 +2,7 @@ package lighthouse
 
 import (
 	"fmt"
+
 	"github.com/twpayne/go-geom"
 )
 

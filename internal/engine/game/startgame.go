@@ -41,7 +41,7 @@ func (e *Game) StartGame() {
 			cmd := exec.Command("clear") //Linux example, its tested
 			cmd.Stdout = os.Stdout
 			cmd.Run()
-			err = e.movePlayer(p, na)
+			err = e.execPlayerAction(p, na)
 			if err != nil {
 				fmt.Printf("Player %d has error %v", p.ID, err)
 			}
@@ -51,7 +51,7 @@ func (e *Game) StartGame() {
 	}
 }
 
-func (e *Game) movePlayer(p *player.Player, action *player.Action) error {
+func (e *Game) execPlayerAction(p *player.Player, action *player.Action) error {
 	fmt.Printf("Player %d action %v\n", p.ID, action)
 
 	switch action.Action {

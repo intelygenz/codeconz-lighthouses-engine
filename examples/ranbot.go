@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
-	"google.golang.org/grpc/status"
 	"net"
 	"time"
+
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
+	"google.golang.org/grpc/status"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -77,8 +79,15 @@ func (ps *BotComs) waitToJoinGame() {
 			cancel()
 			continue
 		} else {
-			fmt.Printf("Joined game with id %d\n", int(playerID.PlayerID))
+			fmt.Printf("Joined game with ID %d\n", int(playerID.PlayerID))
 			ps.botID = int(playerID.PlayerID)
+
+			b, err := json.Marshal(playerID)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			fmt.Println(string(b))
 			break
 		}
 	}
@@ -124,8 +133,16 @@ func (ps *BotComs) getInitialState() {
 		cancel()
 		return
 	} else {
-		fmt.Printf("Got initial state %v", initialState)
+		fmt.Println("Got initial state")
 		ps.initialState = initialState
+
+		b, err := json.Marshal(ps.initialState)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(string(b))
+
 		cancel()
 		return
 	}
@@ -172,14 +189,12 @@ func (gs *ClientServer) InitialState(_ context.Context, _ *coms.PlayerID) (*coms
 func (gs *ClientServer) Turn(_ context.Context, turn *coms.NewTurn) (*coms.NewAction, error) {
 	bg := &BotGame{}
 
-	for _, row := range turn.View {
-		for _, cell := range row.Row {
-			fmt.Printf("%d ", cell)
-		}
-		fmt.Println()
+	b, err := json.Marshal(turn)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
 	}
-
-	fmt.Printf("Player Energy: %d\n", int(turn.Energy))
+	fmt.Println(string(b))
 
 	action := bg.NewTurnAction(turn)
 
@@ -216,7 +231,6 @@ func main() {
 	bot.waitToJoinGame()
 
 	bot.getInitialState()
-	fmt.Println("Received message from server", bot.initialState)
 
 	bot.startListening()
 

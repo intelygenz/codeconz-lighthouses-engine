@@ -3,10 +3,11 @@ package handler
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/game"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
-	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
@@ -76,7 +77,7 @@ func (gs *GameServer) InitialState(_ context.Context, playerID *coms.PlayerID) (
 	}
 
 	mapper := Mapper{}
-	playerInitialState := gs.game.CreateInitialState(*p)
+	playerInitialState := gs.game.CreateInitialState(p)
 
 	return mapper.MapPlayerInitialStateToComPlayerInitialState(playerInitialState), nil
 }

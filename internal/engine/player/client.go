@@ -3,6 +3,7 @@ package player
 import (
 	"context"
 	"fmt"
+
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 	"github.com/spf13/viper"
 	"github.com/twpayne/go-geom"

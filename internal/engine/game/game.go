@@ -1,16 +1,17 @@
 package game
 
 import (
+	"time"
+
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
-	"time"
 )
 
 type GameI interface {
 	AddNewPlayer(np *player.Player) error
 	GetPlayers() []*player.Player
 	GetPlayerByID(id int) *player.Player
-	CreateInitialState(p player.Player) *PlayerInitialState
+	CreateInitialState(p *player.Player) *PlayerInitialState
 	StartGame()
 }
 
