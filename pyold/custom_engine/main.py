@@ -3,8 +3,8 @@
 
 import engine, interface
 
-from randbot import RandBot
-from reinforce import REINFORCE
+from bots.randbot import RandBot
+from bots.reinforce import REINFORCE
 
 import ipdb
 
@@ -18,7 +18,6 @@ if __name__ == "__main__":
     cfg_file = "maps/grid.txt"
     
     # Set the bots to play the game
-    #bots = [RandBot(), RandBot(), RandBot()]
     bots = [REINFORCE(), RandBot()]
 
     config = engine.GameConfig(cfg_file)
@@ -26,4 +25,3 @@ if __name__ == "__main__":
 
     iface = interface.Interface(game, bots)
     iface.train_reinforce(n_training_episodes=10, max_t=100,)
-    #iface.run()
