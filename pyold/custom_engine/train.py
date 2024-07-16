@@ -83,11 +83,13 @@ class Interface(object):
         score_diff = bot.scores[-1] - bot.scores[len_scores - 2]
 
         return np.clip(0, 1, score_diff)
+    
 
-    def run(self):
+    def run(self, max_rounds):
         game_view = view.GameView(self.game)
         round = 0
-        while True:
+    
+        while round < max_rounds and True:
             self.game.pre_round()
             game_view.update()
 
@@ -135,10 +137,6 @@ class Interface(object):
             self.game.post_round()
 
             ###########################################
-            # TODO: Optimize models
-            ###########################################
-
-            ###########################################
             # Print the scores after each round
             ###########################################
 
@@ -148,3 +146,20 @@ class Interface(object):
             print(s)
 
             round += 1
+                
+        ###########################################
+        # TODO: Optimize models
+        ###########################################
+        for bot in self.bots:
+            bot.optimize_model(bot.transitions)
+        
+    
+    def train_model(self, n_training_episodes, max_rounds):
+        for i in range(1, n_training_episodes+1):
+            for bot in self.bots:
+                bot.transitions = []
+                bot.scores = []
+            self.run(max_rounds)
+        for bot in self.bots:
+            if bot.save_model:
+                bot.save_trained_model()

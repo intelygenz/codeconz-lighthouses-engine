@@ -21,6 +21,7 @@ class Bot(object):
         self.scores = []
         self.player_num = 0
         self.game_map = None
+        self.save_model = []
 
     def initialize_game(self, state):
         pass
@@ -32,6 +33,12 @@ class Bot(object):
         state: estado actual del juego.
         """
         return self.nop()
+    
+    def optimize_model(self, transitions):
+        pass
+
+    def save_trained_model(self):
+        pass
 
     def success(self):
         """Éxito: llamado cuando la jugada previa es válida."""

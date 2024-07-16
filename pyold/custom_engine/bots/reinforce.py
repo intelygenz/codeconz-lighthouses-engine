@@ -34,14 +34,14 @@ class Policy(nn.Module):
 
         self.layers = nn.ModuleList()
         input_size = s_size
-        for size, activation in layers_data[0]:
+        for size, activation in layers_data:
             self.layers.append(nn.Linear(input_size, size))
             input_size = size
             if activation is not None:
                 assert isinstance(activation, Module), \
                     "Each tuple should contain a layer size (int) and an activation (ex. nn.ReLU())."
                 self.layers.append(activation)
-        self.layers.append(nn.Linear(size, a_size[0]))
+        self.layers.append(nn.Linear(size, a_size))
 
     def forward(self, x):
         for layer in self.layers:
@@ -74,28 +74,26 @@ class REINFORCE(bot.Bot):
     def __init__(self):
         super().__init__()
 
-        self.NAME = "REINFORCE",
-        self.a_size = len(ACTIONS),
-        self.layers_data = [(16, nn.ReLU())],
-        self.n_training_episodes = 100,
-        self.n_evaluation_episodes = 10,
-        self.max_t = 1000,
-        self.gamma = 1.0,
-        self.lr = 1e-2,
-        self.save_model = True, 
-        self.model_path = './saved_model',
-        self.print_every = 100,
-        self.s_size = None,
-        self.policy = None,
-        self.optimizer = None,
-        self.device = device
-        self.use_saved_model = False
+        self.NAME = "REINFORCE"
+        self.a_size = len(ACTIONS)
+        self.layers_data = [(16, nn.ReLU())]
+        self.gamma = 1.0
+        self.lr = 1e-2
+        self.save_model = True 
+        self.model_path = './saved_model'
+        self.s_size = None
+        self.policy = None
+        self.optimizer = None
+        self.use_saved_model = True
+        self.saved_log_probs = []
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def initialize_game(self, state):
+        self.saved_log_probs = []
         state = self.convert_state(state)
         self.s_size = len(state)
         self.policy = Policy(self.s_size, self.a_size, self.layers_data).to(self.device)
-        self.optimizer = optim.Adam(self.policy.parameters(), lr=self.lr[0])
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=self.lr)
         if self.use_saved_model:
             self.load_saved_model()
 
@@ -114,7 +112,8 @@ class REINFORCE(bot.Bot):
         cy = state['position'][1]
         lighthouses = [(tuple(lh['position'])) for lh in state["lighthouses"]]
         new_state = self.convert_state(state)
-        action, _ = self.policy.act(new_state, self.map, cx, cy, lighthouses)
+        action, log_prob = self.policy.act(new_state, self.map, cx, cy, lighthouses)
+        self.saved_log_probs.append(log_prob)
         if ACTIONS[action] != "attack" and ACTIONS[action] != "connect":
             return self.move(*ACTIONS[action])
         elif ACTIONS[action] == "attack":
@@ -123,26 +122,11 @@ class REINFORCE(bot.Bot):
         elif ACTIONS[action] == "connect":
             return self.connect(random.choice(lighthouses))
 
-    def play_train(self, state):
-        #TODO: improve selection of energy for attacking and connecting lighthouses
-        cx = state['position'][0]
-        cy = state['position'][1]
-        lighthouses = [(tuple(lh['position'])) for lh in state["lighthouses"]]
-        new_state = self.convert_state(state)
-        action, log_prob = self.policy.act(new_state, self.map, cx, cy, lighthouses)
-        if ACTIONS[action] != "attack" and ACTIONS[action] != "connect":
-            return self.move(*ACTIONS[action]), log_prob
-        elif ACTIONS[action] == "attack":
-            energy = random.randrange(state["energy"] + 1)
-            return self.attack(energy), log_prob
-        elif ACTIONS[action] == "connect":
-            return self.connect(random.choice(lighthouses)), log_prob
-
     def load_saved_model(self):
-        if os.path.exists(os.path.dirname(self.model_path)):
-                if os.path.isfile(self.model_path+'/reinforce.pth'):
-                    self.policy.load_state_dict(torch.load(self.model_path+'/reinforce.pth'))
-                    print("Loaded saved model")
+        if os.path.isfile(self.model_path+'/reinforce.pth'):
+            self.policy.load_state_dict(torch.load(self.model_path+'/reinforce.pth'))
+            print("Loaded saved model")
+            
         else:
             print("No saved model")
 
@@ -153,7 +137,7 @@ class REINFORCE(bot.Bot):
                 
         for t in range(n_steps)[::-1]:
             disc_return_t = (returns[0] if len(returns)>0 else 0)
-            returns.appendleft(self.gamma[0]*disc_return_t + rewards[t])
+            returns.appendleft(self.gamma*disc_return_t + rewards[t])
         # Standardize returns to make training more stable
         eps = np.finfo(np.float32).eps.item()
 
@@ -164,13 +148,17 @@ class REINFORCE(bot.Bot):
 
         return returns
 
-    def update_policy(self, rewards, max_t, saved_log_probs):
+    def optimize_model(self, transitions):
         # Calculate the loss and update the policy weights
+        rewards = []
+        max_t = len(transitions)
+        for i in range(max_t):
+            rewards.append(transitions[i][2])
         returns = self.calculate_returns(rewards, max_t)
 
         policy_loss = []
-        for log_prob, disc_return in zip(saved_log_probs, returns):
-            policy_loss.append(-log_prob * disc_return)
+        for log_prob, disc_return in zip(self.saved_log_probs, returns):
+            policy_loss.append((-log_prob * disc_return.reshape(1)))
         policy_loss = torch.cat(policy_loss).sum()
 
         # Calculate the gradient and update the weights
@@ -178,7 +166,7 @@ class REINFORCE(bot.Bot):
         policy_loss.backward()
         self.optimizer.step()
 
-    def save_model(self):
+    def save_trained_model(self):
         os.makedirs(self.model_path, exist_ok=True)
         torch.save(self.policy.state_dict(), self.model_path+'/reinforce.pth')
         print("Saved model to disk")
