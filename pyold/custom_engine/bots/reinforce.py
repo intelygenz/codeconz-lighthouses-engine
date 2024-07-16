@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import os
 
@@ -15,7 +18,7 @@ from torch.distributions import Categorical
 
 import random
 
-import interface
+from bots import bot
 
 # Choose cpu or gpu
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -67,8 +70,10 @@ class Policy(nn.Module):
 
     
 # Create training loop
-class REINFORCE(interface.Bot):
+class REINFORCE(bot.Bot):
     def __init__(self):
+        super().__init__()
+
         self.NAME = "REINFORCE",
         self.a_size = len(ACTIONS),
         self.layers_data = [(16, nn.ReLU())],

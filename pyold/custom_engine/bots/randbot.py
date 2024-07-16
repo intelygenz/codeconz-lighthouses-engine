@@ -3,10 +3,10 @@
 
 import random
 
-import interface
+from bots import bot
 
 
-class RandBot(interface.Bot):
+class RandBot(bot.Bot):
     """Bot que juega aleatoriamente."""
     NAME = "RandBot"
 
