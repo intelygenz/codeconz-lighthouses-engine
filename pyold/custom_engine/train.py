@@ -148,18 +148,9 @@ class Interface(object):
             round += 1
                 
         ###########################################
-        # TODO: Optimize models
+        # Optimize models
         ###########################################
         for bot in self.bots:
             bot.optimize_model(bot.transitions)
         
     
-    def train_model(self, n_training_episodes, max_rounds):
-        for i in range(1, n_training_episodes+1):
-            for bot in self.bots:
-                bot.transitions = []
-                bot.scores = []
-            self.run(max_rounds)
-        for bot in self.bots:
-            if bot.save_model:
-                bot.save_trained_model()

@@ -46,7 +46,7 @@ class Policy(nn.Module):
     def forward(self, x):
         for layer in self.layers:
             x = layer(x)
-        return torch.softmax(x, dim=-1)
+        return torch.log_softmax(x, dim=-1)
     
     def act(self, state, map, cx, cy, lighthouses):
         """
@@ -103,7 +103,7 @@ class REINFORCE(bot.Bot):
             lighthouses.append(lh['position'][0])
             lighthouses.append(lh['position'][1])
             lighthouses.append(lh['energy'])
-        new_state = np.array([state['position'][0], state['position'][1], state['energy'], len(state['lighthouses'])] + lighthouses)
+        new_state = np.array([state['position'][0], state['position'][1], state['score'], state['energy'], len(state['lighthouses'])] + lighthouses)
         return new_state
 
     def play(self, state):
