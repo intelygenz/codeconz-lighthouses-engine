@@ -22,6 +22,8 @@ const (
 	WaterCellRune             = '#'
 	IslandCellRune            = ' '
 	LighthouseCellRune        = '!'
+
+	maxIslandEnergy = 100
 )
 
 type BoardI interface {
@@ -192,8 +194,8 @@ func (m *Board) CalcIslandEnergy() {
 				}
 
 				// Set max energy to 100
-				if islandCell.Energy > 100 {
-					islandCell.Energy = 100
+				if islandCell.Energy > maxIslandEnergy {
+					islandCell.Energy = maxIslandEnergy
 				}
 			}
 		}
