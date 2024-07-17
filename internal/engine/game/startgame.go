@@ -150,8 +150,17 @@ func (e *Game) connectLighthouses(p *player.Player, action *player.Action) error
 		return fmt.Errorf("player %d does not own lighthouse %v", p.ID, destLighthousePos)
 	}
 
-	// TODO: check the connection does not cross another connection
-	// TODO: check the connection does not cross any lighthouse
+	for _, l := range e.gameMap.GetLightHouses() {
+		if xy.IsPointWithinLineBounds(l.Position, curLighthousePos, destLighthousePos) {
+			return fmt.Errorf("connection cannot intersect a lighthouse")
+		}
+
+		for _, c := range l.Connections {
+			if xy.DoLinesOverlap(l.Position, c.Position, curLighthousePos, destLighthousePos) {
+				return fmt.Errorf("connection cannot intersect another connection")
+			}
+		}
+	}
 
 	err = curLighthouse.Connect(destLighthouse)
 	if err != nil {
