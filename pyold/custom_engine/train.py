@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import pygame
 
 import engine, view
 
@@ -88,8 +89,13 @@ class Interface(object):
     def run(self, max_rounds):
         game_view = view.GameView(self.game)
         round = 0
-    
-        while round < max_rounds and True:
+        running = True
+        while round < max_rounds and running:
+            # Event handler for game engine
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
             self.game.pre_round()
             game_view.update()
 
