@@ -17,9 +17,9 @@ if __name__ == "__main__":
     cfg_file = "maps/grid.txt"
     
     # Set the bots to play the game
-    bots = [REINFORCE(), RandBot()]
+    bots = [REINFORCE(model_filename='reinforce_cnn.pth'), REINFORCE(state_maps=False, model_filename='reinforce_mlp.pth'), RandBot()]
 
-    NUM_TRAINING_EPISODES = 5
+    NUM_TRAINING_EPISODES = 1
     MAX_ROUNDS = 1000
 
     for i in range(1, NUM_TRAINING_EPISODES+1):
