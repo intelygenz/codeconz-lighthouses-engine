@@ -73,16 +73,16 @@ class PolicyCNN(nn.Module):
         super(PolicyCNN, self).__init__()
 
         self.network = nn.Sequential(
-            nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=3, stride=1),
+            nn.Conv2d(in_channels=num_maps, out_channels=64, kernel_size=3, stride=1),
             nn.ReLU(),
-            nn.Conv2d(16, 32, 3),
+            nn.Conv2d(64, 128, 3),
             nn.ReLU(),
-            nn.Conv2d(32, 16, 3),
+            nn.Conv2d(128, 64, 3),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(16*13*13, 16),
+            nn.Linear(64*13*13, 32),
             nn.ReLU(),
-            nn.Linear(16, a_size)
+            nn.Linear(32, a_size)
         )
 
     def forward(self, x):
@@ -182,18 +182,28 @@ class REINFORCE(bot.Bot):
         # Create player layer which has the value of the energy of the player + 1 where the player is located
         # 1 is added to the energy to cover the case that the energy of the player is 0
         player_layer = base_layer.copy()
-        x, y = len(player_layer) - 1 - state['position'][0], state['position'][1]
-        player_layer[y,x] = 1 + state['energy']
+        x, y = state['position'][0], state['position'][1]
+        player_layer[x,y] = 1 + state['energy']
         player_layer = self.z_score_scaling(player_layer)
 
         # Create view layer with energy level near the player
         view_layer = base_layer.copy()
         state['view'] = np.array(state['view'])
-        start_row, start_col = y-3, x-3
-        start_row = min(start_row, 11)
-        start_col = min(start_col, 11)
-        start_row = max(start_row, 7)
-        start_col = max(start_col, 7)
+        start_row, start_col = x-3, y-3
+        if y+3 > view_layer.shape[1]-1:
+            adjust = view_layer.shape[1]-1 - (y+3)
+            state['view'] = state['view'][:,:adjust]
+        if x+3 > view_layer.shape[0]-1:
+            adjust = view_layer.shape[0]-1 - (x+3)
+            state['view'] = state['view'][:adjust,:]
+        if y-3 < 0:
+            adjust = 3-y
+            state['view'] = state['view'][:,adjust:]
+            start_col = 0
+        if x-3 < 0:
+            adjust = 3-x
+            state['view'] = state['view'][adjust:,:]
+            start_row = 0
         view_layer[start_row:start_row+state['view'].shape[0], start_col:start_col+state['view'].shape[1]] = state['view']
         view_layer = self.z_score_scaling(view_layer)
 
@@ -202,18 +212,18 @@ class REINFORCE(bot.Bot):
         lh_energy_layer = base_layer.copy()
         lh = state['lighthouses']
         for i in range(len(lh)):
-            x, y = len(lh_energy_layer) - 1 - lh[i]['position'][0], lh[i]['position'][1]
-            lh_energy_layer[y,x] = 1 + lh[i]['energy']
+            x, y = lh[i]['position'][0], lh[i]['position'][1]
+            lh_energy_layer[x,y] = 1 + lh[i]['energy']
         lh_energy_layer = self.z_score_scaling(lh_energy_layer)
 
         # Create layer that has the number of the layer that controls each lighthouse
         # If no player controls the lighthouse, then a value of -1 is assigned
         lh_control_layer = base_layer.copy()
         for i in range(len(lh)):
-            x, y = len(lh_control_layer) - 1 - lh[i]['position'][0], lh[i]['position'][1]
+            x, y = lh[i]['position'][0], lh[i]['position'][1]
             if not lh[i]['owner']:
                 lh[i]['owner'] = -1
-            lh_control_layer[y,x] = lh[i]['owner']
+            lh_control_layer[x,y] = lh[i]['owner']
         lh_control_layer = self.z_score_scaling(lh_control_layer)
 
         # Create layer that indicates the lighthouses that are connected
@@ -221,22 +231,22 @@ class REINFORCE(bot.Bot):
         # assigned the number of connections that it has
         lh_connections_layer = base_layer.copy()
         for i in range(len(lh)):
-            x, y = len(lh_connections_layer) - 1 - lh[i]['position'][0], lh[i]['position'][1]
+            x, y = lh[i]['position'][0], lh[i]['position'][1]
             if len(lh[i]['connections']) == 0:
-                lh_connections_layer[y,x] = -1
+                lh_connections_layer[x,y] = -1
             else:
-                lh_connections_layer[y,x] = len(lh[i]['connections'])
+                lh_connections_layer[x,y] = len(lh[i]['connections'])
         lh_connections_layer = self.z_score_scaling(lh_connections_layer)
 
         # Create layer that indicates if the player has the key to the light house
         # Assign value of 1 if has key and -1 if does not have key
         lh_key_layer = base_layer.copy()
         for i in range(len(lh)):
-            x, y = len(lh_key_layer) - 1 - lh[i]['position'][0], lh[i]['position'][1]
+            x, y = lh[i]['position'][0], lh[i]['position'][1]
             if lh[i]['have_key']:
-                lh_key_layer[y,x] = 1
+                lh_key_layer[x,y] = 1
             else:
-                lh_key_layer[y,x] = -1
+                lh_key_layer[x,y] = -1
 
         # Concatenate the maps into one state
         player_layer = np.expand_dims(player_layer, axis=2)
