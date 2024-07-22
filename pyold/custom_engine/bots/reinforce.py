@@ -48,7 +48,7 @@ class PolicyMLP(nn.Module):
             x = layer(x)
         return torch.log_softmax(x, dim=-1)
     
-    def act(self, state, map, cx, cy, lighthouses):
+    def act(self, state, map, cx, cy, is_lighthouse, possible_connections):
         """
         Given a state, take action
         """
@@ -56,8 +56,10 @@ class PolicyMLP(nn.Module):
         probs = self.forward(state).cpu()
         valid_moves = [(x,y) for x,y in ACTIONS[:8] if map[cy+y][cx+x]]
         valid_indices = [ACTIONS.index(i) for i in ACTIONS if i in valid_moves]
-        if (cx, cy) in lighthouses:
-            valid_indices = valid_indices + [8,9]
+        if is_lighthouse:
+            valid_indices = valid_indices + [8]
+            if possible_connections:
+                valid_indices = valid_indices + [9]
         indices = torch.tensor(valid_indices)
         probs = probs[0]
         probs_valid = probs[indices]
@@ -89,7 +91,7 @@ class PolicyCNN(nn.Module):
         x = self.network(x)
         return torch.log_softmax(x, dim=-1)
     
-    def act(self, state, map, cx, cy, lighthouses):
+    def act(self, state, map, cx, cy, is_lighthouse, possible_connections):
         """
         Given a state, take action
         """
@@ -98,8 +100,10 @@ class PolicyCNN(nn.Module):
         probs = self.forward(state).cpu()
         valid_moves = [(x,y) for x,y in ACTIONS[:8] if map[cy+y][cx+x]]
         valid_indices = [ACTIONS.index(i) for i in ACTIONS if i in valid_moves]
-        if (cx, cy) in lighthouses:
-            valid_indices = valid_indices + [8,9]
+        if is_lighthouse:
+            valid_indices = valid_indices + [8]
+            if possible_connections:
+                valid_indices = valid_indices + [9]
         indices = torch.tensor(valid_indices)
         probs = probs[0]
         probs_valid = probs[indices]
@@ -113,7 +117,7 @@ class PolicyCNN(nn.Module):
     
 # Create training loop
 class REINFORCE(bot.Bot):
-    def __init__(self, state_maps=True, model_filename='model.pth'):
+    def __init__(self, state_maps=True, model_filename='model.pth', use_saved_model=True):
         super().__init__()
 
         self.NAME = "REINFORCE"
@@ -129,7 +133,7 @@ class REINFORCE(bot.Bot):
         self.num_maps = None
         self.policy = None
         self.optimizer = None
-        self.use_saved_model = True
+        self.use_saved_model = use_saved_model
         self.saved_log_probs = []
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -261,20 +265,38 @@ class REINFORCE(bot.Bot):
 
         new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_control_layer, lh_connections_layer, lh_key_layer), axis=2)
         return new_state
+    
+
+    def valid_lighthouse_actions(self, state):
+        cx = state['position'][0]
+        cy = state['position'][1]
+        lighthouses = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
+        possible_connections = []
+        is_lighthouse = False
+        if (cx, cy) in lighthouses:
+            is_lighthouse = True
+            if lighthouses[(cx, cy)]["owner"] == self.player_num:
+                for dest in lighthouses.keys():
+                    if (dest != (cx, cy) and lighthouses[dest]["have_key"] and
+                        [cx, cy] not in lighthouses[dest]["connections"] and
+                        lighthouses[dest]["owner"] == self.player_num):
+                        possible_connections.append(dest)
+        return is_lighthouse, possible_connections
 
 
     def play(self, state):
          #TODO: improve selection of energy for attacking and connecting lighthouses
         cx = state['position'][0]
         cy = state['position'][1]
-        lighthouses = [(tuple(lh['position'])) for lh in state["lighthouses"]]
+        # Check possibilities for lighthouses
+        is_lighthouse, possible_connections = self.valid_lighthouse_actions(state)
         if self.state_maps:
             print("Using maps for state: PolicyCNN")
             new_state = self.convert_state_cnn(state)
         else:
             print("Using array for state: PolicyMLP")
             new_state = self.convert_state_mlp(state)
-        action, log_prob = self.policy.act(new_state, self.map, cx, cy, lighthouses)
+        action, log_prob = self.policy.act(new_state, self.map, cx, cy, is_lighthouse, possible_connections)
         self.saved_log_probs.append(log_prob)
         if ACTIONS[action] != "attack" and ACTIONS[action] != "connect":
             return self.move(*ACTIONS[action])
@@ -282,7 +304,8 @@ class REINFORCE(bot.Bot):
             energy = random.randrange(state["energy"] + 1)
             return self.attack(energy)
         elif ACTIONS[action] == "connect":
-            return self.connect(random.choice(lighthouses))
+            # TODO: improve selection of lighthouse connection
+            return self.connect(random.choice(possible_connections))
 
     def load_saved_model(self):
         if os.path.isfile(os.path.join(self.model_path, self.model_filename)):
