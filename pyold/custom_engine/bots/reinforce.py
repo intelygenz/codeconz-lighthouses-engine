@@ -117,7 +117,7 @@ class REINFORCE(bot.Bot):
         super().__init__()
 
         self.NAME = "REINFORCE"
-        self.state_maps = state_maps
+        self.state_maps = state_maps # use maps for state: True, or array for state: False
         self.a_size = len(ACTIONS)
         self.layers_data = [(16, nn.ReLU())]
         self.gamma = 1.0
@@ -150,12 +150,15 @@ class REINFORCE(bot.Bot):
             self.load_saved_model()
 
     def convert_state_mlp(self, state):
-        lighthouses =[]
-        for lh in state['lighthouses']:
-            lighthouses.append(lh['position'][0])
-            lighthouses.append(lh['position'][1])
-            lighthouses.append(lh['energy'])
-        new_state = np.array([state['position'][0], state['position'][1], state['score'], state['energy'], len(state['lighthouses'])] + lighthouses)
+        view = []
+        for i in range(len(state['view'])):
+            view = view + state['view'][i]
+        # lighthouses =[]
+        # for lh in state['lighthouses']:
+        #     lighthouses.append(lh['position'][0])
+        #     lighthouses.append(lh['position'][1])
+        #     lighthouses.append(lh['energy'])
+        new_state = np.array([state['position'][0], state['position'][1], state['score'], state['energy'], len(state['lighthouses'])] + view)
         sc = StandardScaler()
         new_state = sc.fit_transform(new_state.reshape(-1, 1))
         new_state = new_state.squeeze()
