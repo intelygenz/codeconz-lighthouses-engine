@@ -119,7 +119,6 @@ class PolicyCNN(nn.Module):
 class REINFORCE(bot.Bot):
     def __init__(self, state_maps=True, model_filename='model.pth', load_saved_modelpath=None):
         super().__init__()
-
         self.NAME = "REINFORCE"
         self.state_maps = state_maps # use maps for state: True, or array for state: False
         self.a_size = len(ACTIONS)
@@ -131,6 +130,7 @@ class REINFORCE(bot.Bot):
         self.model_filename = model_filename
         self.load_saved_modelpath = load_saved_modelpath
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
     def initialize_game(self, state):
         self.saved_log_probs = []

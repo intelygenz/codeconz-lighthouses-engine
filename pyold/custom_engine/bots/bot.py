@@ -22,6 +22,8 @@ class Bot(object):
         self.player_num = 0
         self.game_map = None
         self.save_model = []
+        self.final_scores_list = []
+        self.last_episode_score = 0
 
     def initialize_game(self, state):
         pass
