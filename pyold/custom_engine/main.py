@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import engine, train
+import pandas as pd
+import os
 
 from bots.randbot import RandBot
 from bots.reinforce import REINFORCE
@@ -21,8 +23,8 @@ if __name__ == "__main__":
             REINFORCE(state_maps=True, model_filename='reinforce_cnn.pth',load_saved_modelpath='./saved_model/reinforce_cnn.pth'), 
             RandBot()]
 
-    NUM_TRAINING_EPISODES = 20
-    MAX_ROUNDS = 500
+    NUM_TRAINING_EPISODES = 5
+    MAX_ROUNDS = 20
 
     for i in range(1, NUM_TRAINING_EPISODES+1):
         config = engine.GameConfig(cfg_file)
@@ -41,4 +43,10 @@ if __name__ == "__main__":
             if bot.last_episode_score < bot.scores[-1]:
                 bot.last_episode_score = bot.scores[-1]
             bot.final_scores_list.append(bot.scores[-1])
+    
+    final_scores = pd.DataFrame()
+    for bot in bots:
+        final_scores[bot.player_num] = bot.final_scores_list
+    os.makedirs('./final_scores', exist_ok=True)
+    final_scores.to_csv('./final_scores/final_scores.csv', index_label='episode')
        
