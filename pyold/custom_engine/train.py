@@ -88,14 +88,14 @@ class Interface(object):
     def estimate_reward(self, bot, action, next_state, state):
         """
         The logic for estimating the reward is the following:
-        1. 2 points for attacking a lighthouse
-        2. 3 points for connecting two lighthouses
-        3. 1 point for increasing the bot's energy
-        4. -1 point for decreasing the bot's energy
+        1. 1 points for attacking a lighthouse
+        2. 1 points for connecting two lighthouses
+        3. 0.25 point for increasing the bot's energy
+        
         """
         ## TODO: Include connection between 3 lighthouses
         if action['command'] == "attack":
-            return 0.75
+            return 1
         elif action['command'] == "connect":
             return 1
         elif next_state['energy'] > state['energy']:
