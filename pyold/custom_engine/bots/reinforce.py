@@ -358,3 +358,8 @@ class REINFORCE(bot.Bot):
         os.makedirs(self.model_path, exist_ok=True)
         torch.save(self.policy.state_dict(), os.path.join(self.model_path, self.model_filename))
         print("Saved model to disk")
+
+    def save_best_model(self):
+        os.makedirs(self.model_path, exist_ok=True)
+        torch.save(self.policy.state_dict(), os.path.join(self.model_path, 'best_'+self.model_filename))
+        print("Saved model to disk")

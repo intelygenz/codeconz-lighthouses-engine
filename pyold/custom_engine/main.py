@@ -23,8 +23,8 @@ if __name__ == "__main__":
             REINFORCE(state_maps=True, model_filename='reinforce_cnn.pth', use_saved_model=True), 
             RandBot()]
 
-    NUM_TRAINING_EPISODES = 1
-    MAX_ROUNDS = 15
+    NUM_TRAINING_EPISODES = 20
+    MAX_ROUNDS = 5000
 
     for i in range(1, NUM_TRAINING_EPISODES+1):
         config = engine.GameConfig(cfg_file)
@@ -35,11 +35,11 @@ if __name__ == "__main__":
 
         for bot in bots:
             if bot.save_model:
+                bot.save_trained_model()
+                print("model saved")
                 if bot.last_episode_score < bot.scores[-1]:
-                    bot.save_trained_model()
-                    print("model saved")
-                else:
-                    print("model not saved - score lower than last episode")
+                    bot.save_best_model()
+                    print("best model saved")
             if bot.last_episode_score < bot.scores[-1]:
                 bot.last_episode_score = bot.scores[-1]
             bot.final_scores_list.append(bot.scores[-1])
