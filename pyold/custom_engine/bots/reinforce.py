@@ -154,15 +154,24 @@ class REINFORCE(bot.Bot):
             self.load_saved_model()
 
     def convert_state_mlp(self, state):
+        # Create array for view data
         view = []
         for i in range(len(state['view'])):
             view = view + state['view'][i]
-        # lighthouses =[]
-        # for lh in state['lighthouses']:
-        #     lighthouses.append(lh['position'][0])
-        #     lighthouses.append(lh['position'][1])
-        #     lighthouses.append(lh['energy'])
-        new_state = np.array([state['position'][0], state['position'][1], state['score'], state['energy'], len(state['lighthouses'])] + view)
+        cx = state['position'][0]
+        cy = state['position'][1]
+        cx_min, cx_max = cx-3, cx+3
+        cy_min, cy_max = cy-3, cy+3
+        lighthouses = np.zeros((7,7), dtype=int)
+        lighthouses_dict = dict((tuple(lh["position"]), lh['energy']) for lh in state["lighthouses"])
+        for key in lighthouses_dict.keys():
+            if cx_min <= key[0] <= cx_max and cy_min <= key[1] <= cy_max:
+                lighthouses[key[0]+3-cx, key[1]+3-cy] = lighthouses_dict[key] + 1
+        lighthouses_info = []
+        # Create array for lighthouses data (within 3 steps of the bot)
+        for i in range(len(lighthouses)):
+            lighthouses_info = lighthouses_info + list(lighthouses[i])
+        new_state = np.array([state['position'][0], state['position'][1], state['score'], state['energy'], len(state['lighthouses'])] + view + lighthouses_info)
         sc = StandardScaler()
         new_state = sc.fit_transform(new_state.reshape(-1, 1))
         new_state = new_state.squeeze()
