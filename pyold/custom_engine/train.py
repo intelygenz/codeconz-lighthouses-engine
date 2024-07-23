@@ -75,7 +75,7 @@ class Interface(object):
 
         return state
 
-    def estimate_reward(self, bot):
+    def estimate_reward_old(self, bot):
         """
         The logic for estimating the reward is the difference of score between
         two consecutive actions
@@ -84,6 +84,24 @@ class Interface(object):
         score_diff = bot.scores[-1] - bot.scores[len_scores - 2]
 
         return np.clip(0, 1, score_diff)
+    
+    def estimate_reward(self, bot, action, next_state, state):
+        """
+        The logic for estimating the reward is the following:
+        1. 2 points for attacking a lighthouse
+        2. 3 points for connecting two lighthouses
+        3. 1 point for increasing the bot's energy
+        4. -1 point for decreasing the bot's energy
+        """
+        ## TODO: Include connection between 3 lighthouses
+        if action['command'] == "attack":
+            return 0.75
+        elif action['command'] == "connect":
+            return 1
+        elif next_state['energy'] > state['energy']:
+            return 0.25
+        else:
+            return 0
     
 
     def run(self, max_rounds):
@@ -131,10 +149,10 @@ class Interface(object):
                         pass
 
                 bot.scores.append(player.score)
-                reward = self.estimate_reward(bot)
                 game_view.update()
 
                 next_state = self.get_state(player)
+                reward = self.estimate_reward(bot, action, next_state, state)
                 transition = [state, action, reward, next_state]
                 bot.transitions.append(transition)
 

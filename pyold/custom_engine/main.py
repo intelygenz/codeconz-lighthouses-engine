@@ -19,12 +19,12 @@ if __name__ == "__main__":
     cfg_file = "maps/grid.txt"
     
     # Set the bots to play the game
-    bots = [REINFORCE(state_maps=False, model_filename='reinforce_mlp.pth',load_saved_modelpath='./saved_model/reinforce_mlp.pth'), 
-            REINFORCE(state_maps=True, model_filename='reinforce_cnn.pth',load_saved_modelpath='./saved_model/reinforce_cnn.pth'), 
+    bots = [REINFORCE(state_maps=False, model_filename='reinforce_mlp.pth', use_saved_model=True), 
+            REINFORCE(state_maps=True, model_filename='reinforce_cnn.pth', use_saved_model=True), 
             RandBot()]
 
-    NUM_TRAINING_EPISODES = 5
-    MAX_ROUNDS = 20
+    NUM_TRAINING_EPISODES = 1
+    MAX_ROUNDS = 15
 
     for i in range(1, NUM_TRAINING_EPISODES+1):
         config = engine.GameConfig(cfg_file)

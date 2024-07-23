@@ -117,7 +117,7 @@ class PolicyCNN(nn.Module):
     
 # Create training loop
 class REINFORCE(bot.Bot):
-    def __init__(self, state_maps=True, model_filename='model.pth', load_saved_modelpath=None):
+    def __init__(self, state_maps=True, model_filename='model.pth', use_saved_model=True):
         super().__init__()
         self.NAME = "REINFORCE"
         self.state_maps = state_maps # use maps for state: True, or array for state: False
@@ -128,7 +128,7 @@ class REINFORCE(bot.Bot):
         self.save_model = True 
         self.model_path = './saved_model'
         self.model_filename = model_filename
-        self.load_saved_modelpath = load_saved_modelpath
+        self.use_saved_model = use_saved_model
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -145,7 +145,7 @@ class REINFORCE(bot.Bot):
             self.s_size = len(state)
             self.policy = PolicyMLP(self.s_size, self.a_size, self.layers_data).to(self.device)
         self.optimizer = optim.Adam(self.policy.parameters(), lr=self.lr)
-        if self.load_saved_modelpath:
+        if self.use_saved_model:
             self.load_saved_model()
 
     def convert_state_mlp(self, state):
@@ -312,10 +312,9 @@ class REINFORCE(bot.Bot):
             return self.connect(random.choice(possible_connections))
 
     def load_saved_model(self):
-        if os.path.isfile(self.load_saved_modelpath):
-            self.policy.load_state_dict(torch.load(self.load_saved_modelpath))
+        if os.path.isfile(os.path.join(self.model_path, self.model_filename)):
+            self.policy.load_state_dict(torch.load(os.path.join(self.model_path, self.model_filename)))
             print("Loaded saved model")
-            
         else:
             print("No saved model")
 
