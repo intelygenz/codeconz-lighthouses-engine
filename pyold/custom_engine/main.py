@@ -23,8 +23,8 @@ if __name__ == "__main__":
             REINFORCE(state_maps=True, model_filename='reinforce_cnn.pth', use_saved_model=True), 
             RandBot()]
 
-    NUM_TRAINING_EPISODES = 20
-    MAX_ROUNDS = 5000
+    NUM_TRAINING_EPISODES = 5
+    MAX_ROUNDS = 100
 
     for i in range(1, NUM_TRAINING_EPISODES+1):
         config = engine.GameConfig(cfg_file)
