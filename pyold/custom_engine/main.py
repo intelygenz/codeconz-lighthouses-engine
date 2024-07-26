@@ -23,8 +23,8 @@ if __name__ == "__main__":
             REINFORCE(state_maps=True, model_filename='reinforce_cnn.pth', use_saved_model=True), 
             RandBot()]
 
-    NUM_TRAINING_EPISODES = 10
-    MAX_ROUNDS = 10000
+    NUM_TRAINING_EPISODES = 5
+    MAX_ROUNDS = 100
 
     for i in range(1, NUM_TRAINING_EPISODES+1):
         config = engine.GameConfig(cfg_file)
@@ -48,10 +48,10 @@ if __name__ == "__main__":
     rewards_actions_list = pd.DataFrame()
     for bot in bots:
         final_scores[bot.player_num] = bot.final_scores_list
-        rewards_actions_list[bot.player_num+"actions"] = bot.actions_list
-        rewards_actions_list[bot.player_num+"rewards"] = bot.rewards_list
+        rewards_actions_list[str(bot.player_num)+"_actions"] = bot.actions_list
+        rewards_actions_list[str(bot.player_num)+"_rewards"] = bot.rewards_list
     os.makedirs('./final_scores', exist_ok=True)
     os.makedirs('./actions_rewards', exist_ok=True)
     final_scores.to_csv('./final_scores/final_scores.csv', index_label='episode')
-    rewards_actions_list.to_csv('./actions_rewards/rewardsactions_list.csv', index_label='episode')
+    rewards_actions_list.to_csv('./actions_rewards/rewards_actions_list.csv', index_label='episode')
        
