@@ -259,8 +259,8 @@ class REINFORCE(bot.Bot):
                         [cx, cy] not in lighthouses[dest]["connections"] and
                         lighthouses[dest]["owner"] == self.player_num):
                         possible_connections.append(dest)
+        # possible_connections = [lh["position"] for lh in state["lighthouses"]]
         return possible_connections
-
 
     def play(self, state):
         if self.state_maps:
@@ -277,8 +277,7 @@ class REINFORCE(bot.Bot):
             return self.nop()
         elif ACTIONS[action] == "attack":
             #TODO: improve selection of energy for attacking
-            energy = random.randrange(state["energy"] + 1)
-            return self.attack(energy)
+            return self.attack(state['energy'])
         elif ACTIONS[action] == "connect":
             # TODO: improve selection of lighthouse connection, right now uses function to select them
             possible_connections = self.valid_lighthouse_connections(state)
