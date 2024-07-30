@@ -31,7 +31,6 @@ ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "con
 class PolicyMLP(nn.Module):
     def __init__(self, s_size, a_size, layers_data: list):
         super(PolicyMLP, self).__init__()
-
         self.layers = nn.ModuleList()
         input_size = s_size
         for size, activation in layers_data:
@@ -63,16 +62,16 @@ class PolicyCNN(nn.Module):
         super(PolicyCNN, self).__init__()
 
         self.network = nn.Sequential(
-            nn.Conv2d(in_channels=num_maps, out_channels=64, kernel_size=3, stride=1),
+            nn.Conv2d(in_channels=num_maps, out_channels=32, kernel_size=5),
             nn.ReLU(),
-            nn.Conv2d(64, 128, 3),
+            nn.Conv2d(32, 64, 3),
             nn.ReLU(),
-            nn.Conv2d(128, 64, 3),
+            nn.Conv2d(64, 64, 3),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(64*13*13, 32),
+            nn.Linear(64*11*11, 512),
             nn.ReLU(),
-            nn.Linear(32, a_size)
+            nn.Linear(512, a_size)
         )
 
     def forward(self, x):
@@ -98,8 +97,8 @@ class REINFORCE(bot.Bot):
         self.NAME = "REINFORCE"
         self.state_maps = state_maps # use maps for state: True, or array for state: False
         self.a_size = len(ACTIONS)
-        self.layers_data = [(16, nn.ReLU())]
-        self.gamma = 1.0
+        self.layers_data = [(64, nn.ReLU()), (64, nn.ReLU())]
+        self.gamma = 0.99
         self.lr = 1e-2
         self.save_model = True 
         self.model_path = './saved_model'
@@ -328,6 +327,8 @@ class REINFORCE(bot.Bot):
         self.optimizer.zero_grad()
         policy_loss.backward()
         self.optimizer.step()
+        self.policy_loss_list.append(policy_loss.detach().cpu().numpy())
+
 
     def save_trained_model(self):
         os.makedirs(self.model_path, exist_ok=True)

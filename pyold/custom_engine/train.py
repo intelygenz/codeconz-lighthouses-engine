@@ -99,7 +99,7 @@ class Interface(object):
         9. if "connect" and not on a lighthouse: -1
         10. if "connect and no new connection (connection not possible): -0.85
         11. if "connect" and connect three lighthouses: 1
-        12. if "connect" and connect two lighthouses: 0.85
+        12. if "connect" and connect two lighthouses: 0.9
        
         
         """
@@ -162,13 +162,16 @@ class Interface(object):
             
         elif action['command'] == "pass":
             return -1
+        
+        else:
+            return 0
     
 
     def run(self, max_rounds):
         game_view = view.GameView(self.game)
         round = 0
         running = True
-        while round < max_rounds and running:
+        while round < max_rounds and running: 
             # Event handler for game engine
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -214,8 +217,6 @@ class Interface(object):
                 reward = self.estimate_reward(action, state, next_state, player, status)
                 transition = [state, action, reward, next_state]
                 bot.transitions.append(transition)
-                bot.rewards_list.append(reward)
-                bot.actions_list.append(action['command'])
 
                 player_idx += 1
 
@@ -231,6 +232,9 @@ class Interface(object):
             print(s)
 
             round += 1
+
+            if round & 1000 == 0:
+                bot.save_trained_model()
                 
         ###########################################
         # Optimize models
