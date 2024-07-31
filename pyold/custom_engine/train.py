@@ -102,8 +102,6 @@ class Interface(object):
         10. if "connect and no new connection (connection not possible): 0
         11. if "connect" and connect three lighthouses: 1
         12. if "connect" and connect two lighthouses: 0.85 
-       
-        
         """
         state_lh = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
         next_state_lh = dict((tuple(lh["position"]), lh) for lh in next_state["lighthouses"])
@@ -254,8 +252,3 @@ class Interface(object):
                 policy_loss.to_csv(f'./losses/{str(bot.player_num)}_policy_loss.csv', index_label='episode')
             
                 bot.save_trained_model()
-                if bot.last_episode_score < bot.scores[-1]:
-                   bot.save_best_model()
-                   print("best model saved")
-                if bot.last_episode_score < bot.scores[-1]:
-                   bot.last_episode_score = bot.scores[-1]
