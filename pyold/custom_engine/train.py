@@ -92,14 +92,14 @@ class Interface(object):
         The logic for estimating the reward is the following:
         1. if "status" is False: -1
         2. if "move" and the move is invalid: -1
-        3. if "move" and land on lighthouse that do not own: 0.55 #0.45
-        4. if "move" and increase bot's energy: 0.35
+        3. if "move" and land on lighthouse that do not own: 0.5
+        4. if "move" and increase bot's energy: 0.3
         5. if "attack" and not on a lighthouse: -1
-        6. if "attack" and gain control of lighthouse: 0.7 #0.65
-        7. if "attack" and already control lighthouse: 0.25
+        6. if "attack" and gain control of lighthouse: 0.65
+        7. if "attack" and already control lighthouse: 0.15
         8. if "attack" and don't gain control of lighthouse: 0
         9. if "connect" and not on a lighthouse: -1
-        10. if "connect and no new connection (connection not possible): -0.85
+        10. if "connect and no new connection (connection not possible): 0
         11. if "connect" and connect three lighthouses: 1
         12. if "connect" and connect two lighthouses: 0.85 
        
@@ -108,34 +108,34 @@ class Interface(object):
         state_lh = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
         next_state_lh = dict((tuple(lh["position"]), lh) for lh in next_state["lighthouses"])
 
-        # If status is False, give reward of -1
+        # If status is False
         if status['success'] == False:
             return -1
         ### MOVE ###
-        # If the move command is invalid, reward of -1
+        # If the move command is invalid
         elif action['command'] == "move":
-            # If the move command is invalid, reward of -1
+            # If the move command is invalid
             if (state['position'][0] == next_state['position'][0]) and (state['position'][1] == next_state['position'][1]):
                 return -1
-            #If move and land on a lighthouse not owned by player, reward of 0.65
+            #If move and land on a lighthouse not owned by player
             elif next_state['position'] in state_lh.keys() and state_lh[next_state['position']]['owner'] != player.num:
-                return 0.4 #0.3
-            # If move and increase bot's energy, reward of 0.45 
+                return 0.5 
+            # If move and increase bot's energy
             elif next_state['energy'] > state['energy']:
-                return 0.3 #0.2
+                return 0.3 
             else:
                 return 0
         ### ATTACK ###
         elif action['command'] == "attack":
             # If attack and not on a lighthouse
             if state['position'] not in state_lh.keys():
-                return -1 #0
+                return -1 
             # If attack a lighthouse and gain control of it
             elif state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] == player.num:
-                return 0.65 #0.65
+                return 0.65 
             # If attack a lighthouse and already control it
             elif state_lh[state['position']]['owner'] == player.num :
-                return 0.15 #0
+                return 0.15 
             # If attack a lighthouse and not enough energy to gain control
             elif state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] != player.num:
                 return 0
@@ -143,11 +143,11 @@ class Interface(object):
         elif action['command'] == "connect":
             # If try to connect and not on a lighthouse
             if state['position'] not in state_lh.keys():
-                return -1 #0
+                return -1 
             # If try to connect and connection not possible (ex. doesn't own lighthouse, doesn't have key to any other lighthouse, etc.)
             elif (state_lh[state['position']]['owner'] != player.num or 
                   state_lh[state['position']]["connections"] == next_state_lh[next_state['position']]["connections"]): 
-                return -0.85 #0
+                return 0
             # If connect lighthouses
             elif (state_lh[state['position']]['owner'] == player.num and 
                   len(state_lh[state['position']]["connections"]) < len(next_state_lh[next_state['position']]["connections"])):
