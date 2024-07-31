@@ -18,6 +18,7 @@ class Bot(object):
     def __init__(self):
         """Inicializar el bot: llamado al comienzo del juego."""
         self.transitions = []
+        self.transitions_temp = []
         self.scores = []
         self.player_num = 0
         self.game_map = None

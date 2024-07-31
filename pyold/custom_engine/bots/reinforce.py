@@ -92,7 +92,7 @@ class PolicyCNN(nn.Module):
     
 # Create training loop
 class REINFORCE(bot.Bot):
-    def __init__(self, state_maps=True, model_filename='model.pth', use_saved_model=True):
+    def __init__(self, state_maps=True, trained_model_filename='model.pth', save_model_filename='model_save.pth', use_saved_model=True):
         super().__init__()
         self.NAME = "REINFORCE"
         self.state_maps = state_maps # use maps for state: True, or array for state: False
@@ -102,8 +102,10 @@ class REINFORCE(bot.Bot):
         self.lr = 1e-2
         self.save_model = True 
         self.model_path = './saved_model'
-        self.model_filename = model_filename
+        self.trained_model_filename = trained_model_filename
+        self.save_model_filename = save_model_filename
         self.use_saved_model = use_saved_model
+        self.num_steps_update = 50000
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -286,9 +288,9 @@ class REINFORCE(bot.Bot):
                 return self.connect(random.choice(possible_connections))
 
     def load_saved_model(self):
-        if os.path.isfile(os.path.join(self.model_path, self.model_filename)):
-            self.policy.load_state_dict(torch.load(os.path.join(self.model_path, self.model_filename)))
-            print("Loaded saved model")
+        if os.path.isfile(os.path.join(self.model_path, self.trained_model_filename)):
+            self.policy.load_state_dict(torch.load(os.path.join(self.model_path, self.trained_model_filename)))
+            print(f"Loaded saved model: {self.trained_model_filename}")
         else:
             print("No saved model")
 
@@ -328,14 +330,15 @@ class REINFORCE(bot.Bot):
         policy_loss.backward()
         self.optimizer.step()
         self.policy_loss_list.append(policy_loss.detach().cpu().numpy())
+        self.saved_log_probs = []
 
 
     def save_trained_model(self):
         os.makedirs(self.model_path, exist_ok=True)
-        torch.save(self.policy.state_dict(), os.path.join(self.model_path, self.model_filename))
+        torch.save(self.policy.state_dict(), os.path.join(self.model_path, self.save_model_filename))
         print("Saved model to disk")
 
     def save_best_model(self):
         os.makedirs(self.model_path, exist_ok=True)
-        torch.save(self.policy.state_dict(), os.path.join(self.model_path, 'best_'+self.model_filename))
+        torch.save(self.policy.state_dict(), os.path.join(self.model_path, 'best_'+self.save_model_filename))
         print("Saved model to disk")

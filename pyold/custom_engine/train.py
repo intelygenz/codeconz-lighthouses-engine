@@ -3,6 +3,8 @@
 
 import numpy as np
 import pygame
+import pandas as pd
+import os
 
 import engine, view
 
@@ -90,16 +92,16 @@ class Interface(object):
         The logic for estimating the reward is the following:
         1. if "status" is False: -1
         2. if "move" and the move is invalid: -1
-        3. if "move" and land on lighthouse that do not own: 0.65
-        4. if "move" and increase bot's energy: 0.45
+        3. if "move" and land on lighthouse that do not own: 0.55 #0.45
+        4. if "move" and increase bot's energy: 0.35
         5. if "attack" and not on a lighthouse: -1
-        6. if "attack" and gain control of lighthouse: 0.75
+        6. if "attack" and gain control of lighthouse: 0.7 #0.65
         7. if "attack" and already control lighthouse: 0.25
         8. if "attack" and don't gain control of lighthouse: 0
         9. if "connect" and not on a lighthouse: -1
         10. if "connect and no new connection (connection not possible): -0.85
         11. if "connect" and connect three lighthouses: 1
-        12. if "connect" and connect two lighthouses: 0.9
+        12. if "connect" and connect two lighthouses: 0.85 
        
         
         """
@@ -109,46 +111,43 @@ class Interface(object):
         # If status is False, give reward of -1
         if status['success'] == False:
             return -1
-
         ### MOVE ###
         # If the move command is invalid, reward of -1
         elif action['command'] == "move":
             # If the move command is invalid, reward of -1
             if (state['position'][0] == next_state['position'][0]) and (state['position'][1] == next_state['position'][1]):
                 return -1
-            # If move and land on a lighthouse not owned by player, reward of 0.65
+            #If move and land on a lighthouse not owned by player, reward of 0.65
             elif next_state['position'] in state_lh.keys() and state_lh[next_state['position']]['owner'] != player.num:
-                return 0.65
+                return 0.4 #0.3
             # If move and increase bot's energy, reward of 0.45 
             elif next_state['energy'] > state['energy']:
-                return 0.45
+                return 0.3 #0.2
             else:
                 return 0
-
         ### ATTACK ###
         elif action['command'] == "attack":
             # If attack and not on a lighthouse
             if state['position'] not in state_lh.keys():
-                return -1
+                return -1 #0
             # If attack a lighthouse and gain control of it
             elif state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] == player.num:
-                return 0.75
+                return 0.65 #0.65
             # If attack a lighthouse and already control it
             elif state_lh[state['position']]['owner'] == player.num :
-                return 0.25
+                return 0.15 #0
             # If attack a lighthouse and not enough energy to gain control
             elif state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] != player.num:
                 return 0
-
         ### CONNECT ###
         elif action['command'] == "connect":
             # If try to connect and not on a lighthouse
             if state['position'] not in state_lh.keys():
-                return -1
+                return -1 #0
             # If try to connect and connection not possible (ex. doesn't own lighthouse, doesn't have key to any other lighthouse, etc.)
             elif (state_lh[state['position']]['owner'] != player.num or 
                   state_lh[state['position']]["connections"] == next_state_lh[next_state['position']]["connections"]): 
-                return -0.85
+                return -0.85 #0
             # If connect lighthouses
             elif (state_lh[state['position']]['owner'] == player.num and 
                   len(state_lh[state['position']]["connections"]) < len(next_state_lh[next_state['position']]["connections"])):
@@ -158,88 +157,105 @@ class Interface(object):
                     return 1
                 # If connect two lighthouses
                 else:
-                    return 0.9
-            
+                    return 0.85       
         elif action['command'] == "pass":
             return -1
-        
         else:
             return 0
     
 
-    def run(self, max_rounds):
+    def run(self, max_updates=1000000000000, num_steps_update=256):
         game_view = view.GameView(self.game)
+        update = 0
         round = 0
         running = True
-        while round < max_rounds and running: 
-            # Event handler for game engine
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
+        
+        while update < max_updates and running: 
+            ###################################
+            # Get experiences to update agent #
+            ###################################
+            for i in range(num_steps_update):
+                # Event handler for game engine
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
 
-            self.game.pre_round()
-            game_view.update()
-
-            player_idx = 0
-            for bot in self.bots:
-                player = self.game.players[player_idx]
-
-                ####################################################
-                # If round 0, Get initial state and initialize bot
-                ####################################################
-                if round == 0:
-                    bot.player_num = player.num
-                    bot.map = self.game.island.map
-                    state = self.get_state(player)
-                    bot.initialize_game(state)
-                else:
-                    state = next_state
-
-                ###########################################
-                # Get action
-                ###########################################
-                action = bot.play(state)
-                ###########################################
-                # Execute action and get rewards and next state
-                ###########################################
-                status = self.turn(player, action)
-
-                if self.debug:
-                    try:
-                        bot.error(status["message"], action)
-                    except:
-                        pass
-
-                bot.scores.append(player.score)
+                self.game.pre_round()
                 game_view.update()
 
-                next_state = self.get_state(player)
-                reward = self.estimate_reward(action, state, next_state, player, status)
-                transition = [state, action, reward, next_state]
-                bot.transitions.append(transition)
+                player_idx = 0
+                for bot in self.bots:
+                    player = self.game.players[player_idx]
 
-                player_idx += 1
+                    ####################################################
+                    # If round 0, Get initial state and initialize bot
+                    ####################################################
+                    if round == 0:
+                        bot.player_num = player.num
+                        bot.map = self.game.island.map
+                        state = self.get_state(player)
+                        bot.initialize_game(state)
+                    else:
+                        state = next_state
 
-            self.game.post_round()
+                    ###########################################
+                    # Get action
+                    ###########################################
+                    action = bot.play(state)
+                    ###########################################
+                    # Execute action and get rewards and next state
+                    ###########################################
+                    status = self.turn(player, action)
 
-            ###########################################
-            # Print the scores after each round
-            ###########################################
+                    if self.debug:
+                        try:
+                            bot.error(status["message"], action)
+                        except:
+                            pass
 
-            s = "########### ROUND %d SCORE: " % round
-            for i in range(len(self.bots)):
-                s += "P%d: %d " % (i, self.game.players[i].score)
-            print(s)
+                    bot.scores.append(player.score)
+                    game_view.update()
 
-            round += 1
+                    next_state = self.get_state(player)
+                    reward = self.estimate_reward(action, state, next_state, player, status)
+                    transition = [state, action, reward, next_state]
+                    bot.transitions.append(transition)
+                    bot.transitions_temp.append(transition)
 
-            if round & 1000 == 0:
-                bot.save_trained_model()
+                    player_idx += 1
+
+                self.game.post_round()
+
+                ###########################################
+                # Print the scores after each round
+                ###########################################
+
+                s = "########### ROUND %d SCORE: " % round
+                for i in range(len(self.bots)):
+                    s += "P%d: %d " % (i, self.game.players[i].score)
+                print(s)
+
+                round += 1
+            
+            update += 1
+            print("update: ", update)
                 
-        ###########################################
-        # Optimize models
-        ###########################################
-        for bot in self.bots:
-            bot.optimize_model(bot.transitions)
-        
-    
+            ###########################################
+            # Optimize models
+            ###########################################
+            for bot in self.bots:
+                bot.optimize_model(bot.transitions_temp)
+                bot.transitions_temp = []
+                print("updated policy")
+            
+                policy_loss = pd.DataFrame()
+                policy_loss[str(bot.player_num)] = bot.policy_loss_list
+                os.makedirs('./losses', exist_ok=True)
+                policy_loss.to_csv(f'./losses/{str(bot.player_num)}_policy_loss.csv', index_label='episode')
+            
+                bot.save_trained_model()
+                if bot.last_episode_score < bot.scores[-1]:
+                   bot.save_best_model()
+                   print("best model saved")
+                if bot.last_episode_score < bot.scores[-1]:
+                   bot.last_episode_score = bot.scores[-1]
