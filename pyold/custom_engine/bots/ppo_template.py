@@ -106,6 +106,7 @@ class PPO():
         self.num_updates = num_updates
         self.batch_size = self.num_envs * self.num_steps
         self.minibatch_size = self.batch_size // self.num_minibatches
+        self.transitions_temp = []
 
         random.seed(self.seed)
         np.random.seed(self.seed)
@@ -140,8 +141,6 @@ class PPO():
         self.values = torch.zeros((self.num_steps, self.num_envs)).to(device)
         self.global_step = 0
         self.start_time = time.time()
-        # self.next_obs = torch.Tensor(self.envs.reset()).to(device)
-        # self.next_done = torch.zeros(self.num_envs).to(device)
 
 
     def initialize_experience_gathering(self, update):
@@ -151,14 +150,14 @@ class PPO():
             lrnow = frac * self.learning_rate
             self.optimizer.param_groups[0]["lr"] = lrnow
     
-    def play(self, next_obs, next_done):
+    def play(self, step, state, done):
         self.global_step += 1 * self.num_envs
-        self.obs[step] = next_obs
-        self.dones[step] = next_done
-
+        self.obs[step] = state
+        self.dones[step] = done
+        
         # ALGO LOGIC: action logic
         with torch.no_grad():
-            action, logprob, _, value = self.agent.get_action_and_value(next_obs)
+            action, logprob, _, value = self.agent.get_action_and_value(state)
             self.values[step] = value.flatten()
         self.actions[step] = action
         self.logprobs[step] = logprob
@@ -203,8 +202,12 @@ class PPO():
                     self.returns[t] = self.rewards[t] + self.gamma * nextnonterminal * next_return
                 self.advantages = self.returns - self.values
     
-    def optimize_model(self, next_obs, next_done):
+    def optimize_model(self, next_done, transitions):
         # flatten the batch
+        next_obs = transitions[-1][3]
+        self.rewards = torch.zeros((self.num_steps, self.num_envs)).to(device)
+        for i in range(len(transitions)):
+            self.rewards[i] = torch.tensor(transitions[i][2]).to(device).view(-1)
         self.calculate_advantage(next_obs, next_done)
         b_obs = self.obs.reshape((-1,) + self.envs.single_observation_space.shape)
         b_logprobs = self.logprobs.reshape(-1)
@@ -305,18 +308,20 @@ if __name__ == "__main__":
     # Initialize game
     state = None
     bot.initialize_game(state)
-    state = torch.Tensor(envs.reset()).to(device)
+    next_state = torch.Tensor(envs.reset()).to(device)
     done = torch.zeros(NUM_ENVS).to(device)
+    reward=[]
 
     for update in range(1, NUM_UPDATES + 1):
         bot.initialize_experience_gathering(update)
         for step in range(0, NUM_STEPS):
-            action = bot.play(state, done)
-            # TRY NOT TO MODIFY: execute the game and log data.
+            state = next_state
+            action = bot.play(step, state, done)
             next_state, reward, done, info = envs.step(action.cpu().numpy())
-            bot.rewards[step] = torch.tensor(reward).to(device).view(-1)
             next_state, done = torch.Tensor(next_state).to(device), torch.Tensor(done).to(device)
             bot.print_metrics(info)
-            state = next_state
+            transition = [state, action, reward, next_state]
+            bot.transitions_temp.append(transition)
         
-        bot.optimize_model(state, done)
+        bot.optimize_model(done, bot.transitions_temp)
+        bot.transitions_temp = []
