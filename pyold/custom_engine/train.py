@@ -162,7 +162,7 @@ class Interface(object):
             return 0
     
 
-    def run(self, max_updates=1000000000000, num_steps_update=256):
+    def train(self, max_updates=1000000000000, num_steps_update=256):
         game_view = view.GameView(self.game)
         update = 0
         round = 0
@@ -252,3 +252,75 @@ class Interface(object):
                 policy_loss.to_csv(f'./losses/{str(bot.player_num)}_policy_loss.csv', index_label='episode')
             
                 bot.save_trained_model()
+    
+    def run(self, max_rounds=None):
+        game_view = view.GameView(self.game)
+        round = 0
+        running = True
+        
+        while round < max_rounds and running: 
+            # Event handler for game engine
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            self.game.pre_round()
+            game_view.update()
+
+            player_idx = 0
+            for bot in self.bots:
+                player = self.game.players[player_idx]
+
+                ####################################################
+                # If round 0, Get initial state and initialize bot
+                ####################################################
+                if round == 0:
+                    bot.player_num = player.num
+                    bot.map = self.game.island.map
+                    state = self.get_state(player)
+                    bot.initialize_game(state)
+                else:
+                    state = next_state
+
+                ###########################################
+                # Get action
+                ###########################################
+                action = bot.play(state)
+                ###########################################
+                # Execute action and get rewards and next state
+                ###########################################
+                status = self.turn(player, action)
+
+                if self.debug:
+                    try:
+                        bot.error(status["message"], action)
+                    except:
+                        pass
+
+                bot.scores.append(player.score)
+                game_view.update()
+
+                next_state = self.get_state(player)
+                reward = self.estimate_reward(action, state, next_state, player, status)
+                transition = [state, action, reward, next_state]
+                bot.transitions.append(transition)
+                bot.transitions_temp.append(transition)
+
+                player_idx += 1
+
+            self.game.post_round()
+
+            ###########################################
+            # Print the scores after each round
+            ###########################################
+
+            s = "########### ROUND %d SCORE: " % round
+            for i in range(len(self.bots)):
+                s += "P%d: %d " % (i, self.game.players[i].score)
+            print(s)
+
+            round += 1
+            
+
+                
+     
