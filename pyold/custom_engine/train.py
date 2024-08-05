@@ -99,7 +99,7 @@ class Interface(object):
         7. if "attack" and already control lighthouse: 0.15
         8. if "attack" and don't gain control of lighthouse: 0
         9. if "connect" and not on a lighthouse: -1
-        10. if "connect and no new connection (connection not possible): 0
+        10. if "connect" and no new connection (connection not possible): 0
         11. if "connect" and connect three lighthouses: 1
         12. if "connect" and connect two lighthouses: 0.85 
         """
@@ -117,10 +117,10 @@ class Interface(object):
                 return -1
             #If move and land on a lighthouse not owned by player
             elif next_state['position'] in state_lh.keys() and state_lh[next_state['position']]['owner'] != player.num:
-                return 0.5 
+                return 0.55
             # If move and increase bot's energy
             elif next_state['energy'] > state['energy']:
-                return 0.3 
+                return 0.35 
             else:
                 return 0
         ### ATTACK ###
@@ -130,7 +130,7 @@ class Interface(object):
                 return -1 
             # If attack a lighthouse and gain control of it
             elif state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] == player.num:
-                return 0.65 
+                return 0.7 
             # If attack a lighthouse and already control it
             elif state_lh[state['position']]['owner'] == player.num :
                 return 0.15 
@@ -145,7 +145,7 @@ class Interface(object):
             # If try to connect and connection not possible (ex. doesn't own lighthouse, doesn't have key to any other lighthouse, etc.)
             elif (state_lh[state['position']]['owner'] != player.num or 
                   state_lh[state['position']]["connections"] == next_state_lh[next_state['position']]["connections"]): 
-                return 0
+                return -0.85
             # If connect lighthouses
             elif (state_lh[state['position']]['owner'] == player.num and 
                   len(state_lh[state['position']]["connections"]) < len(next_state_lh[next_state['position']]["connections"])):
