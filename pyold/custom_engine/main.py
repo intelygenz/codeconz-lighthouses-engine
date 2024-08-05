@@ -24,13 +24,13 @@ if __name__ == "__main__":
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
 
-    bots = [REINFORCE(state_maps=True, trained_model_filename=None, save_model_filename = None, use_saved_model=False)]
+    bots = [REINFORCE(state_maps=True, model_filename = "reinforce_cnn_0108.pth", use_saved_model=True),]
 
-    NUM_EPISODES = 25
-    MAX_AGENT_UPDATES = 5000000 # Number of times to update the agent 
-    NUM_STEPS_POLICY_UPDATE = 256 # Number of experiences to collect for each update to the agent
+    NUM_EPISODES = 5
+    MAX_AGENT_UPDATES = 10 # Number of times to update the agent 
+    NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the agent
     MAX_EVALUATION_ROUNDS = 10000
-    TRAIN = False # Whether to run training or evaluation
+    TRAIN = True # Whether to run training or evaluation
 
     #######################################################################
     # Total number of rounds = MAX_AGENT_UPATES * NUM_STEPS_POLICY_UPDATE #
