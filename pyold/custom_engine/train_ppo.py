@@ -172,7 +172,8 @@ class Interface(object):
             ###################################
             # Get experiences to update agent #
             ###################################
-            for i in range(num_steps_update):
+
+            for step in range(num_steps_update):
                 # Event handler for game engine
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -197,11 +198,13 @@ class Interface(object):
                         bot.initialize_game(state)
                     else:
                         state = next_state
+                    if step == 0:
+                        bot.initialize_experience_gathering(update)
 
                     ###########################################
                     # Get action
                     ###########################################
-                    action = bot.play(state)
+                    action = bot.play(step, state)
                     ###########################################
                     # Execute action and get rewards and next state
                     ###########################################

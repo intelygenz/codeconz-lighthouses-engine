@@ -7,6 +7,7 @@ import os
 
 from bots.randbot import RandBot
 from bots.reinforce_ppo import REINFORCE
+from bots.ppo_faro import PPO
 
 
 # ==============================================================================
@@ -24,18 +25,19 @@ if __name__ == "__main__":
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
 
-    bots = [REINFORCE(state_maps=False, model_filename = "reinforce.pth", use_saved_model=True),]
-
     NUM_EPISODES = 5
     MAX_AGENT_UPDATES = 3 # Number of times to update the agent 
     NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the agent
     MAX_EVALUATION_ROUNDS = 10000
     TRAIN = True # Whether to run training or evaluation
-    NUM_ENVS = 1
+    NUM_ENVS = 2
 
     #######################################################################
     # Total number of rounds = MAX_AGENT_UPATES * NUM_STEPS_POLICY_UPDATE #
     #######################################################################
+
+    #bots = [REINFORCE(state_maps=False, model_filename = "reinforce.pth", use_saved_model=True),]
+    bots = [PPO(state_maps=False, num_envs=NUM_ENVS, num_steps=NUM_STEPS_POLICY_UPDATE, num_updates=MAX_AGENT_UPDATES, model_filename = "reinforce.pth", use_saved_model=True),]
 
     for i in range(1, NUM_EPISODES+1):
         config = engine.GameConfig(cfg_file)
