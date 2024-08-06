@@ -71,29 +71,29 @@ class AgentCNN(nn.Module):
         super(AgentCNN, self).__init__()
 
         self.critic = nn.Sequential(
-            nn.Conv2d(in_channels=num_maps, out_channels=32, kernel_size=5),
+            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=32, kernel_size=5)),
             nn.ReLU(),
-            nn.Conv2d(32, 64, 3),
+            layer_init(nn.Conv2d(32, 64, 3)),
             nn.ReLU(),
-            nn.Conv2d(64, 64, 3),
+            layer_init(nn.Conv2d(64, 64, 3)),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(64*11*11, 256),
+            layer_init(nn.Linear(64*11*11, 512)),
             nn.ReLU(),
-            nn.Linear(256, 1)
+            layer_init(nn.Linear(512, 1), std=1)
         )
 
         self.actor = nn.Sequential(
-            nn.Conv2d(in_channels=num_maps, out_channels=32, kernel_size=5),
+            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=32, kernel_size=5)),
             nn.ReLU(),
-            nn.Conv2d(32, 64, 3),
+            layer_init(nn.Conv2d(32, 64, 3)),
             nn.ReLU(),
-            nn.Conv2d(64, 64, 3),
+            layer_init(nn.Conv2d(64, 64, 3)),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(64*11*11, 256),
+            layer_init(nn.Linear(64*11*11, 512)),
             nn.ReLU(),
-            nn.Linear(256, a_size)
+            layer_init(nn.Linear(512, a_size), std=0.01)
         )
 
     def get_value(self, x):
@@ -125,7 +125,7 @@ class PPO(bot.Bot):
         self.num_minibatches = 4 # the number of mini-batches
         self.update_epochs = 4 # the K epochs to update the policy
         self.norm_adv = True # advantages normalization
-        self.clip_coef = 0.2 # the surrogate clipping coefficient
+        self.clip_coef = 0.1 # the surrogate clipping coefficient
         self.clip_vloss = True # whether or not to use a clipped loss for the value function, as per the paper
         self.ent_coef = 0.01 # coefficient of the entropy
         self.vf_coef = 0.5 # coefficient of the value function
@@ -143,14 +143,14 @@ class PPO(bot.Bot):
         self.seed = 1
         self.train = train
 
-        random.seed(self.seed)
-        np.random.seed(self.seed)
-        torch.manual_seed(self.seed)
-        torch.backends.cudnn.deterministic = self.torch_deterministic
+        # random.seed(self.seed)
+        # np.random.seed(self.seed)
+        # torch.manual_seed(self.seed)
+        # torch.backends.cudnn.deterministic = self.torch_deterministic
 
 
         # Initialize tensorboard
-        self.writer = SummaryWriter(f"runs/cartpole-test")
+        self.writer = SummaryWriter(f"runs/ppo/cnn/new")
         self.writer.add_text(
             "hyperparameters",
             "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(self).items()])),
@@ -343,11 +343,9 @@ class PPO(bot.Bot):
             self.global_step += 1 * self.num_envs
         actions_list = []
         if self.state_maps:
-            print("Using maps for state: PolicyCNN")
             new_state = [self.convert_state_cnn(state[i], i) for i in range(len(state))]
             new_state = np.transpose(new_state, (0,3,1,2))
         else:
-            print("Using array for state: PolicyMLP")
             new_state = [self.convert_state_mlp(state[i]) for i in range(len(state))]
         new_state = torch.from_numpy(np.array(new_state)).float().to(device) 
         if self.train:
@@ -405,21 +403,22 @@ class PPO(bot.Bot):
                         next_return = self.returns[t + 1]
                     self.returns[t] = self.rewards[t] + self.gamma * nextnonterminal * next_return
                 self.advantages = self.returns - self.values
+            print("advantages: ", self.advantages.sum(axis=0))
+
     
     def optimize_model(self, transitions):
         # flatten the batch
         next_obs = transitions[-1][3]
         if self.state_maps:
-            print("Using maps for state: PolicyCNN")
             next_obs = [self.convert_state_cnn(next_obs[i], i) for i in range(len(next_obs))]
             next_obs = np.transpose(next_obs, (0,3,1,2))
         else:
-            print("Using array for state: PolicyMLP")
             next_obs = [self.convert_state_mlp(next_obs[i]) for i in range(len(next_obs))]
         next_obs = torch.from_numpy(np.array(next_obs)).float().to(device)
         self.rewards = torch.zeros((self.num_steps, self.num_envs)).to(device)
         for i in range(len(transitions)):
             self.rewards[i] = torch.tensor(transitions[i][2]).to(device).view(-1)
+        print("rewards: ", self.rewards.sum(axis=0))
         self.calculate_advantage(next_obs)
         if self.state_maps:
             b_obs = self.obs.reshape((-1,) + self.s_size)
@@ -499,13 +498,13 @@ class PPO(bot.Bot):
             self.writer.add_scalar("losses/approx_kl", approx_kl.item(), self.global_step)
             self.writer.add_scalar("losses/clipfrac", np.mean(clipfracs), self.global_step)
             self.writer.add_scalar("losses/explained_variance", explained_var, self.global_step)
-            print("SPS:", int(self.global_step / (time.time() - self.start_time)))
+            #print("SPS:", int(self.global_step / (time.time() - self.start_time)))
             self.writer.add_scalar("charts/SPS", int(self.global_step / (time.time() - self.start_time)), self.global_step)
     
     def save_trained_model(self):
         os.makedirs(self.model_path, exist_ok=True)
         torch.save(self.agent.state_dict(), os.path.join(self.model_path, self.model_filename))
-        print("Saved model to disk")
+        #print("Saved model to disk")
 
     def load_saved_model(self):
         if self.model_filename and os.path.isfile(os.path.join(self.model_path, self.model_filename)):

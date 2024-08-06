@@ -26,14 +26,14 @@ if __name__ == "__main__":
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
 
     NUM_EPISODES = 5
-    MAX_AGENT_UPDATES = 10000 # Number of times to update the agent 
-    NUM_STEPS_POLICY_UPDATE = 10 # Number of experiences to collect for each update to the agent
+    MAX_AGENT_UPDATES = 3000 # Number of times to update the agent 
+    NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the agent
     MAX_EVALUATION_ROUNDS = 10000
     TRAIN = True # Whether to run training or evaluation
-    NUM_ENVS = 4
+    NUM_ENVS = 8
     STATE_MAPS = True
-    MODEL_FILENAME = "ppo_mlp.pth"
-    USE_SAVED_MODEL = False
+    MODEL_FILENAME = "ppo_cnn_extreme_new.pth"
+    USE_SAVED_MODEL = True
 
     #######################################################################
     # Total number of rounds = MAX_AGENT_UPATES * NUM_STEPS_POLICY_UPDATE #
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         for bot in bots:
                 final_scores["bot_"+str(bot.player_num)] = bot.final_scores_list
         os.makedirs('./final_scores', exist_ok=True)
-        final_scores.to_csv('./final_scores/final_scores.csv', index_label='episode')
+        final_scores.to_csv('./final_scores/final_scores_mlp_extreme.csv', index_label='episode')
 
 
 

@@ -87,7 +87,7 @@ class Interface(object):
 
         return np.clip(0, 1, score_diff)
     
-    def estimate_reward(self, action, state, next_state, player, status):
+    def estimate_reward_complicated(self, action, state, next_state, player, status):
         """
         The logic for estimating the reward is the following:
         1. if "status" is False: -1
@@ -117,10 +117,10 @@ class Interface(object):
                 return -1
             #If move and land on a lighthouse not owned by player
             elif next_state['position'] in state_lh.keys() and state_lh[next_state['position']]['owner'] != player.num:
-                return 0.55
+                return 0.25
             # If move and increase bot's energy
             elif next_state['energy'] > state['energy']:
-                return 0.35 
+                return 0.15 
             else:
                 return 0
         ### ATTACK ###
@@ -130,12 +130,14 @@ class Interface(object):
                 return -1 
             # If attack a lighthouse and gain control of it
             elif state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] == player.num:
-                return 0.7 
+                return 0.4 
             # If attack a lighthouse and already control it
             elif state_lh[state['position']]['owner'] == player.num :
-                return 0.15 
+                return 0 
             # If attack a lighthouse and not enough energy to gain control
             elif state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] != player.num:
+                return 0
+            else:
                 return 0
         ### CONNECT ###
         elif action['command'] == "connect":
@@ -152,17 +154,131 @@ class Interface(object):
                 # If connect three lighthouses
                 new_connection = list(set(next_state_lh[next_state['position']]["connections"])-set(state_lh[state['position']]["connections"]))[0]
                 if any(i in next_state_lh[next_state['position']]["connections"] for i in next_state_lh[new_connection]["connections"]):
+                    print("connect 3")
                     return 1
                 # If connect two lighthouses
                 else:
-                    return 0.85       
+                    print("connect 2")
+                    return 0.85     
+            else:
+                return 0  
         elif action['command'] == "pass":
             return -1
         else:
             return 0
     
 
-    def train(self, max_updates=1000000000000, num_steps_update=256):
+    def estimate_reward(self, action, state, next_state, player, status):
+        """
+        The logic for estimating the reward is the following:
+        1. if "status" is False: -1
+        2. if "move" and the move is invalid: -1
+        3. if "attack" and not on a lighthouse: -1
+        4. if "connect" and not on a lighthouse: -1
+        5. if "connect" and connect three lighthouses: 1
+        6. if "connect" and connect two lighthouses: 0.65 
+        """
+        state_lh = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
+        next_state_lh = dict((tuple(lh["position"]), lh) for lh in next_state["lighthouses"])
+
+        # If status is False
+        if status['success'] == False:
+            return -1
+        # If the move command is invalid
+        elif action['command'] == "move":
+            # If the move command is invalid
+            if (state['position'][0] == next_state['position'][0]) and (state['position'][1] == next_state['position'][1]):
+                return -1
+            #If move and land on a lighthouse not owned by player
+            elif next_state['position'] in state_lh.keys() and state_lh[next_state['position']]['owner'] != player.num:
+                return 0
+            # If move and increase bot's energy
+            elif next_state['energy'] > state['energy']:
+                return 0
+            else:
+                return 0
+        ### ATTACK ###
+        elif action['command'] == "attack":
+            # If attack and not on a lighthouse
+            if state['position'] not in state_lh.keys():
+                return -1 
+            # If attack a lighthouse and gain control of it
+            elif state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] == player.num:
+                return 0
+            else:
+                return 0
+        ### CONNECT ###
+        elif action['command'] == "connect":
+            # If try to connect and not on a lighthouse
+            if state['position'] not in state_lh.keys():
+                return -1 
+            # If try to connect and connection not possible (ex. doesn't own lighthouse, doesn't have key to any other lighthouse, etc.)
+            elif (state_lh[state['position']]['owner'] != player.num or 
+                  state_lh[state['position']]["connections"] == next_state_lh[next_state['position']]["connections"]): 
+                return -0.5
+            # If connect lighthouses
+            elif (state_lh[state['position']]['owner'] == player.num and 
+                  len(state_lh[state['position']]["connections"]) < len(next_state_lh[next_state['position']]["connections"])):
+                # If connect three lighthouses
+                new_connection = list(set(next_state_lh[next_state['position']]["connections"])-set(state_lh[state['position']]["connections"]))[0]
+                if any(i in next_state_lh[next_state['position']]["connections"] for i in next_state_lh[new_connection]["connections"]):
+                    return 1
+                # If connect two lighthouses
+                else:
+                    return 0.85
+            else:
+                return 0       
+        elif action['command'] == "pass":
+            return -1
+        else:
+            return 0
+    
+    def estimate_reward_extreme(self, action, state, next_state, player, status):
+        """
+        The logic for estimating the reward is the following:
+        1. if "status" is False: -1
+        2. if "move" and the move is invalid: -1
+        3. if "attack" and not on a lighthouse: -1
+        4. if "connect" and not on a lighthouse: -1
+        5. if "connect" and connect three lighthouses: 1
+        6. if "connect" and connect two lighthouses: 0.65 
+        """
+        state_lh = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
+        next_state_lh = dict((tuple(lh["position"]), lh) for lh in next_state["lighthouses"])
+
+        # If status is False
+        if status['success'] == False:
+            return -1
+        # If the move command is invalid
+        elif action['command'] == "move":
+            return -1
+        ### ATTACK ###
+        elif action['command'] == "attack":
+            return -1
+        ### CONNECT ###
+        elif action['command'] == "connect":
+            # If try to connect and not on a lighthouse
+            if state['position'] not in state_lh.keys():
+                return -1 
+            # If connect lighthouses
+            elif (state_lh[state['position']]['owner'] == player.num and 
+                  len(state_lh[state['position']]["connections"]) < len(next_state_lh[next_state['position']]["connections"])):
+                # If connect three lighthouses
+                new_connection = list(set(next_state_lh[next_state['position']]["connections"])-set(state_lh[state['position']]["connections"]))[0]
+                if any(i in next_state_lh[next_state['position']]["connections"] for i in next_state_lh[new_connection]["connections"]):
+                    return 1
+                # If connect two lighthouses
+                else:
+                    return 0.85
+            else:
+                return -1      
+        elif action['command'] == "pass":
+            return -1
+        else:
+            return -1
+    
+
+    def train(self, max_updates=0, num_steps_update=0):
         game_view = [view.GameView(self.game[i]) for i in range(len(self.game))]
         update = 0
         round = 0
@@ -222,7 +338,7 @@ class Interface(object):
                     
                     bot.scores.append(scores_temp)
                     next_state = [self.get_state(player[i], i) for i in range(len(self.game))]
-                    reward = [self.estimate_reward(action[i], state[i], next_state[i], player[i], status[i]) for i in range(len(self.game))]
+                    reward = [self.estimate_reward_extreme(action[i], state[i], next_state[i], player[i], status[i]) for i in range(len(self.game))]
                     transition = [state, action, reward, next_state]
                     bot.transitions.append(transition)
                     bot.transitions_temp.append(transition)
@@ -236,15 +352,15 @@ class Interface(object):
                 # Print the scores after each round
                 ###########################################
 
-                s = "########### ROUND %d SCORE: " % round
-                for i in range(len(self.bots)):
-                    s += "P%d: %d " % (i, self.game[i].players[i].score)
-                print(s)
+                # s = "########### ROUND %d SCORE: " % round
+                # for i in range(len(self.bots)):
+                #     s += "P%d: %d " % (i, self.game[i].players[i].score)
+                # print(s)
 
                 round += 1
             
             update += 1
-            print("update: ", update)
+            #print("update: ", update)
                 
             ###########################################
             # Optimize models
@@ -252,7 +368,7 @@ class Interface(object):
             for bot in self.bots:
                 bot.optimize_model(bot.transitions_temp)
                 bot.transitions_temp = []
-                print("updated policy")
+                #print("updated policy")
             
                 policy_loss = pd.DataFrame()
                 policy_loss[str(bot.player_num)] = bot.policy_loss_list
