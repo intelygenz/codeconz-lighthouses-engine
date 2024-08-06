@@ -66,8 +66,48 @@ class AgentMLP(nn.Module):
         return action, probs.log_prob(action), probs.entropy(), self.critic(x)
 
 
+class AgentCNN(nn.Module):
+    def __init__(self, num_maps, a_size: list):
+        super(AgentCNN, self).__init__()
+
+        self.critic = nn.Sequential(
+            nn.Conv2d(in_channels=num_maps, out_channels=32, kernel_size=5),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, 3),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, 3),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(64*11*11, 256),
+            nn.ReLU(),
+            nn.Linear(256, 1)
+        )
+
+        self.actor = nn.Sequential(
+            nn.Conv2d(in_channels=num_maps, out_channels=32, kernel_size=5),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, 3),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, 3),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(64*11*11, 256),
+            nn.ReLU(),
+            nn.Linear(256, a_size)
+        )
+
+    def get_value(self, x):
+        return self.critic(x)
+
+    def get_action_and_value(self, x, action=None):
+        logits = self.actor(x)
+        probs = Categorical(logits=logits)
+        if action is None:
+            action = probs.sample()
+        return action, probs.log_prob(action), probs.entropy(), self.critic(x)
+
 class PPO(bot.Bot):
-    def __init__(self, state_maps, num_envs, num_steps, num_updates, model_filename='model.pth', use_saved_model=False):
+    def __init__(self, state_maps, num_envs, num_steps, num_updates, train=True, model_filename='model.pth', use_saved_model=False):
         super().__init__()
         self.NAME = "REINFORCE"
         self.gamma = 0.99
@@ -101,6 +141,7 @@ class PPO(bot.Bot):
         self.a_size = len(ACTIONS)
         self.state_maps = state_maps
         self.seed = 1
+        self.train = train
 
         random.seed(self.seed)
         np.random.seed(self.seed)
@@ -128,8 +169,9 @@ class PPO(bot.Bot):
             state = [self.convert_state_mlp(state[i]) for i in range(len(state))]
             self.s_size = len(state[0])
             self.agent = AgentMLP(self.s_size, self.a_size).to(self.device)
-        self.initialize_buffer_and_variables()
-        self.optimizer = optim.Adam(self.agent.parameters(), lr=self.learning_rate)
+        if self.train:
+            self.initialize_buffer_and_variables()
+            self.optimizer = optim.Adam(self.agent.parameters(), lr=self.learning_rate)
         if self.use_saved_model:
             self.load_saved_model()
     
@@ -291,23 +333,27 @@ class PPO(bot.Bot):
         return possible_connections
 
     
-    def play(self, step, state):
-        self.global_step += 1 * self.num_envs
+    def play(self, state, step=None):
+        if self.train:
+            self.global_step += 1 * self.num_envs
         actions_list = []
         if self.state_maps:
             print("Using maps for state: PolicyCNN")
             new_state = [self.convert_state_cnn(state[i], i) for i in range(len(state))]
+            new_state = np.transpose(new_state, (0,3,1,2))
         else:
             print("Using array for state: PolicyMLP")
             new_state = [self.convert_state_mlp(state[i]) for i in range(len(state))]
         new_state = torch.from_numpy(np.array(new_state)).float().to(device) 
-        self.obs[step] = new_state
+        if self.train:
+            self.obs[step] = new_state
         with torch.no_grad():
             action, log_prob, _, value = self.agent.get_action_and_value(new_state)
-            self.saved_log_probs.append(log_prob)
-            self.values[step] = value.flatten()
-        self.actions[step] = action
-        self.logprobs[step] = log_prob
+            if self.train:
+                self.saved_log_probs.append(log_prob)
+                self.values[step] = value.flatten()
+                self.actions[step] = action
+                self.logprobs[step] = log_prob
         for i in range(len(action)):
             if ACTIONS[action[i]] != "attack" and ACTIONS[action[i]] != "connect" and ACTIONS[action[i]] != "pass":
                 actions_list.append(self.move(*ACTIONS[action[i]]))
@@ -434,18 +480,18 @@ class PPO(bot.Bot):
         y_pred, y_true = b_values.cpu().numpy(), b_returns.cpu().numpy()
         var_y = np.var(y_true)
         explained_var = np.nan if var_y == 0 else 1 - np.var(y_true - y_pred) / var_y
-
-        # TRY NOT TO MODIFY: record rewards for plotting purposes
-        self.writer.add_scalar("charts/learning_rate", self.optimizer.param_groups[0]["lr"], self.global_step)
-        self.writer.add_scalar("losses/value_loss", v_loss.item(), self.global_step)
-        self.writer.add_scalar("losses/policy_loss", pg_loss.item(), self.global_step)
-        self.writer.add_scalar("losses/entropy", entropy_loss.item(), self.global_step)
-        self.writer.add_scalar("losses/old_approx_kl", old_approx_kl.item(), self.global_step)
-        self.writer.add_scalar("losses/approx_kl", approx_kl.item(), self.global_step)
-        self.writer.add_scalar("losses/clipfrac", np.mean(clipfracs), self.global_step)
-        self.writer.add_scalar("losses/explained_variance", explained_var, self.global_step)
-        print("SPS:", int(self.global_step / (time.time() - self.start_time)))
-        self.writer.add_scalar("charts/SPS", int(self.global_step / (time.time() - self.start_time)), self.global_step)
+        if self.train:
+            # TRY NOT TO MODIFY: record rewards for plotting purposes
+            self.writer.add_scalar("charts/learning_rate", self.optimizer.param_groups[0]["lr"], self.global_step)
+            self.writer.add_scalar("losses/value_loss", v_loss.item(), self.global_step)
+            self.writer.add_scalar("losses/policy_loss", pg_loss.item(), self.global_step)
+            self.writer.add_scalar("losses/entropy", entropy_loss.item(), self.global_step)
+            self.writer.add_scalar("losses/old_approx_kl", old_approx_kl.item(), self.global_step)
+            self.writer.add_scalar("losses/approx_kl", approx_kl.item(), self.global_step)
+            self.writer.add_scalar("losses/clipfrac", np.mean(clipfracs), self.global_step)
+            self.writer.add_scalar("losses/explained_variance", explained_var, self.global_step)
+            print("SPS:", int(self.global_step / (time.time() - self.start_time)))
+            self.writer.add_scalar("charts/SPS", int(self.global_step / (time.time() - self.start_time)), self.global_step)
     
     def save_trained_model(self):
         os.makedirs(self.model_path, exist_ok=True)

@@ -191,7 +191,6 @@ class Interface(object):
                     # If round 0, Get initial state and initialize bot
                     ####################################################
                     if round == 0:
-                        state = []
                         bot.player_num = player[0].num
                         bot.map = [self.game[i].island.map for i in range(len(self.game))]
                         state = [self.get_state(player[i], i) for i in range(len(self.game))]
@@ -204,7 +203,7 @@ class Interface(object):
                     ###########################################
                     # Get action
                     ###########################################
-                    action = bot.play(step, state)
+                    action = bot.play(state, step)
                     ###########################################
                     # Execute action and get rewards and next state
                     ###########################################
@@ -263,22 +262,24 @@ class Interface(object):
                 bot.save_trained_model()
     
     def run(self, max_rounds=None):
-        game_view = view.GameView(self.game)
+        game_view = [view.GameView(self.game[i]) for i in range(len(self.game))]
         round = 0
         running = True
         
         while round < max_rounds and running: 
             # Event handler for game engine
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
+                    if event.type == pygame.QUIT:
+                        running = False
 
-            self.game.pre_round()
-            game_view.update()
+            for i in range(len(self.game)):
+                self.game[i].pre_round()
+                game_view[i].update()
 
             player_idx = 0
             for bot in self.bots:
-                player = self.game.players[player_idx]
+                player = [self.game[i].players[player_idx] for i in range(len(self.game))]
+            
 
                 ####################################################
                 # If round 0, Get initial state and initialize bot
@@ -286,7 +287,7 @@ class Interface(object):
                 if round == 0:
                     bot.player_num = player[0].num
                     bot.map = [self.game[i].island.map for i in range(len(self.game))]
-                    state = self.get_state(player)
+                    state = [self.get_state(player[i], i) for i in range(len(self.game))]
                     bot.initialize_game(state)
                 else:
                     state = next_state
@@ -298,26 +299,29 @@ class Interface(object):
                 ###########################################
                 # Execute action and get rewards and next state
                 ###########################################
-                status = self.turn(player, action)
+                status = [self.turn(player[i], action[i]) for i in range(len(self.game))]
 
                 if self.debug:
                     try:
                         bot.error(status["message"], action)
                     except:
                         pass
-
-                bot.scores.append(player.score)
-                game_view.update()
-
-                next_state = self.get_state(player)
-                reward = self.estimate_reward(action, state, next_state, player, status)
+                for i in range(len(self.game)):
+                        scores_temp = []
+                        scores_temp.append(player[i].score)
+                        game_view[i].update()
+                
+                bot.scores.append(scores_temp)
+                
+                next_state = [self.get_state(player[i], i) for i in range(len(self.game))]
+                reward = [self.estimate_reward(action[i], state[i], next_state[i], player[i], status[i]) for i in range(len(self.game))]
                 transition = [state, action, reward, next_state]
                 bot.transitions.append(transition)
-                bot.transitions_temp.append(transition)
-
+             
                 player_idx += 1
 
-            self.game.post_round()
+            for i in range(len(self.game)):
+                self.game[i].post_round()
 
             ###########################################
             # Print the scores after each round
@@ -325,7 +329,7 @@ class Interface(object):
 
             s = "########### ROUND %d SCORE: " % round
             for i in range(len(self.bots)):
-                s += "P%d: %d " % (i, self.game.players[i].score)
+                s += "P%d: %d " % (i, self.game[i].players[i].score)
             print(s)
 
             round += 1

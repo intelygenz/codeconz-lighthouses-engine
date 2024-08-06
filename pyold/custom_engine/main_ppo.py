@@ -26,18 +26,21 @@ if __name__ == "__main__":
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
 
     NUM_EPISODES = 5
-    MAX_AGENT_UPDATES = 3 # Number of times to update the agent 
+    MAX_AGENT_UPDATES = 10000 # Number of times to update the agent 
     NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the agent
     MAX_EVALUATION_ROUNDS = 10000
-    TRAIN = True # Whether to run training or evaluation
-    NUM_ENVS = 2
+    TRAIN = False # Whether to run training or evaluation
+    NUM_ENVS = 1
+    STATE_MAPS = True
+    MODEL_FILENAME = "ppo_mlp.pth"
+    USE_SAVED_MODEL = False
 
     #######################################################################
     # Total number of rounds = MAX_AGENT_UPATES * NUM_STEPS_POLICY_UPDATE #
     #######################################################################
 
     #bots = [REINFORCE(state_maps=False, model_filename = "reinforce.pth", use_saved_model=True),]
-    bots = [PPO(state_maps=False, num_envs=NUM_ENVS, num_steps=NUM_STEPS_POLICY_UPDATE, num_updates=MAX_AGENT_UPDATES, model_filename = "reinforce.pth", use_saved_model=True),]
+    bots = [PPO(state_maps=STATE_MAPS, num_envs=NUM_ENVS, num_steps=NUM_STEPS_POLICY_UPDATE, num_updates=MAX_AGENT_UPDATES, train=TRAIN, model_filename = MODEL_FILENAME, use_saved_model=USE_SAVED_MODEL),]
 
     for i in range(1, NUM_EPISODES+1):
         config = engine.GameConfig(cfg_file)
@@ -57,7 +60,7 @@ if __name__ == "__main__":
         for bot in bots:
                 final_scores["bot_"+str(bot.player_num)] = bot.final_scores_list
         os.makedirs('./final_scores', exist_ok=True)
-        final_scores.to_csv('./final_scores/final_scores_cnn_no_trained.csv', index_label='episode')
+        final_scores.to_csv('./final_scores/final_scores.csv', index_label='episode')
 
 
 
