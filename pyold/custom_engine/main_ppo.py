@@ -6,8 +6,8 @@ import pandas as pd
 import os
 
 from bots.randbot import RandBot
-from bots.reinforce_ppo import REINFORCE
-from bots.ppo_faro import PPO
+from bots.reinforce_multi_env import REINFORCE
+from bots.ppo import PPO
 
 
 # ==============================================================================
