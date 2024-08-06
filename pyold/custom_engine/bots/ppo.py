@@ -163,6 +163,8 @@ class PPO(bot.Bot):
             print("Using maps for state: PolicyCNN")
             state = [self.convert_state_cnn(state[i], i) for i in range(len(state))]
             self.num_maps = state[0].shape[2]
+            state = np.transpose(state, (0,3,1,2))
+            self.s_size = state[0].shape
             self.agent = AgentCNN(self.num_maps, self.a_size).to(self.device)
         else:
             print("Using array for state: PolicyMLP")
@@ -177,7 +179,10 @@ class PPO(bot.Bot):
     
     def initialize_buffer_and_variables(self):
          # ALGO Logic: Storage setup
-        self.obs = torch.zeros((self.num_steps, self.num_envs) + (self.s_size,)).to(device)
+        if self.state_maps:
+            self.obs = torch.zeros((self.num_steps, self.num_envs) + self.s_size).to(device)
+        else:    
+            self.obs = torch.zeros((self.num_steps, self.num_envs) + (self.s_size,)).to(device)
         self.actions = torch.zeros((self.num_steps, self.num_envs) + ()).to(device)
         self.logprobs = torch.zeros((self.num_steps, self.num_envs)).to(device)
         self.rewards = torch.zeros((self.num_steps, self.num_envs)).to(device)
@@ -407,6 +412,7 @@ class PPO(bot.Bot):
         if self.state_maps:
             print("Using maps for state: PolicyCNN")
             next_obs = [self.convert_state_cnn(next_obs[i], i) for i in range(len(next_obs))]
+            next_obs = np.transpose(next_obs, (0,3,1,2))
         else:
             print("Using array for state: PolicyMLP")
             next_obs = [self.convert_state_mlp(next_obs[i]) for i in range(len(next_obs))]
@@ -415,7 +421,10 @@ class PPO(bot.Bot):
         for i in range(len(transitions)):
             self.rewards[i] = torch.tensor(transitions[i][2]).to(device).view(-1)
         self.calculate_advantage(next_obs)
-        b_obs = self.obs.reshape((-1,) + (self.s_size,))
+        if self.state_maps:
+            b_obs = self.obs.reshape((-1,) + self.s_size)
+        else:
+            b_obs = self.obs.reshape((-1,) + (self.s_size,))
         b_logprobs = self.logprobs.reshape(-1)
         b_actions = self.actions.reshape((-1,) + ())
         b_advantages = self.advantages.reshape(-1)

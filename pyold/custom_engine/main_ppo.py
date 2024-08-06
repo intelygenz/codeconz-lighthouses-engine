@@ -27,10 +27,10 @@ if __name__ == "__main__":
 
     NUM_EPISODES = 5
     MAX_AGENT_UPDATES = 10000 # Number of times to update the agent 
-    NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the agent
+    NUM_STEPS_POLICY_UPDATE = 10 # Number of experiences to collect for each update to the agent
     MAX_EVALUATION_ROUNDS = 10000
-    TRAIN = False # Whether to run training or evaluation
-    NUM_ENVS = 1
+    TRAIN = True # Whether to run training or evaluation
+    NUM_ENVS = 4
     STATE_MAPS = True
     MODEL_FILENAME = "ppo_mlp.pth"
     USE_SAVED_MODEL = False
