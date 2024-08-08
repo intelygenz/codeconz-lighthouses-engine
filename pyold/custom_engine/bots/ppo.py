@@ -71,29 +71,25 @@ class AgentCNN(nn.Module):
         super(AgentCNN, self).__init__()
 
         self.critic = nn.Sequential(
-            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=32, kernel_size=5)),
+            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=7)),
             nn.ReLU(),
-            layer_init(nn.Conv2d(32, 64, 3)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(64, 64, 3)),
+            layer_init(nn.Conv2d(16, 32, 5)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(64*11*11, 512)),
-            nn.ReLU(),
-            layer_init(nn.Linear(512, 1), std=1)
+            layer_init(nn.Linear(32*9*9, 256)),
+            nn.Tanh(),
+            layer_init(nn.Linear(256, 1), std=1)
         )
 
         self.actor = nn.Sequential(
-            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=32, kernel_size=5)),
+            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=7)),
             nn.ReLU(),
-            layer_init(nn.Conv2d(32, 64, 3)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(64, 64, 3)),
+            layer_init(nn.Conv2d(16, 32, 5)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(64*11*11, 512)),
-            nn.ReLU(),
-            layer_init(nn.Linear(512, a_size), std=0.01)
+            layer_init(nn.Linear(32*9*9, 256)),
+            nn.Tanh(),
+            layer_init(nn.Linear(256, a_size), std=0.01)
         )
 
     def get_value(self, x):
@@ -150,7 +146,7 @@ class PPO(bot.Bot):
 
 
         # Initialize tensorboard
-        self.writer = SummaryWriter(f"runs/ppo/cnn/new")
+        self.writer = SummaryWriter(f"runs/ppo/cnn/test")
         self.writer.add_text(
             "hyperparameters",
             "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(self).items()])),
@@ -200,6 +196,7 @@ class PPO(bot.Bot):
             self.optimizer.param_groups[0]["lr"] = lrnow
     
     def convert_state_mlp(self, state):
+        # TODO: Add in information over owner and train with more than one bot
         # Create array for view data
         view = []
         for i in range(len(state['view'])):
@@ -247,7 +244,7 @@ class PPO(bot.Bot):
         x, y = state['position'][0], state['position'][1]
         player_layer[x,y] = 1 + state['energy']
         player_layer = self.z_score_scaling(player_layer)
-
+    
         # Create view layer with energy level near the player
         view_layer = base_layer.copy()
         state['view'] = np.array(state['view'])
@@ -278,15 +275,15 @@ class PPO(bot.Bot):
             lh_energy_layer[x,y] = 1 + lh[i]['energy']
         lh_energy_layer = self.z_score_scaling(lh_energy_layer)
 
-        # Create layer that has the number of the layer that controls each lighthouse
+        # Create layer that has the number of the player that controls each lighthouse
         # If no player controls the lighthouse, then a value of -1 is assigned
-        lh_control_layer = base_layer.copy()
-        for i in range(len(lh)):
-            x, y = lh[i]['position'][0], lh[i]['position'][1]
-            if not lh[i]['owner']:
-                lh[i]['owner'] = -1
-            lh_control_layer[x,y] = lh[i]['owner']
-        lh_control_layer = self.z_score_scaling(lh_control_layer)
+        # lh_control_layer = base_layer.copy()
+        # for i in range(len(lh)):
+        #     x, y = lh[i]['position'][0], lh[i]['position'][1]
+        #     if not lh[i]['owner']:
+        #         lh[i]['owner'] = -1
+        #     lh_control_layer[x,y] = lh[i]['owner']
+        # lh_control_layer = self.z_score_scaling(lh_control_layer)
 
         # Create layer that indicates the lighthouses that are connected
         # If the lighthouse is not connected, then a value of -1 is assigned, if it is connected then it is 
@@ -309,16 +306,17 @@ class PPO(bot.Bot):
                 lh_key_layer[x,y] = 1
             else:
                 lh_key_layer[x,y] = -1
+        lh_key_layer = self.z_score_scaling(lh_key_layer)
 
         # Concatenate the maps into one state
         player_layer = np.expand_dims(player_layer, axis=2)
         view_layer = np.expand_dims(view_layer, axis=2)
         lh_energy_layer = np.expand_dims(lh_energy_layer, axis=2)
-        lh_control_layer = np.expand_dims(lh_control_layer, axis=2)
+        #lh_control_layer = np.expand_dims(lh_control_layer, axis=2)
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
-        new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_control_layer, lh_connections_layer, lh_key_layer), axis=2)
+        new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_connections_layer, lh_key_layer), axis=2)
         return new_state
     
 
@@ -488,19 +486,18 @@ class PPO(bot.Bot):
         y_pred, y_true = b_values.cpu().numpy(), b_returns.cpu().numpy()
         var_y = np.var(y_true)
         explained_var = np.nan if var_y == 0 else 1 - np.var(y_true - y_pred) / var_y
-        if self.train:
-            # TRY NOT TO MODIFY: record rewards for plotting purposes
-            self.writer.add_scalar("charts/learning_rate", self.optimizer.param_groups[0]["lr"], self.global_step)
-            self.writer.add_scalar("losses/value_loss", v_loss.item(), self.global_step)
-            self.writer.add_scalar("losses/policy_loss", pg_loss.item(), self.global_step)
-            self.writer.add_scalar("losses/entropy", entropy_loss.item(), self.global_step)
-            self.writer.add_scalar("losses/old_approx_kl", old_approx_kl.item(), self.global_step)
-            self.writer.add_scalar("losses/approx_kl", approx_kl.item(), self.global_step)
-            self.writer.add_scalar("losses/clipfrac", np.mean(clipfracs), self.global_step)
-            self.writer.add_scalar("losses/explained_variance", explained_var, self.global_step)
-            #print("SPS:", int(self.global_step / (time.time() - self.start_time)))
-            self.writer.add_scalar("charts/SPS", int(self.global_step / (time.time() - self.start_time)), self.global_step)
-    
+        # TRY NOT TO MODIFY: record rewards for plotting purposes
+        self.writer.add_scalar("charts/learning_rate", self.optimizer.param_groups[0]["lr"], self.global_step)
+        self.writer.add_scalar("losses/value_loss", v_loss.item(), self.global_step)
+        self.writer.add_scalar("losses/policy_loss", pg_loss.item(), self.global_step)
+        self.writer.add_scalar("losses/entropy", entropy_loss.item(), self.global_step)
+        self.writer.add_scalar("losses/old_approx_kl", old_approx_kl.item(), self.global_step)
+        self.writer.add_scalar("losses/approx_kl", approx_kl.item(), self.global_step)
+        self.writer.add_scalar("losses/clipfrac", np.mean(clipfracs), self.global_step)
+        self.writer.add_scalar("losses/explained_variance", explained_var, self.global_step)
+        #print("SPS:", int(self.global_step / (time.time() - self.start_time)))
+        self.writer.add_scalar("charts/SPS", int(self.global_step / (time.time() - self.start_time)), self.global_step)
+
     def save_trained_model(self):
         os.makedirs(self.model_path, exist_ok=True)
         torch.save(self.agent.state_dict(), os.path.join(self.model_path, self.model_filename))
