@@ -82,32 +82,38 @@ class Interface(object):
         """
         The logic for estimating the reward is the following:
         1. if "status" is False: -1
-        2. if "move" and the move is invalid: -1
-        3. if "attack" and not on a lighthouse: -1
-        4. if "connect" and not on a lighthouse: -1
-        5. if "connect" and connect three lighthouses: 1
-        6. if "connect" and connect two lighthouses: 0.65 
+        2. if command is "move": -1
+        3. if "attack" and gain control of lighthouse: 0 (can also try 0.2 and 0.45)
+        4. if "attack" and do not gain control: -1
+        5. if "connect" and connect three lighthouses: 1 (can also try adding extra amount from score gained)
+        6. if "connect" and connect two lighthouses: 0 (can also try 0.5 and 0.85)
+        7. if "connect" and do not connect lighthouses: -1
+        8. if command is "pass": -1
+        9. anything not covered by the above: -1
         """
+        # TODO: this reward function should be simplified once the final one has been decided on
         state_lh = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
         next_state_lh = dict((tuple(lh["position"]), lh) for lh in next_state["lighthouses"])
+        # Get difference between previous score and current score
         score_temp = []
         len_scores = len(scores)
         for j in range(len(scores)):
             score_temp.append(scores[j][i])
         score_diff = score_temp[-1] - score_temp[len_scores - 2]
-        extra = score_diff*0.01
+        # Create small extra component to take into account the size of triangle created
+        extra = score_diff*0.01 
 
         # If status is False
         if status['success'] == False:
             return -1
-        # If the move command is invalid
+        # If the command is move
         elif action['command'] == "move":
             return -1
         ### ATTACK ###
         elif action['command'] == "attack":
             # If attack a lighthouse and gain control of it
             if state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] == player.num:
-                return 0.45 + extra
+                return 0 # 0.2 
             else: 
                 return -1
         ### CONNECT ###
@@ -118,10 +124,10 @@ class Interface(object):
                 # If connect three lighthouses
                 new_connection = list(set(next_state_lh[next_state['position']]["connections"])-set(state_lh[state['position']]["connections"]))[0]
                 if any(i in next_state_lh[next_state['position']]["connections"] for i in next_state_lh[new_connection]["connections"]):
-                    return 1 + extra
+                    return 1 # + extra
                 # If connect two lighthouses
                 else:
-                    return 0.85 + extra
+                    return 0 #0.5
             else:
                 return -1      
         elif action['command'] == "pass":
@@ -166,7 +172,7 @@ class Interface(object):
                     else:
                         state = next_state
                     if step == 0:
-                        bot.initialize_experience_gathering(update)
+                        bot.initialize_experience_gathering()
 
                     ###########################################
                     # Get action
@@ -212,7 +218,8 @@ class Interface(object):
                 round += 1
             
             update += 1
-            #print("update: ", update)
+            bot.update += 1
+            print("update", bot.update)
                 
             ###########################################
             # Optimize models

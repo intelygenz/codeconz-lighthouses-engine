@@ -105,7 +105,7 @@ class AgentCNN(nn.Module):
 class PPO(bot.Bot):
     def __init__(self, state_maps, num_envs, num_steps, num_updates, train=True, model_filename='model.pth', use_saved_model=False):
         super().__init__()
-        self.NAME = "REINFORCE"
+        self.NAME = "PPO"
         self.gamma = 0.99
         self.learning_rate = 2.5e-4
         self.save_model = True 
@@ -129,6 +129,7 @@ class PPO(bot.Bot):
         self.target_kl = None # the target KL divergence threshold
         self.num_steps = num_steps
         self.num_updates = num_updates
+        self.update = 0
         self.batch_size = self.num_envs * self.num_steps
         self.use_saved_model = use_saved_model
         self.model_filename = model_filename
@@ -146,7 +147,7 @@ class PPO(bot.Bot):
 
 
         # Initialize tensorboard
-        self.writer = SummaryWriter(f"runs/ppo/cnn/test")
+        self.writer = SummaryWriter(f"runs/ppo/cnn")
         self.writer.add_text(
             "hyperparameters",
             "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(self).items()])),
@@ -188,10 +189,10 @@ class PPO(bot.Bot):
         self.start_time = time.time()
 
 
-    def initialize_experience_gathering(self, update):
+    def initialize_experience_gathering(self):
         # Annealing the rate if instructed to do so.
         if self.anneal_lr:
-            frac = 1.0 - (update - 1.0) / self.num_updates
+            frac = 1.0 - (self.update - 1.0) / self.num_updates
             lrnow = frac * self.learning_rate
             self.optimizer.param_groups[0]["lr"] = lrnow
     
