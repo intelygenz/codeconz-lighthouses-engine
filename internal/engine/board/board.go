@@ -210,6 +210,19 @@ func (m *Board) CalcLighthouseEnergy() {
 		if lg.Energy <= 0 {
 			lg.Energy = 0
 			lg.Owner = -1
+
+			for _, conn := range lg.Connections {
+				for i, l := range conn.Connections {
+					if l.Position.Equal(geom.XY, lg.Position) {
+						if len(conn.Connections) == 1 {
+							conn.Connections = make([]lighthouse.Lighthouse, 0)
+						} else {
+							conn.Connections = append(conn.Connections[:i], conn.Connections[i+1:]...)
+						}
+					}
+				}
+			}
+
 			lg.Connections = make([]lighthouse.Lighthouse, 0)
 		}
 	}
