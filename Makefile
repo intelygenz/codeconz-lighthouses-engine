@@ -4,15 +4,15 @@ build:
 
 # Run the application
 rungs:
-	go run ./cmd/main.go -la=:3000
+	go run ./cmd/main.go
 
 # Run bot 1
 runbot1:
-	go run ./examples/ranbot.go -bn=bot1 -la=:3001  -gs=localhost:3000
+	go run ./examples/ranbot.go -bn=bot1 -la=:3001 -gs=:50051
 
 # Run bot 2
 runbot2:
-	go run ./examples/ranbot.go -bn=bot2 -la=:3002  -gs=localhost:3000
+	go run ./examples/ranbot.go -bn=bot2 -la=:3002 -gs=:50051
 
 # Run linter
 lint:
