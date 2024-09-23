@@ -54,6 +54,10 @@ func (b *Bootstrap) Run() {
 
 	fmt.Println("players joining is closed, now the game starts!!!")
 
+	if len(ge.GetPlayers()) == 0 {
+		panic("No players joined, game did not start.")
+	}
+
 	ge.StartGame()
 
 	fmt.Println("Game finished!!!")
@@ -61,8 +65,8 @@ func (b *Bootstrap) Run() {
 
 func (b *Bootstrap) initializeConfiguration() {
 	viper.SetDefault("game.listen_address", ":50051")
-	viper.SetDefault("game.join_timeout", 10*time.Second)
+	viper.SetDefault("game.join_timeout", 15*time.Second)
 	viper.SetDefault("game.turn_request_timeout", 100*time.Millisecond)
-	viper.SetDefault("game.turns", 20)
+	viper.SetDefault("game.turns", 2)
 	viper.SetDefault("game.board_path", "./maps/island.txt")
 }

@@ -14,6 +14,10 @@ runbot1:
 runbot2:
 	go run ./examples/ranbot.go -bn=bot2 -la=:3002 -gs=:50051
 
+# Run bot 3
+runbot3:
+	go run ./examples/ranbot.go -bn=bot3 -la=:3003 -gs=:50051
+
 # Run linter
 lint:
 	golangci-lint run
@@ -31,7 +35,7 @@ proto:
 	--go-grpc_opt=paths=source_relative,require_unimplemented_servers=false \
 	--python_out=./internal/handler/coms \
 	--pyi_out=./internal/handler/coms \
-	--grpc_python_out=./internal/handler/coms \
+	--grpclib_python_out=./internal/handler/coms \
 	./proto/*.proto
 
 .PHONY: build run test proto

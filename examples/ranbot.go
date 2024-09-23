@@ -82,16 +82,14 @@ func (ps *BotComs) waitToJoinGame() {
 			fmt.Printf("Joined game with ID %d\n", int(playerID.PlayerID))
 			ps.botID = int(playerID.PlayerID)
 
-			b, err := json.Marshal(playerID)
+			_, err := json.Marshal(playerID)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-			fmt.Println(string(b))
 			break
 		}
 	}
-
 }
 
 func (ps *BotComs) startListening() {

@@ -62,7 +62,7 @@ func (gs *GameServer) Join(_ context.Context, req *coms.NewPlayer) (*coms.Player
 		return nil, err
 	}
 
-	fmt.Printf("New player joined %d\n", np.ID)
+	fmt.Printf("New player %s joined with ID %d\n", np.Name, np.ID)
 
 	return &coms.PlayerID{PlayerID: int32(np.ID)}, nil
 }
