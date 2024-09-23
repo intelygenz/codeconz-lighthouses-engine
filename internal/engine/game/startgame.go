@@ -17,7 +17,7 @@ func (e *Game) StartGame() {
 	e.gameStartAt = time.Now()
 
 	for i := 0; i < e.turns; i++ {
-		time.Sleep(4 * time.Second)
+		time.Sleep(4 * time.Second) // TODO remove sleep for real game
 		e.gameMap.CalcIslandEnergy()
 		e.gameMap.CalcLighthouseEnergy()
 		for _, p := range e.players {
@@ -37,16 +37,20 @@ func (e *Game) StartGame() {
 				break
 			}
 
-			// TODO: apply the action to change the state of the game
+			// TODO: remove cmd related code for production, this is just to visualize the map while the actions are being executed
 			cmd := exec.Command("clear") //Linux example, its tested
 			cmd.Stdout = os.Stdout
 			cmd.Run()
+
 			err = e.execPlayerAction(p, na)
 			if err != nil {
 				fmt.Printf("Player %d has error %v", p.ID, err)
 			}
 		}
+
 		e.CalcPlayersScores()
+
+		// TODO: remove map printing related code for production, this is just to visualize the map while the actions are being executed
 		e.gameMap.PrettyPrintMap(e.players)
 	}
 }

@@ -60,6 +60,7 @@ func (e *Game) GetPlayerByID(id int) *player.Player {
 	return nil
 }
 
+// TODO pending
 func (e *Game) CalcPlayersScores() {
 	for _, p := range e.players {
 		for _, l := range e.gameMap.GetLightHouses() {
@@ -114,11 +115,11 @@ func (e *Game) GenerateTrianglesFromLines(lines []Line) []Triangle {
 					e.HasCommonPoint(uniqueLines[j], uniqueLines[k]) &&
 					e.HasCommonPoint(uniqueLines[k], uniqueLines[i]) {
 
-					triangles = append(triangles, Triangle{
-						A: uniqueLines[i],
-						B: uniqueLines[j],
-						C: uniqueLines[k],
-					})
+					//triangles = append(triangles, Triangle{
+					//	A: uniqueLines[i],
+					//	B: uniqueLines[j],
+					//	C: uniqueLines[k],
+					//})
 				}
 			}
 		}

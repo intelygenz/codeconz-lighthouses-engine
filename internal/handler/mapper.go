@@ -51,6 +51,8 @@ func (m *Mapper) MapLighthousesToComLighthouses(lighthouseList []*lighthouse.Lig
 					Y: int32(l.Position.Y()),
 					// TODO add owner, connections, etc...
 				},
+				Owner: int32(l.Owner),
+				// TODO add haveKey and the missing fields
 			},
 		)
 	}
