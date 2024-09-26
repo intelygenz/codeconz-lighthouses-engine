@@ -96,3 +96,9 @@ class NewAction(_message.Message):
     Destination: Position
     Energy: int
     def __init__(self, Action: _Optional[_Union[Action, str]] = ..., Destination: _Optional[_Union[Position, _Mapping]] = ..., Energy: _Optional[int] = ...) -> None: ...
+
+class PlayerReady(_message.Message):
+    __slots__ = ("Ready",)
+    READY_FIELD_NUMBER: _ClassVar[int]
+    Ready: bool
+    def __init__(self, Ready: bool = ...) -> None: ...

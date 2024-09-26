@@ -67,21 +67,10 @@ func (gs *GameServer) Join(_ context.Context, req *coms.NewPlayer) (*coms.Player
 	return &coms.PlayerID{PlayerID: int32(np.ID)}, nil
 }
 
-func (gs *GameServer) InitialState(_ context.Context, playerID *coms.PlayerID) (*coms.NewPlayerInitialState, error) {
-	fmt.Printf("New player ask for initial state %d\n", playerID.PlayerID)
-
-	p := gs.game.GetPlayerByID(int(playerID.PlayerID))
-
-	if p == nil {
-		return nil, fmt.Errorf("player not found")
-	}
-
-	mapper := Mapper{}
-	playerInitialState := gs.game.CreateInitialState(p)
-
-	return mapper.MapPlayerInitialStateToComPlayerInitialState(playerInitialState), nil
+func (gs *GameServer) InitialState(_ context.Context, playerID *coms.NewPlayerInitialState) (*coms.PlayerReady, error) {
+	return nil, fmt.Errorf("game server does not implement InitialState service")
 }
 
 func (gs *GameServer) Turn(_ context.Context, _ *coms.NewTurn) (*coms.NewAction, error) {
-	return nil, fmt.Errorf("game server does not implement Turn sercvice")
+	return nil, fmt.Errorf("game server does not implement Turn service")
 }

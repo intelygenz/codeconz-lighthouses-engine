@@ -1,8 +1,9 @@
 package game
 
 import (
-	"github.com/twpayne/go-geom"
 	"time"
+
+	"github.com/twpayne/go-geom"
 
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
@@ -13,6 +14,7 @@ type GameI interface {
 	GetPlayers() []*player.Player
 	GetPlayerByID(id int) *player.Player
 	CreateInitialState(p *player.Player) *PlayerInitialState
+	SendInitialState()
 	StartGame()
 }
 
@@ -41,7 +43,7 @@ func NewGame(islandPath string, turns int) GameI {
 }
 
 func (e *Game) AddNewPlayer(np *player.Player) error {
-	np.ID = len(e.players)
+	np.ID = len(e.players) + 1
 	np.Position = e.gameMap.GetRandomPlayerInitialPosition()
 	e.players = append(e.players, np)
 	return nil
