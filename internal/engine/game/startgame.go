@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/spf13/viper"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/xy"
 
@@ -17,6 +18,11 @@ func (e *Game) StartGame() {
 	e.gameStartAt = time.Now()
 
 	for i := 0; i < e.turns; i++ {
+		if viper.GetBool("game.verbosity") {
+			cmd := exec.Command("clear") //Linux example, its tested
+			cmd.Stdout = os.Stdout
+			cmd.Run()
+		}
 		time.Sleep(4 * time.Second) // TODO remove sleep for real game
 		e.gameMap.CalcIslandEnergy()
 		e.gameMap.CalcLighthouseEnergy()
@@ -33,25 +39,22 @@ func (e *Game) StartGame() {
 			})
 			if err != nil {
 				// handle error
-				fmt.Printf("Player %d has error %v", p.ID, err)
+				fmt.Printf("Player %d has error %v\n", p.ID, err)
 				break
 			}
 
-			// TODO: remove cmd related code for production, this is just to visualize the map while the actions are being executed
-			cmd := exec.Command("clear") //Linux example, its tested
-			cmd.Stdout = os.Stdout
-			cmd.Run()
-
 			err = e.execPlayerAction(p, na)
 			if err != nil {
-				fmt.Printf("Player %d has error %v", p.ID, err)
+				fmt.Printf("Player %d has error %v\n", p.ID, err)
 			}
+			fmt.Println("*************************************************")
 		}
 
 		e.CalcPlayersScores()
 
-		// TODO: remove map printing related code for production, this is just to visualize the map while the actions are being executed
-		e.gameMap.PrettyPrintMap(e.players)
+		if viper.GetBool("game.verbosity") {
+			e.gameMap.PrettyPrintMap(e.players)
+		}
 	}
 }
 
