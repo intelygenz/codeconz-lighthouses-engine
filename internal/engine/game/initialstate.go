@@ -41,12 +41,14 @@ func (e *Game) SendInitialState() {
 
 		mapper := Mapper{}
 		comPlayerInitialState := mapper.MapPlayerInitialStateToComPlayerInitialState(pInitSt)
-		// TODO: debug mode on
-		b, err := json.Marshal(comPlayerInitialState)
-		if err != nil {
-			panic(err)
+
+		if viper.GetBool("game.verbosity") {
+			b, err := json.Marshal(comPlayerInitialState)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(string(b))
 		}
-		fmt.Println(string(b))
 
 		// set grpc client
 		grpcOpt := grpc.WithTransportCredentials(insecure.NewCredentials())

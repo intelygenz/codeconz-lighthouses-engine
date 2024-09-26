@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc/status"
 
 	"golang.org/x/net/context"
@@ -81,13 +82,14 @@ func (ps *BotComs) waitToJoinGame() {
 			fmt.Printf("Joined game with ID %d\n", int(playerID.PlayerID))
 			ps.botID = int(playerID.PlayerID)
 
-			// TODO: debug mode on
-			b, err := json.Marshal(playerID)
-			if err != nil {
-				fmt.Println(err)
-				return
+			if viper.GetBool("bot.verbosity") {
+				b, err := json.Marshal(playerID)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				fmt.Println(string(b))
 			}
-			fmt.Println(string(b))
 			break
 		}
 	}
@@ -155,26 +157,27 @@ func (gs *ClientServer) InitialState(_ context.Context, initialState *coms.NewPl
 	gs.bg = &BotGame{}
 	gs.bg.initialState = initialState
 
-	// TODO: debug mode on
-	b, err := json.Marshal(initialState)
-	if err != nil {
-		return nil, err
+	if viper.GetBool("bot.verbosity") {
+		b, err := json.Marshal(initialState)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(string(b))
 	}
-	fmt.Println(string(b))
 
 	resp := coms.PlayerReady{Ready: true}
 	return &resp, nil
 }
 
 func (gs *ClientServer) Turn(_ context.Context, turn *coms.NewTurn) (*coms.NewAction, error) {
-
-	// TODO: debug mode on
-	b, err := json.Marshal(turn)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
+	if viper.GetBool("bot.verbosity") {
+		b, err := json.Marshal(turn)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+		fmt.Println(string(b))
 	}
-	fmt.Println(string(b))
 
 	action := gs.bg.NewTurnAction(turn)
 
@@ -200,6 +203,9 @@ func ensureParams() (botName *string, listenAddress *string, gameServerAddress *
 }
 
 func main() {
+	// init configuration
+	viper.SetDefault("bot.verbosity", true)
+
 	botName, listenAddress, gameServerAddress := ensureParams()
 
 	bot := &BotComs{

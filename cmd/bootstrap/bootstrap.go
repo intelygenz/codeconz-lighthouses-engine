@@ -72,4 +72,5 @@ func (b *Bootstrap) initializeConfiguration() {
 	viper.SetDefault("game.turn_request_timeout", 100*time.Millisecond)
 	viper.SetDefault("game.turns", 20)
 	viper.SetDefault("game.board_path", "./maps/island.txt")
+	viper.SetDefault("game.verbosity", true)
 }
