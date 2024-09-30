@@ -6,8 +6,10 @@
       </div>
       <ScoreBoard :players="orderedPlayers" />
     </div>
-    <GameBoard :tiles="tiles" :playback="playback"/>
-    <PlaybackControls :playback="plaback"/>
+    <div class="game">
+      <GameBoard :game="game" :playback="playback"/>
+      <PlaybackControls :playback="playback"/>
+    </div>
   </div>
 </template>
 
@@ -16,53 +18,202 @@ import ScoreBoard from './components/ScoreBoard.vue'
 import GameBoard from './components/GameBoard.vue'
 import PlaybackControls from './components/PlaybackControls.vue'
 
+import { 
+  Game, 
+  Playback,
+  player, 
+  lighthouse, 
+  round,
+  initialRoundStatus,
+  boardStatus,
+  playerStatus,
+  playerScore,
+  lighthouseStatus,
+  turn,
+  c
+} from './code/domain.js'
+
+const palette = [
+  0xff0000, 
+  0x580aff,
+  0xdeff0a,
+  0xbe0aff,
+  0x0aefff,
+  0xa1ff0a,
+  0xff8700,
+  0x147df5,
+  0x0aff99,
+  0xffd300,
+]
+
+const matrix = [
+  ['w', 'w', 'w', 'w', 'w'],
+  ['w', 'g', 'g', 'g', 'w'],
+  ['w', 'g', 'g', 'g', 'w'],
+  ['w', 'g', 'g', 'g', 'w'],
+  ['w', 'w', 'w', 'w', 'w'],
+]
+
+const player1 = player(1, 'Alice', palette[0], c(1, 1))
+const player2 = player(2, 'Bob', palette[1], c(1, 2))
+const player3 = player(3, 'X', palette[2], c(1, 3))
+let players = [player1, player2]
+players = [player1, player2, player3]
+
+const lighthouse1 = lighthouse(1, c(2, 2))
+const lighthouses = [lighthouse1]
+
+let rounds = [
+  round(
+    1, 
+    initialRoundStatus(
+      boardStatus([
+        [0, 0, 0, 0, 0],
+        [0, 0, 4, 4, 0],
+        [0, 0, 5, 100, 0],
+        [0, 4, 4, 50, 0],
+        [0, 0, 0, 0, 0],
+      ]),
+      [playerStatus(player1.id, 4, []), playerStatus(player2.id, 4, [])],
+      [playerScore(player1.id, 0), playerScore(player2.id, 0)],
+      [lighthouseStatus(lighthouse1.id, 0)]
+    ), [
+      turn(playerStatus(player1.id, 4, []), c(2, 1)),
+      turn(playerStatus(player2.id, 4, []), c(1, 3)),
+    ],
+  ),
+  round(
+    2, 
+    initialRoundStatus(
+      boardStatus([
+        [0, 0, 0, 0, 0],
+        [0, 4, 0, 8, 0],
+        [0, 4, 10, 100, 0],
+        [0, 0, 8, 50, 0],
+        [0, 0, 0, 0, 0],
+      ]),
+      [playerStatus(player1.id, 12, []), playerStatus(player2.id, 12, [])],
+      [playerScore(player1.id, 0), playerScore(player2.id, 0)],
+      [lighthouseStatus(lighthouse1.id, 0)]
+    ), [
+      turn(playerStatus(player1.id, 12, []), c(2, 2)),
+      turn(playerStatus(player2.id, 12, []), c(2, 3)),
+    ],
+  ),
+  round(
+    3, 
+    initialRoundStatus(
+      boardStatus([
+        [0, 0, 0, 0, 0],
+        [0, 8, 4, 12, 0],
+        [0, 8, 0, 100, 0],
+        [0, 4, 0, 50, 0],
+        [0, 0, 0, 0, 0],
+      ]),
+      [playerStatus(player1.id, 27, [1]), playerStatus(player2.id, 24, [])],
+      [playerScore(player1.id, 2), playerScore(player2.id, 0)],
+      [lighthouseStatus(lighthouse1.id, 0)]
+    ), [
+      turn(playerStatus(player1.id, 0, [1]), c(2, 2), lighthouseStatus(lighthouse1.id, 1, 27, [])),
+      turn(playerStatus(player2.id, 24, []), c(2, 2)),
+    ],
+  ),
+  round(
+    4, 
+    initialRoundStatus(
+      boardStatus([
+        [0, 0, 0, 0, 0],
+        [0, 12, 8, 16, 0],
+        [0, 12, 0, 100, 0],
+        [0, 8, 4, 50, 0],
+        [0, 0, 0, 0, 0],
+      ]),
+      [playerStatus(player1.id, 2, [1]), playerStatus(player2.id, 26, [1])],
+      [playerScore(player1.id, 2), playerScore(player2.id, 2)],
+      [lighthouseStatus(lighthouse1.id, 17)]
+    ), [
+      turn(playerStatus(player1.id, 2, [1]), c(1, 2)),
+      turn(playerStatus(player2.id, 0, [1]), c(2, 2), lighthouseStatus(lighthouse1.id, 2, 9, [])),
+    ],
+  ),
+]
+
+rounds = [
+  round(
+    1, 
+    initialRoundStatus(
+      boardStatus([
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+      ]),
+      [playerStatus(player1.id, 0, []), playerStatus(player2.id, 0, []), playerStatus(player3.id, 0, [])],
+      [playerScore(player1.id, 0), playerScore(player2.id, 0), playerScore(player3.id, 0)],
+      [lighthouseStatus(lighthouse1.id, 0)]
+    ), [
+      turn(playerStatus(player1.id, 4, []), c(2, 2)),
+      turn(playerStatus(player2.id, 4, []), c(2, 2)),
+      turn(playerStatus(player3.id, 4, []), c(2, 2)),
+    ],
+  ),
+  round(
+    2, 
+    initialRoundStatus(
+      boardStatus([
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+      ]),
+      [playerStatus(player1.id, 0, []), playerStatus(player2.id, 0, []), playerStatus(player3.id, 0, [])],
+      [playerScore(player1.id, 0), playerScore(player2.id, 0), playerScore(player3.id, 0)],
+      [lighthouseStatus(lighthouse1.id, 0)]
+    ), [
+      turn(playerStatus(player1.id, 12, []), c(3, 3)),
+      turn(playerStatus(player2.id, 12, []), c(3, 2)),
+      turn(playerStatus(player3.id, 12, []), c(3, 1)),
+    ],
+  ),
+  round(
+    3, 
+    initialRoundStatus(
+      boardStatus([
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+      ]),
+      [playerStatus(player1.id, 0, []), playerStatus(player2.id, 0, []), playerStatus(player3.id, 0, [])],
+      [playerScore(player1.id, 0), playerScore(player2.id, 0), playerScore(player3.id, 0)],
+      [lighthouseStatus(lighthouse1.id, 0)]
+    ), [
+      turn(playerStatus(player1.id, 12, []), c(3, 2)),
+      turn(playerStatus(player2.id, 12, []), c(3, 2)),
+      turn(playerStatus(player3.id, 12, []), c(3, 2)),
+    ],
+  )
+]
+
+const game = new Game(matrix, players, lighthouses, rounds)
+const playback = new Playback(game, 50)
+
 export default {
   name: 'App',
   components: {
     ScoreBoard,
     GameBoard,
-    //PlaybackControls
+    PlaybackControls
   },
   data() {
-    return {
-      players: [
-        { id: 1, name: 'Alice', points: 10, energy: 100 },
-        { id: 2, name: 'Bob', points: 20, energy: 90 },
-        { id: 3, name: 'Charlie', points: 30, energy: 80 },
-        { id: 4, name: 'David', points: 40, energy: 70 },
-        { id: 5, name: 'Eve', points: 50, energy: 60 },
-        { id: 6, name: 'Frank', points: 60, energy: 50 },
-        { id: 7, name: 'Grace', points: 70, energy: 40 },
-        { id: 8, name: 'Heidi', points: 80, energy: 30 },
-        { id: 9, name: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore', points: 90, energy: 20 },
-        { id: 10, name: 'Judy', points: 100, energy: 10 },
-        { id: 11, name: 'Eve 2', points: 50, energy: 60 },
-        { id: 12, name: 'Frank 2', points: 60, energy: 50 },
-        { id: 13, name: 'Grace 2', points: 70, energy: 40 },
-        { id: 14, name: 'Heidi 2', points: 80, energy: 30 },
-        { id: 15, name: 'Someone 2', points: 90, energy: 20 },
-        { id: 16, name: 'Judy 2', points: 100, energy: 10 },
-      ],
-      tiles: [
-        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-        [-1,  0,  0, -1,  0,  0,  0,  0,  0,  0,  0,  0, -1],
-        [-1,  0, -1, -1, -1, -1,  0,  0,  0,  0,  0,  0, -1],
-        [-1,  0, -1, -1,  0,  0,  0,  0,  0, -1, -1,  0, -1],
-        [-1,  0,  0,  0,  0, -1, -1, -1, -1, -1, -1,  0, -1],
-        [-1, -1, -1, -1, -1, -1,  0,  0, -1, -1,  0,  0, -1],
-        [-1, -1, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0, -1],
-        [-1, -1, -1,  0,  0, -1, -1, -1,  0, -1, -1, -1, -1],
-        [-1,  0,  0,  0, -1, -1, -1, -1,  0, -1,  0,  0, -1],
-        [-1, -1,  0, -1, -1, -1,  0,  0,  0, -1,  0,  0, -1],
-        [-1,  0,  0,  0,  0, -1, -1, -1,  0,  0,  0, -1, -1],
-        [-1, -1, -1, -1, -1, -1, -1, -1,  0,  0, -1, -1, -1],
-        [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
-      ],
-    }
+    return { game, playback }
   },
   computed: {
     orderedPlayers() {
-      return this.players.slice().sort((a, b) => b.points - a.points);
+      return this.game.players.slice().sort((a, b) => b.score - a.score);
     },
   },
 }
@@ -104,5 +255,12 @@ html, body {
 
 .header img {
   height: 100px;
+}
+
+.game {
+  flex: 1; /* take up remaining space */
+  display: flex;
+  flex-direction: column;
+  background-color: black;
 }
 </style>
