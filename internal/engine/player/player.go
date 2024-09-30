@@ -19,12 +19,11 @@ type Action struct {
 }
 
 type Turn struct {
-	Position           geom.Coord
-	Score              int
-	Energy             int
-	View               [][]int
-	Lighthouses        []*lighthouse.Lighthouse
-	UserLighthouseKeys []*lighthouse.Lighthouse
+	Position    geom.Coord
+	Score       int
+	Energy      int
+	View        [][]int
+	Lighthouses []*lighthouse.Lighthouse
 }
 
 type Player struct {

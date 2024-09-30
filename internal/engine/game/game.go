@@ -91,7 +91,7 @@ func (e *Game) NormalizeLine(line Line) Line {
 	return Line{A: line.B, B: line.A}
 }
 
-// GenerateTrianglesFromLines generates all possible triangles from a given array of lines
+// TODO: GenerateTrianglesFromLines generates all possible triangles from a given array of lines
 func (e *Game) GenerateTrianglesFromLines(lines []Line) []Triangle {
 	var triangles []Triangle
 
