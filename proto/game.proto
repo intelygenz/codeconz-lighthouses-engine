@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "github.com/jonasdacruz/lighthouses_aicontest/coms";
 
-message NewPlayer {	
+message NewPlayer {
 	string name = 1;
 	string serverAddress = 2;
 }
@@ -29,12 +29,12 @@ message NewPlayer {
 message MapRow {
 	repeated int32 Row = 1;
 }
-	
+
 message Position {
 	int32 X = 1;
-	int32 Y = 2;  
+	int32 Y = 2;
 }
-		
+
 message Lighthouse {
 	Position Position = 1;
 	int32 Owner = 2;
@@ -52,7 +52,7 @@ message NewPlayerInitialState {
     int32 PlayerCount = 2;
     Position Position = 3;
     repeated MapRow Map = 4;
-    repeated Lighthouse Lighthouses = 5; 
+    repeated Lighthouse Lighthouses = 5;
 }
 
 /*
@@ -123,8 +123,12 @@ message NewAction {
 	int32 Energy	= 3;
 }
 
+message PlayerReady {
+	bool Ready = 1;
+}
+
 service GameService {
 	rpc Join (NewPlayer) returns (PlayerID) {}
-	rpc InitialState (PlayerID) returns (NewPlayerInitialState) {}
+	rpc InitialState (NewPlayerInitialState) returns (PlayerReady) {}
 	rpc Turn (NewTurn) returns (NewAction) {}
 }

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc/status"
 
 	"golang.org/x/net/context"
@@ -52,7 +53,6 @@ type BotComs struct {
 	botID                        int
 	botName                      string
 	myAddress, gameServerAddress string
-	initialState                 *coms.NewPlayerInitialState
 }
 
 func (ps *BotComs) waitToJoinGame() {
@@ -82,10 +82,13 @@ func (ps *BotComs) waitToJoinGame() {
 			fmt.Printf("Joined game with ID %d\n", int(playerID.PlayerID))
 			ps.botID = int(playerID.PlayerID)
 
-			_, err := json.Marshal(playerID)
-			if err != nil {
-				fmt.Println(err)
-				return
+			if viper.GetBool("bot.verbosity") {
+				b, err := json.Marshal(playerID)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				fmt.Println(string(b))
 			}
 			break
 		}
@@ -109,40 +112,6 @@ func (ps *BotComs) startListening() {
 
 	if err := grpcServer.Serve(lis); err != nil {
 		panic(err)
-	}
-}
-
-func (ps *BotComs) getInitialState() {
-	fmt.Println("Retrieving initial state", ps.myAddress)
-	grpcOpt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	grpcClient, err := grpc.NewClient(ps.gameServerAddress, grpcOpt)
-	if err != nil {
-		fmt.Printf("grpc client ERROR: %v\n", err)
-		panic("could not create a grpc client")
-	}
-
-	npjc := coms.NewGameServiceClient(grpcClient)
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutToResponse)
-	initialState, err := npjc.InitialState(ctx, &coms.PlayerID{PlayerID: int32(ps.botID)})
-	// time.Sleep(timeoutToResponse)
-	if err != nil {
-		fmt.Printf("could not get initial state ERROR: %v\n", err)
-		cancel()
-		return
-	} else {
-		fmt.Println("Got initial state")
-		ps.initialState = initialState
-
-		b, err := json.Marshal(ps.initialState)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		fmt.Println(string(b))
-
-		cancel()
-		return
 	}
 }
 
@@ -174,27 +143,43 @@ func StreamLoggingInterceptor(
 	return err
 }
 
-type ClientServer struct{}
-
-func (gs *ClientServer) Join(_ context.Context, _ *coms.NewPlayer) (*coms.PlayerID, error) {
-	return nil, fmt.Errorf("game server does not implement Join sercvice")
+type ClientServer struct {
+	bg *BotGame
 }
 
-func (gs *ClientServer) InitialState(_ context.Context, _ *coms.PlayerID) (*coms.NewPlayerInitialState, error) {
-	return nil, fmt.Errorf("game server does not implement InitialState service")
+func (gs *ClientServer) Join(_ context.Context, _ *coms.NewPlayer) (*coms.PlayerID, error) {
+	return nil, fmt.Errorf("random bot does not implement Join service")
+}
+
+func (gs *ClientServer) InitialState(_ context.Context, initialState *coms.NewPlayerInitialState) (*coms.PlayerReady, error) {
+	fmt.Println("random bot receiving InitialState")
+
+	gs.bg = &BotGame{}
+	gs.bg.initialState = initialState
+
+	if viper.GetBool("bot.verbosity") {
+		b, err := json.Marshal(initialState)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(string(b))
+	}
+
+	resp := coms.PlayerReady{Ready: true}
+	return &resp, nil
 }
 
 func (gs *ClientServer) Turn(_ context.Context, turn *coms.NewTurn) (*coms.NewAction, error) {
-	bg := &BotGame{}
-
-	b, err := json.Marshal(turn)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
+	if viper.GetBool("bot.verbosity") {
+		b, err := json.Marshal(turn)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+		fmt.Println(string(b))
 	}
-	fmt.Println(string(b))
 
-	action := bg.NewTurnAction(turn)
+	action := gs.bg.NewTurnAction(turn)
 
 	return action, nil
 }
@@ -218,6 +203,9 @@ func ensureParams() (botName *string, listenAddress *string, gameServerAddress *
 }
 
 func main() {
+	// init configuration
+	viper.SetDefault("bot.verbosity", true)
+
 	botName, listenAddress, gameServerAddress := ensureParams()
 
 	bot := &BotComs{
@@ -228,7 +216,8 @@ func main() {
 
 	bot.waitToJoinGame()
 
-	bot.getInitialState()
+	// TODO: may be it needs to be 1 more step to retrieve initial state and process it
+	// bot.getInitialState()
 
 	bot.startListening()
 

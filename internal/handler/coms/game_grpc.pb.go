@@ -23,7 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GameServiceClient interface {
 	Join(ctx context.Context, in *NewPlayer, opts ...grpc.CallOption) (*PlayerID, error)
-	InitialState(ctx context.Context, in *PlayerID, opts ...grpc.CallOption) (*NewPlayerInitialState, error)
+	InitialState(ctx context.Context, in *NewPlayerInitialState, opts ...grpc.CallOption) (*PlayerReady, error)
 	Turn(ctx context.Context, in *NewTurn, opts ...grpc.CallOption) (*NewAction, error)
 }
 
@@ -44,8 +44,8 @@ func (c *gameServiceClient) Join(ctx context.Context, in *NewPlayer, opts ...grp
 	return out, nil
 }
 
-func (c *gameServiceClient) InitialState(ctx context.Context, in *PlayerID, opts ...grpc.CallOption) (*NewPlayerInitialState, error) {
-	out := new(NewPlayerInitialState)
+func (c *gameServiceClient) InitialState(ctx context.Context, in *NewPlayerInitialState, opts ...grpc.CallOption) (*PlayerReady, error) {
+	out := new(PlayerReady)
 	err := c.cc.Invoke(ctx, "/GameService/InitialState", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (c *gameServiceClient) Turn(ctx context.Context, in *NewTurn, opts ...grpc.
 // for forward compatibility
 type GameServiceServer interface {
 	Join(context.Context, *NewPlayer) (*PlayerID, error)
-	InitialState(context.Context, *PlayerID) (*NewPlayerInitialState, error)
+	InitialState(context.Context, *NewPlayerInitialState) (*PlayerReady, error)
 	Turn(context.Context, *NewTurn) (*NewAction, error)
 }
 
@@ -78,7 +78,7 @@ type UnimplementedGameServiceServer struct {
 func (UnimplementedGameServiceServer) Join(context.Context, *NewPlayer) (*PlayerID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Join not implemented")
 }
-func (UnimplementedGameServiceServer) InitialState(context.Context, *PlayerID) (*NewPlayerInitialState, error) {
+func (UnimplementedGameServiceServer) InitialState(context.Context, *NewPlayerInitialState) (*PlayerReady, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InitialState not implemented")
 }
 func (UnimplementedGameServiceServer) Turn(context.Context, *NewTurn) (*NewAction, error) {
@@ -115,7 +115,7 @@ func _GameService_Join_Handler(srv interface{}, ctx context.Context, dec func(in
 }
 
 func _GameService_InitialState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PlayerID)
+	in := new(NewPlayerInitialState)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func _GameService_InitialState_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: "/GameService/InitialState",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GameServiceServer).InitialState(ctx, req.(*PlayerID))
+		return srv.(GameServiceServer).InitialState(ctx, req.(*NewPlayerInitialState))
 	}
 	return interceptor(ctx, in, info, handler)
 }

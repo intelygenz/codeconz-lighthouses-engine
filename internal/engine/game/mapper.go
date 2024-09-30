@@ -1,7 +1,6 @@
-package handler
+package game
 
 import (
-	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/game"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/lighthouse"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 )
@@ -9,9 +8,9 @@ import (
 type Mapper struct {
 }
 
-func (m *Mapper) MapPlayerInitialStateToComPlayerInitialState(playerInitialState *game.PlayerInitialState) *coms.NewPlayerInitialState {
+func (m *Mapper) MapPlayerInitialStateToComPlayerInitialState(playerInitialState *PlayerInitialState) *coms.NewPlayerInitialState {
 	return &coms.NewPlayerInitialState{
-		PlayerID:    int32(playerInitialState.PlayerID),
+		PlayerID:    int32(playerInitialState.PlayerID), // ISSUE: 0 is not send
 		PlayerCount: int32(playerInitialState.PlayerCount),
 		Position: &coms.Position{
 			X: int32(playerInitialState.Position.X()),

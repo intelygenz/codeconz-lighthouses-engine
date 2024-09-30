@@ -19,7 +19,7 @@ class GameServiceBase(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def InitialState(self, stream: 'grpclib.server.Stream[game_pb2.PlayerID, game_pb2.NewPlayerInitialState]') -> None:
+    async def InitialState(self, stream: 'grpclib.server.Stream[game_pb2.NewPlayerInitialState, game_pb2.PlayerReady]') -> None:
         pass
 
     @abc.abstractmethod
@@ -37,8 +37,8 @@ class GameServiceBase(abc.ABC):
             '/GameService/InitialState': grpclib.const.Handler(
                 self.InitialState,
                 grpclib.const.Cardinality.UNARY_UNARY,
-                game_pb2.PlayerID,
                 game_pb2.NewPlayerInitialState,
+                game_pb2.PlayerReady,
             ),
             '/GameService/Turn': grpclib.const.Handler(
                 self.Turn,
@@ -61,8 +61,8 @@ class GameServiceStub:
         self.InitialState = grpclib.client.UnaryUnaryMethod(
             channel,
             '/GameService/InitialState',
-            game_pb2.PlayerID,
             game_pb2.NewPlayerInitialState,
+            game_pb2.PlayerReady,
         )
         self.Turn = grpclib.client.UnaryUnaryMethod(
             channel,
