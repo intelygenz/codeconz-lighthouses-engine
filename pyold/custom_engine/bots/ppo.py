@@ -25,7 +25,7 @@ import random
 from bots import bot
 
 # Actions for moving
-ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "connect", "pass")
+ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "connect", "attack", "pass")
 
 # Choose cpu or gpu
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -76,7 +76,7 @@ class AgentCNN(nn.Module):
             layer_init(nn.Conv2d(16, 32, 5)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*9*9, 256)),
+            layer_init(nn.Linear(32*10*10, 256)),
             nn.Tanh(),
             layer_init(nn.Linear(256, 1), std=1)
         )
@@ -87,7 +87,7 @@ class AgentCNN(nn.Module):
             layer_init(nn.Conv2d(16, 32, 5)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*9*9, 256)),
+            layer_init(nn.Linear(32*10*10, 256)),
             nn.Tanh(),
             layer_init(nn.Linear(256, a_size), std=0.01)
         )
@@ -230,14 +230,7 @@ class PPO(bot.Bot):
     def convert_state_cnn(self, state, i):
         # Create base layer that will serve as the base for all layers of the state
         # This layer has zeros in all cells except the border cells in which the value is -1
-        map = np.array(self.map[i])
-        base_layer = np.zeros(map.shape, dtype = int)
-        base_layer[0] = -1
-        base_layer[len(base_layer)-1] = -1
-        base_layer = np.transpose(base_layer)
-        base_layer[0] = -1
-        base_layer[len(base_layer)-1] = -1
-        base_layer = np.transpose(base_layer)
+        base_layer = np.array(self.map[i].copy())
 
         # Create player layer which has the value of the energy of the player + 1 where the player is located
         # 1 is added to the energy to cover the case that the energy of the player is 0
@@ -278,13 +271,14 @@ class PPO(bot.Bot):
 
         # Create layer that has the number of the player that controls each lighthouse
         # If no player controls the lighthouse, then a value of -1 is assigned
-        # lh_control_layer = base_layer.copy()
-        # for i in range(len(lh)):
-        #     x, y = lh[i]['position'][0], lh[i]['position'][1]
-        #     if not lh[i]['owner']:
-        #         lh[i]['owner'] = -1
-        #     lh_control_layer[x,y] = lh[i]['owner']
-        # lh_control_layer = self.z_score_scaling(lh_control_layer)
+        lh_control_layer = base_layer.copy()
+        for i in range(len(lh)):
+            x, y = lh[i]['position'][0], lh[i]['position'][1]
+            if lh[i]['owner'] == None:
+                lh_control_layer[x,y] = -1
+            else:
+                lh_control_layer[x,y] = lh[i]['owner']
+        lh_control_layer = self.z_score_scaling(lh_control_layer)
 
         # Create layer that indicates the lighthouses that are connected
         # If the lighthouse is not connected, then a value of -1 is assigned, if it is connected then it is 
@@ -313,7 +307,7 @@ class PPO(bot.Bot):
         player_layer = np.expand_dims(player_layer, axis=2)
         view_layer = np.expand_dims(view_layer, axis=2)
         lh_energy_layer = np.expand_dims(lh_energy_layer, axis=2)
-        #lh_control_layer = np.expand_dims(lh_control_layer, axis=2)
+        lh_control_layer = np.expand_dims(lh_control_layer, axis=2)
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
