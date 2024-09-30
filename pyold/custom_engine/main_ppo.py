@@ -17,7 +17,8 @@ from bots.ppo import PPO
 
 if __name__ == "__main__":
     # Set the map
-    cfg_file = "maps/grid.txt"
+    cfg_files = ["maps/grid.txt", "maps/island.txt", "maps/random.txt"] #, "maps/square_xl.txt"]
+    cfg_file = "maps/grid_or.txt"
     
     # Set the bots to play the game
 
@@ -25,14 +26,14 @@ if __name__ == "__main__":
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
 
-    NUM_EPISODES = 5
-    MAX_AGENT_UPDATES = 90 # Number of times to update the agent within an episode
+    NUM_EPISODES = 100
+    MAX_AGENT_UPDATES = 90 #90 # Number of times to update the agent within an episode
     NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the agent
     MAX_EVALUATION_ROUNDS = 10000
-    TRAIN = False # Whether to run training or evaluation
-    NUM_ENVS = 1
+    TRAIN = True # Whether to run training or evaluation
+    NUM_ENVS = 3
     STATE_MAPS = True
-    MODEL_FILENAME = "ppo_cnn_1env_extra_connect3_update.pth"
+    MODEL_FILENAME = "test3.pth"
     USE_SAVED_MODEL = True
     MAX_TOTAL_UPDATES = NUM_EPISODES * MAX_AGENT_UPDATES
 
@@ -45,11 +46,16 @@ if __name__ == "__main__":
 
     if TRAIN:
         for i in range(1, NUM_EPISODES+1):
-            config = engine.GameConfig(cfg_file)
-            game = [engine.Game(config, len(bots)) for i in range(NUM_ENVS)]
+            for i in range(len(cfg_files)):
+                config = engine.GameConfig(cfg_files[i])
+                game = [engine.Game(config, len(bots)) for i in range(NUM_ENVS)]
+            # config = engine.GameConfig(cfg_file)
+            # game = [engine.Game(config, len(bots)) for i in range(NUM_ENVS)]
 
-            iface = train_ppo.Interface(game, bots, debug=False)
-            iface.train(max_updates=MAX_AGENT_UPDATES, num_steps_update=NUM_STEPS_POLICY_UPDATE)
+                iface = train_ppo.Interface(game, bots, debug=False)
+                iface.train(max_updates=MAX_AGENT_UPDATES, num_steps_update=NUM_STEPS_POLICY_UPDATE)
+            # iface = train_ppo.Interface(game, bots, debug=False)
+            # iface.train(max_updates=MAX_AGENT_UPDATES, num_steps_update=NUM_STEPS_POLICY_UPDATE)
     
     if not TRAIN:
         for i in range(1, NUM_EPISODES+1):
