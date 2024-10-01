@@ -1,8 +1,6 @@
 package game
 
 import (
-	"fmt"
-
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/sorting"
 )
@@ -32,20 +30,20 @@ func NormalizeTriangle(vA, vB, vC geom.Coord) Triangle {
 				A: vA,
 				B: vB,
 				C: vC,
-			} // OK, case 00, 03, 30
+			}
 		} else {
 			if sorting.IsLess2D(vA, vC) {
 				return Triangle{
 					A: vA,
 					B: vC,
 					C: vB,
-				} // OK, case 00, 30, 03
+				}
 			} else {
 				return Triangle{
 					A: vC,
 					B: vA,
 					C: vB,
-				} // OK, case 03, 30, 00
+				}
 			}
 		}
 	} else {
@@ -55,7 +53,7 @@ func NormalizeTriangle(vA, vB, vC geom.Coord) Triangle {
 					A: vB,
 					B: vA,
 					C: vC,
-				} // OK, case 03, 00, 30
+				}
 			}
 		} else {
 			if sorting.IsLess2D(vB, vC) {
@@ -63,14 +61,14 @@ func NormalizeTriangle(vA, vB, vC geom.Coord) Triangle {
 					A: vB,
 					B: vC,
 					C: vA,
-				} // OK, case 30, 00, 03
+				}
 
 			} else {
 				return Triangle{
 					A: vC,
 					B: vB,
 					C: vA,
-				} // OK, case 30, 03, 00
+				}
 			}
 		}
 	}
@@ -80,7 +78,6 @@ func NormalizeTriangle(vA, vB, vC geom.Coord) Triangle {
 
 // GenerateTrianglesFromLines generates all possible triangles from a given array of lines
 func GenerateTrianglesFromLines(lines []Line) []Triangle {
-	//var []Triangle
 	triangles := []Triangle{}
 
 	// Normalize lines to handle duplicates with reversed points
@@ -113,9 +110,7 @@ func GenerateTrianglesFromLines(lines []Line) []Triangle {
 					verticeC := GetCommonPoint(uniqueLines[k], uniqueLines[i])
 
 					if !verticeA.Equal(geom.XY, verticeB) && !verticeB.Equal(geom.XY, verticeC) && !verticeA.Equal(geom.XY, verticeC) {
-						fmt.Println("Bingo! Lines found are a triangle!")
 						triangle := NormalizeTriangle(verticeA, verticeB, verticeC)
-
 						if !Contains(triangles, triangle) {
 							triangles = append(triangles, triangle)
 						}
@@ -124,7 +119,6 @@ func GenerateTrianglesFromLines(lines []Line) []Triangle {
 			}
 		}
 	}
-
 	return triangles
 }
 
