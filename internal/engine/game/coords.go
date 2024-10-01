@@ -22,7 +22,7 @@ func NormalizeLine(line Line) Line {
 	return Line{A: line.B, B: line.A}
 }
 
-// NormalizeTriangle ensures that a line is always stored with the smaller point first
+// NormalizeTriangle ensures that the 3 points of a triangle are always stored with smaller point first and greater point last
 func NormalizeTriangle(vA, vB, vC geom.Coord) Triangle {
 	if sorting.IsLess2D(vA, vB) {
 		if sorting.IsLess2D(vB, vC) {
@@ -76,7 +76,7 @@ func NormalizeTriangle(vA, vB, vC geom.Coord) Triangle {
 	return Triangle{}
 }
 
-// GenerateTrianglesFromLines generates all possible triangles from a given array of lines
+// GenerateTrianglesFromLines generates all possible unique triangles from a given array of lines
 func GenerateTrianglesFromLines(lines []Line) []Triangle {
 	triangles := []Triangle{}
 
@@ -91,7 +91,6 @@ func GenerateTrianglesFromLines(lines []Line) []Triangle {
 
 	// Create a slice of unique lines, commented as it alters order
 	var uniqueLines []Line
-	// var uniqueLines []Line
 	for line := range linesMap {
 		uniqueLines = append(uniqueLines, line)
 	}
@@ -105,12 +104,15 @@ func GenerateTrianglesFromLines(lines []Line) []Triangle {
 					HasCommonPoint(uniqueLines[j], uniqueLines[k]) &&
 					HasCommonPoint(uniqueLines[k], uniqueLines[i]) {
 
+					// get vertices
 					verticeA := GetCommonPoint(uniqueLines[i], uniqueLines[j])
 					verticeB := GetCommonPoint(uniqueLines[j], uniqueLines[k])
 					verticeC := GetCommonPoint(uniqueLines[k], uniqueLines[i])
 
+					// only if each point is different
 					if !verticeA.Equal(geom.XY, verticeB) && !verticeB.Equal(geom.XY, verticeC) && !verticeA.Equal(geom.XY, verticeC) {
 						triangle := NormalizeTriangle(verticeA, verticeB, verticeC)
+						// only add new triangles
 						if !Contains(triangles, triangle) {
 							triangles = append(triangles, triangle)
 						}
@@ -128,6 +130,7 @@ func HasCommonPoint(line1, line2 Line) bool {
 		line1.B.Equal(geom.XY, *line2.A) || line1.B.Equal(geom.XY, *line2.B)
 }
 
+// GetCommonPoint get common endpoint of a line
 func GetCommonPoint(line1, line2 Line) geom.Coord {
 	if line1.A.Equal(geom.XY, *line2.A) || line1.B.Equal(geom.XY, *line2.A) {
 		return *line2.A
@@ -135,6 +138,7 @@ func GetCommonPoint(line1, line2 Line) geom.Coord {
 	return *line2.B
 }
 
+// Checks if a triangle already exists in a list of triangles
 func Contains(tris []Triangle, t Triangle) bool {
 	for _, ts := range tris {
 		if ts.A.Equal(geom.XY, t.A) && ts.B.Equal(geom.XY, t.B) && ts.C.Equal(geom.XY, t.C) {
