@@ -4,5 +4,5 @@ type NoMorePlayersAcceptedError struct {
 }
 
 func (e *NoMorePlayersAcceptedError) Error() string {
-	return "No more players accepted"
+	return "no more players accepted"
 }
