@@ -7,14 +7,16 @@ import (
 )
 
 type Lighthouse struct {
-	Position    geom.Coord
-	Energy      int
-	Owner       int
-	Connections []Lighthouse
+	ID          int          `json:"id"`
+	Position    geom.Coord   `json:"position"`
+	Energy      int          `json:"energy"`
+	Owner       int          `json:"owner_id"`
+	Connections []Lighthouse `json:"connections"`
 }
 
-func NewLightHouse(x, y int) *Lighthouse {
+func NewLightHouse(lId, x, y int) *Lighthouse {
 	return &Lighthouse{
+		ID:          lId,
 		Position:    geom.Coord{float64(x), float64(y)},
 		Energy:      0,
 		Owner:       -1,

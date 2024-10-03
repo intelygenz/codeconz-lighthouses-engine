@@ -36,6 +36,7 @@ type BoardI interface {
 	CalcIslandEnergy()
 	CalcLighthouseEnergy()
 	CalcPlayerEnergy(players []*player.Player, currentPlayer *player.Player)
+	GetIslandEnergy() [][]int
 
 	CanMoveTo(coord geom.Coord) bool
 	IsLighthouse(position geom.Coord) bool
@@ -103,6 +104,7 @@ func (m *Board) load(path string) {
 		m.cells[i] = make([]CellI, m.Width)
 	}
 
+	lId := 1
 	for i, line := range lines {
 		for j, char := range line {
 			switch char {
@@ -112,7 +114,8 @@ func (m *Board) load(path string) {
 				m.cells[i][j] = cell.NewEmptyCell(i, j)
 			case LighthouseCellRune:
 				m.cells[i][j] = island.NewIslandCell(i, j)
-				m.lighthouses = append(m.lighthouses, lighthouse.NewLightHouse(i, j))
+				m.lighthouses = append(m.lighthouses, lighthouse.NewLightHouse(lId, i, j))
+				lId++
 			default:
 				m.cells[i][j] = island.NewIslandCell(i, j)
 				m.playerInitialPositions = append(m.playerInitialPositions, m.cells[i][j].(*island.Island))
@@ -200,6 +203,23 @@ func (m *Board) CalcIslandEnergy() {
 			}
 		}
 	}
+}
+
+// get energy for the each cell in the board
+func (m *Board) GetIslandEnergy() [][]int {
+	islandEnergy := make([][]int, m.Height)
+	for i := 0; i < m.Height; i++ {
+		islandEnergy[i] = make([]int, m.Width)
+		for j := 0; j < m.Width; j++ {
+			if m.cells[i][j].GetType() == cell.IslandCell {
+				islandCell := m.cells[i][j].(*island.Island)
+				islandEnergy[i][j] = islandCell.Energy
+			} else {
+				islandEnergy[i][j] = 0
+			}
+		}
+	}
+	return islandEnergy
 }
 
 func (m *Board) CalcLighthouseEnergy() {

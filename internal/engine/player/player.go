@@ -27,13 +27,13 @@ type Turn struct {
 }
 
 type Player struct {
-	ServerAddress  string
-	ID             int
-	Name           string
-	Score          int
-	Energy         int
-	Position       geom.Coord
-	LighthouseKeys []*lighthouse.Lighthouse
+	ServerAddress  string                   `json:"-"`
+	ID             int                      `json:"id"`
+	Name           string                   `json:"name"`
+	Score          int                      `json:"score"`
+	Energy         int                      `json:"energy"`
+	Position       geom.Coord               `json:"position"`
+	LighthouseKeys []*lighthouse.Lighthouse `json:"keys"`
 }
 
 func NewPlayer(serverAddress string, name string) *Player {

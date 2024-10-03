@@ -5,6 +5,7 @@ import (
 
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/state"
 )
 
 type GameI interface {
@@ -13,6 +14,7 @@ type GameI interface {
 	GetPlayerByID(id int) *player.Player
 	CreateInitialState(p *player.Player) *PlayerInitialState
 	SendInitialState()
+	CalcPlayersScores()
 	StartGame()
 }
 
@@ -21,14 +23,17 @@ type Game struct {
 	players     []*player.Player
 	gameMap     board.BoardI
 	turns       int
+	state       state.State
 }
 
 func NewGame(islandPath string, turns int) GameI {
+	gState := state.NewInMemoryState()
 	return &Game{
 		gameStartAt: time.Now(),
 		players:     []*player.Player{},
 		gameMap:     board.NewBoard(islandPath),
 		turns:       turns,
+		state:       gState,
 	}
 }
 
