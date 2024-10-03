@@ -249,16 +249,24 @@ func (m *Board) CalcLighthouseEnergy() {
 }
 
 func (m *Board) CalcPlayerEnergy(players []*player.Player, currentPlayer *player.Player) {
+	islandCell := m.cells[int(currentPlayer.Position.X())][int(currentPlayer.Position.Y())].(*island.Island)
+	if islandCell.Energy == 0 {
+		// energy is already given, do nothing
+		return
+	}
+
 	playersOnPosition := make([]*player.Player, 0)
 	for _, p := range players {
 		if currentPlayer.Position.Equal(geom.XY, p.Position) {
 			playersOnPosition = append(playersOnPosition, p)
 		}
 	}
-
-	islandCell := m.cells[int(currentPlayer.Position.X())][int(currentPlayer.Position.Y())].(*island.Island)
-	currentPlayer.Energy += int(math.Floor(float64(islandCell.Energy / len(playersOnPosition))))
-
+	// calculate how much energy is in the island, divide between all players in the position and give corresponding energy
+	energy := int(float64(islandCell.Energy / len(playersOnPosition)))
+	for _, p := range playersOnPosition {
+		p.Energy += energy
+	}
+	// energy is 0
 	islandCell.Energy = 0
 }
 

@@ -43,12 +43,15 @@ func (e *Game) StartGame() {
 			Players:    e.GetPlayers(),
 			Lighthouse: e.gameMap.GetLightHouses(),
 		}
+		round.GenerateDataGameStatus()
 		e.state.SetNewRound(roundId, round)
 
+		// give energy to all players before turns starts
 		for _, p := range e.players {
-			// TODO: review this needs to be done before everything else
 			e.gameMap.CalcPlayerEnergy(e.GetPlayers(), p)
+		}
 
+		for _, p := range e.players {
 			// send message to each Player with the info
 			na, err := p.RequestNewTurn(player.Turn{
 				Position:    p.Position,
@@ -70,11 +73,12 @@ func (e *Game) StartGame() {
 			fmt.Println("*************************************************")
 
 			// generate turn state and set into game state
-			turnS := state.Turn{
+			turn := state.Turn{
 				Player:      *p,
 				Lighthouses: e.gameMap.GetLightHouses(),
 			}
-			e.state.AddPlayerTurn(roundId, turnS)
+			turn.GenerateDataTurn()
+			e.state.AddPlayerTurn(roundId, turn)
 		}
 
 		e.CalcPlayersScores()

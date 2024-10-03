@@ -7,11 +7,12 @@ import (
 )
 
 type Lighthouse struct {
-	ID          int          `json:"id"`
-	Position    geom.Coord   `json:"position"`
-	Energy      int          `json:"energy"`
-	Owner       int          `json:"owner_id"`
-	Connections []Lighthouse `json:"connections"`
+	ID            int          `json:"id"`
+	Position      geom.Coord   `json:"position"`
+	Energy        int          `json:"energy"`
+	Owner         int          `json:"ownerId"`
+	Connections   []Lighthouse `json:"-"`
+	ConnectionsId []int        `json:"connections"`
 }
 
 func NewLightHouse(lId, x, y int) *Lighthouse {
@@ -40,4 +41,11 @@ func (l *Lighthouse) Connect(lighthouse *Lighthouse) error {
 	lighthouse.Connections = append(lighthouse.Connections, *l)
 
 	return nil
+}
+
+func (l *Lighthouse) GenerateConnectionsId() {
+	l.ConnectionsId = make([]int, 0)
+	for _, c := range l.Connections {
+		l.ConnectionsId = append(l.ConnectionsId, c.ID)
+	}
 }

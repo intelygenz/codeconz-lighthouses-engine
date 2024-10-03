@@ -27,13 +27,14 @@ type Turn struct {
 }
 
 type Player struct {
-	ServerAddress  string                   `json:"-"`
-	ID             int                      `json:"id"`
-	Name           string                   `json:"name"`
-	Score          int                      `json:"score"`
-	Energy         int                      `json:"energy"`
-	Position       geom.Coord               `json:"position"`
-	LighthouseKeys []*lighthouse.Lighthouse `json:"keys"`
+	ServerAddress    string                   `json:"-"`
+	ID               int                      `json:"id"`
+	Name             string                   `json:"name"`
+	Score            int                      `json:"score"`
+	Energy           int                      `json:"energy"`
+	Position         geom.Coord               `json:"position"`
+	LighthouseKeys   []*lighthouse.Lighthouse `json:"-"`
+	LighthouseKeyIds []int                    `json:"keys"`
 }
 
 func NewPlayer(serverAddress string, name string) *Player {
@@ -66,5 +67,12 @@ func (p *Player) RemoveLighthouseKey(lighthouse lighthouse.Lighthouse) {
 			p.LighthouseKeys = append(p.LighthouseKeys[:i], p.LighthouseKeys[i+1:]...)
 			break
 		}
+	}
+}
+
+func (p *Player) GenerateLighthouseKeysIds() {
+	p.LighthouseKeyIds = make([]int, 0)
+	for _, l := range p.LighthouseKeys {
+		p.LighthouseKeyIds = append(p.LighthouseKeyIds, l.ID)
 	}
 }

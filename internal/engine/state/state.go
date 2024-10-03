@@ -18,10 +18,27 @@ type GameStatus struct {
 	Lighthouse []*lighthouse.Lighthouse `json:"lighthouses"`
 }
 
+func (gs *GameStatus) GenerateDataGameStatus() {
+	for _, p := range gs.Players {
+		p.GenerateLighthouseKeysIds()
+	}
+	for _, l := range gs.Lighthouse {
+		l.GenerateConnectionsId()
+	}
+}
+
 type Turn struct {
 	Player      player.Player            `json:"player"`
 	Lighthouses []*lighthouse.Lighthouse `json:"lighthouses"`
 }
+
+func (t *Turn) GenerateDataTurn() {
+	t.Player.GenerateLighthouseKeysIds()
+	for _, l := range t.Lighthouses {
+		l.GenerateConnectionsId()
+	}
+}
+
 type Round struct {
 	Id    int        `json:"-"`
 	Setup GameStatus `json:"setup"`
