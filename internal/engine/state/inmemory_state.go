@@ -11,7 +11,7 @@ type InMemoryState struct {
 	GameState GameState
 }
 
-func NewInMemoryState() *InMemoryState {
+func NewInMemoryState() State {
 	return &InMemoryState{
 		GameState: GameState{},
 	}
