@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"slices"
 	"time"
 
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
@@ -20,6 +21,8 @@ const (
 	timeoutToResponse = 1 * time.Second
 )
 
+var countT = 1
+
 type BotGameTurn struct {
 	turn   *coms.NewTurn
 	action *coms.NewAction
@@ -33,11 +36,51 @@ type BotGame struct {
 func (bg *BotGame) NewTurnAction(turn *coms.NewTurn) *coms.NewAction {
 	position := &coms.Position{
 		X: turn.Position.X + 1,
-		Y: turn.Position.Y + 1,
+		Y: turn.Position.Y,
 	}
 	action := &coms.NewAction{
 		Action:      coms.Action_MOVE,
 		Destination: position,
+	}
+	if countT == 2 {
+		position := &coms.Position{
+			X: turn.Position.X,
+			Y: turn.Position.Y + 1,
+		}
+		action = &coms.NewAction{
+			Action:      coms.Action_MOVE,
+			Destination: position,
+		}
+	}
+
+	if countT == 3 || countT == 6 {
+		action = &coms.NewAction{
+			Action: coms.Action_ATTACK,
+			Energy: turn.Energy,
+			Destination: &coms.Position{
+				X: turn.Position.X,
+				Y: turn.Position.Y,
+			},
+		}
+	}
+	if countT == 7 {
+		action = &coms.NewAction{
+			Action: coms.Action_CONNECT,
+			Destination: &coms.Position{
+				X: 3,
+				Y: 3,
+			},
+		}
+	}
+	moveUp := []int{4, 5}
+	if slices.Contains(moveUp, countT) {
+		action = &coms.NewAction{
+			Action: coms.Action_MOVE,
+			Destination: &coms.Position{
+				X: turn.Position.X - 1,
+				Y: turn.Position.Y,
+			},
+		}
 	}
 
 	bgt := BotGameTurn{
@@ -46,6 +89,7 @@ func (bg *BotGame) NewTurnAction(turn *coms.NewTurn) *coms.NewAction {
 	}
 	bg.turnStates = append(bg.turnStates, bgt)
 
+	countT += 1
 	return action
 }
 

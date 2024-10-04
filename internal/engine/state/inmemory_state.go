@@ -21,20 +21,17 @@ func (m *InMemoryState) SetGameState(gs GameState) {
 	m.GameState = gs
 }
 
-func (m *InMemoryState) SetNewRound(rId int, gs GameStatus) {
+func (m *InMemoryState) SetNewRound(rId int, gs *GameStatus) {
 	r := Round{
 		Id:    rId,
 		Setup: gs,
 	}
 	m.GameState.Rounds = append(m.GameState.Rounds, r)
 }
-func (m *InMemoryState) AddPlayerTurn(rId int, ts Turn) {
-	for _, r := range m.GameState.Rounds {
-		if r.Id == rId {
-			r.Turns = append(r.Turns, ts)
-		}
-	}
+func (m *InMemoryState) AddPlayerTurn(rId int, ts *Turn) {
+	m.GameState.Rounds[rId-1].Turns = append(m.GameState.Rounds[rId-1].Turns, ts)
 }
+
 func (m *InMemoryState) DumpToFileFinalStateInJson() error {
 	data, _ := json.Marshal(m.GameState)
 

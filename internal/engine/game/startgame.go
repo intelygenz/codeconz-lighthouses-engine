@@ -15,11 +15,7 @@ import (
 func (e *Game) StartGame() {
 	e.gameStartAt = time.Now()
 	// generate initial game state
-	gStatus := state.GameStatus{
-		Energy:     e.gameMap.GetIslandEnergy(),
-		Players:    e.GetPlayers(),
-		Lighthouse: e.gameMap.GetLightHouses(),
-	}
+	gStatus := state.NewGameStatus(e.gameMap.GetIslandEnergy(), e.GetPlayers(), e.gameMap.GetLightHouses())
 	gState := state.GameState{
 		Topology: e.gameMap.GetPlayableMap(),
 		Setup:    gStatus,
@@ -38,12 +34,7 @@ func (e *Game) StartGame() {
 		e.gameMap.CalcLighthouseEnergy()
 
 		// generate initial round state
-		round := state.GameStatus{
-			Energy:     e.gameMap.GetIslandEnergy(),
-			Players:    e.GetPlayers(),
-			Lighthouse: e.gameMap.GetLightHouses(),
-		}
-		round.GenerateDataGameStatus()
+		round := state.NewGameStatus(e.gameMap.GetIslandEnergy(), e.GetPlayers(), e.gameMap.GetLightHouses())
 		e.state.SetNewRound(roundId, round)
 
 		// give energy to all players before turns starts
@@ -73,11 +64,7 @@ func (e *Game) StartGame() {
 			fmt.Println("*************************************************")
 
 			// generate turn state and set into game state
-			turn := state.Turn{
-				Player:      *p,
-				Lighthouses: e.gameMap.GetLightHouses(),
-			}
-			turn.GenerateDataTurn()
+			turn := state.NewTurn(p, e.gameMap.GetLightHouses())
 			e.state.AddPlayerTurn(roundId, turn)
 		}
 
