@@ -1,0 +1,16 @@
+# Build the Go binary
+FROM golang:1.22-alpine
+
+WORKDIR /app
+COPY . ./
+
+RUN go mod download && \
+    CGO_ENABLED=0 GOOS=linux go build -o game cmd/main.go
+
+EXPOSE 50051
+# all ports to listen
+EXPOSE 3001
+EXPOSE 3002
+
+# Command to run the Go binary
+CMD ["./game"]

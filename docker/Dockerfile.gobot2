@@ -1,0 +1,14 @@
+# Build the Go binary
+FROM golang:1.22-alpine
+
+WORKDIR /app
+COPY . ./
+
+RUN go mod download && \
+    CGO_ENABLED=0 GOOS=linux go build -o bot2 ./examples/ranbot.go
+
+EXPOSE 50051
+EXPOSE 3002
+
+# Command to run the Go binary
+CMD ["./bot2", "-bn=bot2", "-la=gobot2:3002", "-gs=game:50051"]

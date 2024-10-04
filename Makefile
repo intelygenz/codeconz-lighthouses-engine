@@ -26,6 +26,24 @@ lint:
 test:
 	go test -v ./...
 
+# docker stuff
+dnetwork:
+	 docker network create gamenw
+
+dbuild:
+# one common image with args did not work
+#	docker build -f ./docker/Dockerfile.game . -t game && docker build -f ./docker/Dockerfile.gobot --build-arg BOT_PORT=3001 . --build-arg BOT_NAME=gobot1 -t gobot1 && docker build -f ./docker/Dockerfile.gobot . --build-arg BOT_PORT=3002 --build-arg BOT_NAME=gobot2 -t gobot2
+	docker build -f ./docker/Dockerfile.game . -t game && docker build -f ./docker/Dockerfile.gobot1 . -t gobot1 && docker build -f ./docker/Dockerfile.gobot2 . -t gobot2
+
+drungs:
+	docker run --rm --net gamenw --name game -v ./output:/app/output -p 50051:50051 game
+
+drunbot1:
+	docker run --rm --net gamenw --name gobot1 -p 3001:3001 gobot1
+
+drunbot2:
+	docker run --rm --net gamenw --name gobot2 -p 3002:3002 gobot2
+
 # Generate protobuf files
 proto:
 	protoc -I=./proto \
