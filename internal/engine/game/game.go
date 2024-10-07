@@ -1,12 +1,12 @@
 package game
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/state"
-	"github.com/twpayne/go-geom"
 )
 
 type GameI interface {
@@ -62,34 +62,32 @@ func (e *Game) CalcPlayersScores() {
 	for _, p := range e.players {
 		var lines []Line
 		for _, l := range e.gameMap.GetLightHouses() {
-			// REVIEW: ojo, estamos duplicando el score por cada lighthouse?
 			if l.Owner == p.ID {
+				// SCORE: sum 2 points for each lighthouse the player owns
 				p.Score += 2
-				p.Score += 2 * len(l.Connections)
 
 				// Calculate pairs of connected lighthouses
 				for _, conn := range l.Connections {
-					// get lines to calculate later triangles for the player
 					l := Line{A: &l.Position, B: &conn.Position}
 					lines = append(lines, l)
-					if conn.Owner == p.ID {
-						p.Score += 2
-					}
 				}
 			}
 		}
-		// get triangles for the player
+		// NOTE: as we are looping players and lighthouses,
+		// lines will be duplicated for each pair of lighthouses connected
+		// ex: if lighthouse 1 and 4 are connected, lines are: [[1, 4], [4,1]]
+		// but it is only 1 connection between lighthouses 1 and 4
+		connections := int(len(lines) / 2)
+
+		// SCORE: sum 2 points for each pair of lighthouses connected
+		p.Score += connections * 2
+
+		// SCORE: get triangles for the player and calculate score inside each triangle
 		triangles := GenerateTrianglesFromLines(lines)
-		// calculate score inside each triangle
 		for _, t := range triangles {
-
-			v0 := []int{int(t.A.X()), int(t.A.Y())}
-			v1 := []int{int(t.B.X()), int(t.B.Y())}
-			v2 := []int{int(t.C.X()), int(t.C.Y())}
-
-			for _, point := range renderTriangle(v0, v1, v2) {
-				pos := geom.Coord{float64(point[0]), float64(point[1])}
-				if e.gameMap.IsIsland(pos) {
+			for _, coord := range renderTriangle(t) {
+				if e.gameMap.IsIsland(coord) {
+					fmt.Printf("one more triangle to sum!\n")
 					p.Score++
 				}
 			}

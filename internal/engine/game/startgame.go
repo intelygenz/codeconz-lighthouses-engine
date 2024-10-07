@@ -29,7 +29,10 @@ func (e *Game) StartGame() {
 			cmd.Stdout = os.Stdout
 			cmd.Run()
 		}
-		time.Sleep(4 * time.Second) // TODO remove sleep for real game
+		timeBetweenRounds := viper.GetDuration("game.time_between_rounds")
+		if timeBetweenRounds > 0 {
+			time.Sleep(timeBetweenRounds)
+		}
 		e.gameMap.CalcIslandEnergy()
 		e.gameMap.CalcLighthouseEnergy()
 
@@ -74,6 +77,8 @@ func (e *Game) StartGame() {
 			e.gameMap.PrettyPrintMap(e.players)
 		}
 	}
+
+	// REVIEW: after last round, there is no information updated in state regarding latest player's score
 
 	// dump to file the final state of the game in json format
 	if err := e.state.DumpToFileFinalStateInJson(); err != nil {
