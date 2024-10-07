@@ -52,7 +52,7 @@ func (e *Game) moveToPosition(p *player.Player, action *player.Action) error {
 }
 
 func (e *Game) attackPosition(p *player.Player, action *player.Action) error {
-	fmt.Printf("Player %d attack\n", p.ID)
+	fmt.Printf("Player %d attacking\n", p.ID)
 
 	if action.Energy > p.Energy {
 		return fmt.Errorf("player %d has no energy to attack", p.ID)
@@ -77,6 +77,7 @@ func (e *Game) attackPosition(p *player.Player, action *player.Action) error {
 			}
 
 			p.Energy -= action.Energy
+			fmt.Printf("Player %d attacked lighthouse %d. Current energy and owner are: %d, %d \n", p.ID, l.ID, l.Energy, l.Owner)
 			break
 		}
 	}
@@ -114,6 +115,10 @@ func (e *Game) connectLighthouses(p *player.Player, action *player.Action) error
 	}
 
 	for _, l := range e.gameMap.GetLightHouses() {
+		// ignore checks below when l.Position is equal to curLighthousePos or destLighthousePos
+		if l.Position.Equal(geom.XY, curLighthousePos) || l.Position.Equal(geom.XY, destLighthousePos) {
+			continue
+		}
 		if xy.IsPointWithinLineBounds(l.Position, curLighthousePos, destLighthousePos) {
 			return fmt.Errorf("connection cannot intersect a lighthouse")
 		}
@@ -126,6 +131,7 @@ func (e *Game) connectLighthouses(p *player.Player, action *player.Action) error
 	}
 
 	err = curLighthouse.Connect(destLighthouse)
+	fmt.Printf("Player %d connect lighthouse %v with %v\n", p.ID, curLighthousePos, destLighthousePos)
 	if err != nil {
 		return err
 	}
