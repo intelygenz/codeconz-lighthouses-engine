@@ -1,0 +1,103 @@
+# Datos y estado de un jugador
+# ==============================================================
+Player:
+  id: integer
+  name: string
+  x: integer # entre 0 y el ancho del mapa
+  y: integer # entre 0 y el alto del mapa
+  energy: integer # superior o igual a 0
+  score: integer # superior o igual a 0
+  keys: array[integer] # lista de Lighthouse.id existentes (no nullable)
+
+
+
+# Datos y estado de un lighthouse
+# ==============================================================
+Lighthouse:
+  id: integer
+  x: integer # entre 0 y el ancho del mapa
+  y: integer # entre 0 y el alto del mapa
+  ownerId: [integer|null] # referencia a Player.id
+  energy: 0 # obligatorio, 0 por defecto
+  connections: array[integer] # lista de Lighthouse.id existentes (no nullable)
+
+
+
+# Representa el estado de un jugador y de los faros al terminar su turno
+# ==============================================================
+Turn:
+  # Propiedades que pueden cambiar:
+  # - x,y: si el jugador se ha movido
+  # - energy: si el jugador ha atacado o recargado un faro
+  # - keys: si el jugador conectó un faro con otro (se pierde la llave)
+  player: Player # obligatorio
+
+  # Propiedades que pueden cambiar en cada faro:
+  # - ownerId: si el jugador ha atacado faro
+  # - energy: si el jugador ha atacado o recargado el faro
+  # - connections: si el jugador conectó un faro con otro (cambiaría en ambos faros)
+  lighthouses: array[Lighthouse]
+
+
+
+# Estado del juego al inicio del juego o al inicio de una ronda (al terminar la ronda anterior y preparar la ronda actual)
+# ==============================================================
+GameStatus:
+  # Matriz de energía de las casillas después del comienzo de ronda.
+  # Debe tener el mismo tamaño que el mapa.
+  # Las casillas ocupadas por un jugador deberían estar a 0.
+  # E.g.
+  # - [0, 0, 0, 0, 0]
+  # - [0, 0, 4, 4, 0]
+  # - [0, 0, 5, 4, 0]
+  # - [0, 4, 4, 4, 0]
+  # - [0, 0, 0, 0, 0]
+  energy: array[array[integer]]
+
+  # Propiedades que cambian en cada Player:
+  # - por terminar la ronda anterior: 
+  #   - score: se calculan los puntos de la ronda anterior
+  # - por preparar la ronda actual:
+  #   - energy: energia de la casilla
+  #   - keys: si el jugador ocupa una casilla con faro
+  players: array[Player]
+
+  # Propiedades que cambian en cada Lighthouse:
+  # - por preparar la ronda actual: 
+  #   - energy: decrece la energía
+  #   - ownerId: el faro se queda sin energía
+  lighthouses: array[Lighthouse]
+
+
+
+# Estado inicial de una ronda (al terminar la ronda anterior y preparar la ronda actual) y sus cambios de estado
+# ==============================================================
+Round:
+  # Estado inicial de la ronda
+  setup: GameStatus
+
+  # Lista ordenada de estados de jugador y faros
+  turns: array[Turn]
+
+
+
+# Representación de la partida
+# ==============================================================
+Game:
+  # Topología del mapa:
+  # 'w': agua
+  # 'g': tierra
+  # E.g.
+  # - ['w', 'w', 'w', 'w', 'w']
+  # - ['w', 'g', 'g', 'g', 'w']
+  # - ['w', 'g', 'g', 'g', 'w']
+  # - ['w', 'g', 'g', 'g', 'w']
+  # - ['w', 'w', 'w', 'w', 'w']
+  # Se visualiza mejor con 'w' y 'g' que con -1 y 0
+  topology: array[array[string]]
+  
+  # Estado inicial del juego
+  setup: GameStatus
+
+  # Lista ordenada de rondas
+  rounds: array[Round]

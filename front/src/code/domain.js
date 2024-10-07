@@ -28,8 +28,8 @@ export class Positionable {
 }
 
 export class Game {
-  constructor(matrix, players, lighthouses, rounds) {
-    this.board = new Board(matrix)
+  constructor(map, players, lighthouses, rounds) {
+    this.board = new Board(map)
 
     this.players = players.sort((a, b) => a.id - b.id)
     this.players.forEach(player => {
@@ -46,8 +46,8 @@ export class Game {
 }
 
 export class Board {
-  constructor(matrix) {
-    this.tiles = matrix.map((row, y) => row.map((tileType, x) => 
+  constructor(map) {
+    this.tiles = map.map((row, y) => row.map((tileType, x) => 
       new Tile(new Coordinates(x, y), new TileType(tileType), null)
     ))
   }
@@ -58,8 +58,8 @@ export class Board {
 }
 
 export class BoardStatus {
-  constructor(energyMatrix) {
-    this.energyMatrix = energyMatrix
+  constructor(energyMap) {
+    this.energyMap = energyMap
   }
 }
 
@@ -137,13 +137,13 @@ export class Lighthouse extends Positionable {
     super(coordinates)
     this.id = id
     this.energy = 0
-    this.owner = null
+    this.ownerId = null
     this.connections = []
   }
 
   syncStatus(lighthouseStatus) {
     this.energy = lighthouseStatus.energy
-    this.owner = lighthouseStatus.owner
+    this.ownerId = lighthouseStatus.ownerId
     this.connections = lighthouseStatus.connections
   }
 }
@@ -220,9 +220,9 @@ export class PlayerScore {
 }
 
 export class LighthouseStatus {
-  constructor(lighthouseId, owner, energy, connections) {
+  constructor(lighthouseId, ownerId, energy, connections) {
     this.lighthouseId = lighthouseId
-    this.owner = owner
+    this.ownerId = ownerId
     this.energy = energy
     this.connections = connections
   }
