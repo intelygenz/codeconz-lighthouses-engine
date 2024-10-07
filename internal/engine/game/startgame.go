@@ -78,7 +78,9 @@ func (e *Game) StartGame() {
 		}
 	}
 
-	// REVIEW: after last round, there is no information updated in state regarding latest player's score
+	// generate final game state after all turns in last round
+	gfStatus := state.NewGameStatus(e.gameMap.GetIslandEnergy(), e.GetPlayers(), e.gameMap.GetLightHouses())
+	e.state.SetFinalGameState(gfStatus)
 
 	// dump to file the final state of the game in json format
 	if err := e.state.DumpToFileFinalStateInJson(); err != nil {

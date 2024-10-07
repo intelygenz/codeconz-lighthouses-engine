@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board"
@@ -87,7 +86,6 @@ func (e *Game) CalcPlayersScores() {
 		for _, t := range triangles {
 			for _, coord := range renderTriangle(t) {
 				if e.gameMap.IsIsland(coord) {
-					fmt.Printf("one more triangle to sum!\n")
 					p.Score++
 				}
 			}

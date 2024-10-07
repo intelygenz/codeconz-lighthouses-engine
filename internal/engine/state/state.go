@@ -7,6 +7,7 @@ import (
 
 type State interface {
 	SetGameState(GameState)
+	SetFinalGameState(*GameStatus)
 	SetNewRound(int, *GameStatus)
 	AddPlayerTurn(int, *Turn)
 	DumpToFileFinalStateInJson() error
@@ -65,7 +66,8 @@ type Round struct {
 }
 
 type GameState struct {
-	Topology [][]bool    `json:"topology"`
-	Setup    *GameStatus `json:"setup"`
-	Rounds   []Round     `json:"rounds"`
+	Topology    [][]bool    `json:"topology"`
+	Setup       *GameStatus `json:"setup"`
+	Rounds      []Round     `json:"rounds"`
+	FinalStatus *GameStatus `json:"finalStatus"`
 }
