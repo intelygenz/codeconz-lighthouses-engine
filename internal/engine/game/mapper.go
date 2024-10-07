@@ -1,6 +1,7 @@
 package game
 
 import (
+	boardCell "github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board/cell"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/lighthouse"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 )
@@ -26,11 +27,10 @@ func (m *Mapper) MapPlayableBoolMapToMapRowList(island [][]bool) []*coms.MapRow 
 	for _, row := range island {
 		cells := make([]int32, 0)
 		for _, cell := range row {
-			// TODO extracto to constants
 			if cell {
-				cells = append(cells, 0)
+				cells = append(cells, int32(boardCell.WaterCell))
 			} else {
-				cells = append(cells, 1)
+				cells = append(cells, int32(boardCell.IslandCell))
 			}
 		}
 		rows = append(rows, &coms.MapRow{Row: cells})
@@ -48,13 +48,10 @@ func (m *Mapper) MapLighthousesToComLighthouses(lighthouseList []*lighthouse.Lig
 				Position: &coms.Position{
 					X: int32(l.Position.X()),
 					Y: int32(l.Position.Y()),
-					// TODO add owner, connections, etc...
 				},
 				Owner: int32(l.Owner),
-				// TODO add haveKey and the missing fields
 			},
 		)
 	}
-
 	return lighthouses
 }
