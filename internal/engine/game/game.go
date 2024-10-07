@@ -6,6 +6,7 @@ import (
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/state"
+	"github.com/twpayne/go-geom"
 )
 
 type GameI interface {
@@ -57,16 +58,14 @@ func (e *Game) GetPlayerByID(id int) *player.Player {
 	return nil
 }
 
-// TODO pending
 func (e *Game) CalcPlayersScores() {
 	for _, p := range e.players {
 		var lines []Line
 		for _, l := range e.gameMap.GetLightHouses() {
+			// REVIEW: ojo, estamos duplicando el score por cada lighthouse?
 			if l.Owner == p.ID {
 				p.Score += 2
-				// REVIEW: ojo, estamos duplicando el score por cada lighthouse?
 				p.Score += 2 * len(l.Connections)
-				// TODO: add 1 point for each cell inside connected triangles
 
 				// Calculate pairs of connected lighthouses
 				for _, conn := range l.Connections {
@@ -80,8 +79,20 @@ func (e *Game) CalcPlayersScores() {
 			}
 		}
 		// get triangles for the player
-		_ = GenerateTrianglesFromLines(lines)
+		triangles := GenerateTrianglesFromLines(lines)
 		// calculate score inside each triangle
-		//p.Score += CalcScoreInsideTriangles(triangles)
+		for _, t := range triangles {
+
+			v0 := []int{int(t.A.X()), int(t.A.Y())}
+			v1 := []int{int(t.B.X()), int(t.B.Y())}
+			v2 := []int{int(t.C.X()), int(t.C.Y())}
+
+			for _, point := range renderTriangle(v0, v1, v2) {
+				pos := geom.Coord{float64(point[0]), float64(point[1])}
+				if e.gameMap.IsIsland(pos) {
+					p.Score++
+				}
+			}
+		}
 	}
 }

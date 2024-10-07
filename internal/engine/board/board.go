@@ -231,19 +231,23 @@ func (m *Board) CalcLighthouseEnergy() {
 			lg.Energy = 0
 			lg.Owner = -1
 
-			for _, conn := range lg.Connections {
-				for i, l := range conn.Connections {
-					if l.Position.Equal(geom.XY, lg.Position) {
-						if len(conn.Connections) == 1 {
-							conn.Connections = make([]lighthouse.Lighthouse, 0)
-						} else {
+			if len(lg.Connections) > 0 {
+				for _, conn := range lg.Connections {
+					if len(conn.Connections) == 1 {
+						conn.Connections = make([]*lighthouse.Lighthouse, 0)
+						conn.ConnectionsId = make([]int, 0)
+					}
+					for i, l := range conn.Connections {
+						if l.Position.Equal(geom.XY, lg.Position) {
 							conn.Connections = append(conn.Connections[:i], conn.Connections[i+1:]...)
+							conn.ConnectionsId = append(conn.ConnectionsId[:i], conn.ConnectionsId[i+1:]...)
 						}
 					}
 				}
+				// current lighthouse loses all connections
+				lg.Connections = make([]*lighthouse.Lighthouse, 0)
+				lg.ConnectionsId = make([]int, 0)
 			}
-
-			lg.Connections = make([]lighthouse.Lighthouse, 0)
 		}
 	}
 }

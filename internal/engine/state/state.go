@@ -13,7 +13,7 @@ type State interface {
 }
 
 type GameStatus struct {
-	Energy      [][]int                 `json:"energy"` // TODO: see how to get easily energy
+	Energy      [][]int                 `json:"energy"`
 	Players     []player.Player         `json:"players"`
 	Lighthouses []lighthouse.Lighthouse `json:"lighthouses"`
 }
