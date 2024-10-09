@@ -1,3 +1,7 @@
+GAME_BOTS    := 3
+GAME_NETWORK := gamenw
+SERVER_PORT  := 50051
+
 # Build the application
 build:
 	go build -o bin/lighthouses_aicontest
@@ -8,15 +12,15 @@ rungs:
 
 # Run bot 1
 runbot1:
-	go run ./examples/ranbot.go -bn=bot1 -la=:3001 -gs=:50051
+	go run ./examples/ranbot.go -bn=bot1 -la=:3001 -gs=:$(SERVER_PORT)
 
 # Run bot 2
 runbot2:
-	go run ./examples/ranbot.go -bn=bot2 -la=:3002 -gs=:50051
+	go run ./examples/ranbot.go -bn=bot2 -la=:3002 -gs=:$(SERVER_PORT)
 
 # Run bot 3
 runbot3:
-	go run ./examples/ranbot.go -bn=bot3 -la=:3003 -gs=:50051
+	go run ./examples/ranbot.go -bn=bot3 -la=:3003 -gs=:$(SERVER_PORT)
 
 # Run linter
 lint:
@@ -26,23 +30,38 @@ lint:
 test:
 	go test -v ./...
 
-# docker stuff
-dnetwork:
-	 docker network create gamenw
+# full docker test spinning up $(GAME_BOTS)
+docker-test: docker-net-up docker-build docker-game-simulation docker-destroy
 
-dbuild:
-# one common image with args did not work
-#	docker build -f ./docker/Dockerfile.game . -t game && docker build -f ./docker/Dockerfile.gobot --build-arg BOT_PORT=3001 . --build-arg BOT_NAME=gobot1 -t gobot1 && docker build -f ./docker/Dockerfile.gobot . --build-arg BOT_PORT=3002 --build-arg BOT_NAME=gobot2 -t gobot2
-	docker build -f ./docker/Dockerfile.game . -t game && docker build -f ./docker/Dockerfile.gobot1 . -t gobot1 && docker build -f ./docker/Dockerfile.gobot2 . -t gobot2
+docker-net-up:
+	# crating docker network $(GAME_NETWORK)
+	@docker network create $(GAME_NETWORK)
 
-drungs:
-	docker run --rm --net gamenw --name game -v ./output:/app/output -p 50051:50051 game
+docker-net-down:
+	# deleting docker network $(GAME_NETWORK)
+	@docker network rm $(GAME_NETWORK)
 
-drunbot1:
-	docker run --rm --net gamenw --name gobot1 -p 3001:3001 gobot1
+docker-build:
+	# building the game server & $(GAME_BOTS) bots
+	@echo "==> building game server"
+	@docker build -f ./docker/Dockerfile.game . -t game
+	@for i in {1..$(GAME_BOTS)} ; do echo "==> building gobot$${i}" ; docker build -f ./docker/Dockerfile.gobot . --build-arg BOT_PORT=300$${i} --build-arg BOT_NAME=gobot$${i} -t gobot$${i} ; done
 
-drunbot2:
-	docker run --rm --net gamenw --name gobot2 -p 3002:3002 gobot2
+docker-game-simulation:
+	# simulating a game with $(GAME_BOTS) bots
+	@docker run -d --rm --net $(GAME_NETWORK) --name game -v ./output:/app/output -p $(SERVER_PORT):$(SERVER_PORT) game
+	@for i in {1..$(GAME_BOTS)} ; do docker run -d --rm --net $(GAME_NETWORK) --name gobot$${i} -p 300$${i}:300$${i} -e BOT_PORT=300$${i} -e BOT_NAME=gobot$${i} gobot$${i} ; done
+	@docker logs -tf game
+	@echo "==> game output files:"
+	@ls -lanh ./output/
+
+docker-destroy:
+	# stopping docker containers
+	@docker ps -a | awk '/(gobot|game)/ {print $$1}' | xargs docker stop
+	# cleaning up all docker images
+	@docker images --format '{{.Repository}}' | awk '/^(gobot|game)/ {print $$1}' | sort -r | xargs docker rmi -f
+	# deleting docker network $(GAME_NETWORK)
+	@docker network rm $(GAME_NETWORK)
 
 # Generate protobuf files
 proto:
@@ -56,4 +75,4 @@ proto:
 	--grpclib_python_out=./internal/handler/coms \
 	./proto/*.proto
 
-.PHONY: build run test proto
+.PHONY: build rungs runbot1 runbot2 runbot3 lint test docker-net-up docker-net-down docker-build docker-game-simulation docker-destroy proto
