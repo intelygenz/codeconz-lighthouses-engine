@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 GAME_BOTS    := 3
 GAME_NETWORK := gamenw
 SERVER_PORT  := 50051

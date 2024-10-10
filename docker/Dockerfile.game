@@ -10,8 +10,5 @@ WORKDIR /app
 COPY . ./
 COPY --from=builder /app/game ./
 EXPOSE 50051
-# all ports to listen
-EXPOSE 3001
-EXPOSE 3002
 # Command to run the Go binary
 CMD ["./game"]
