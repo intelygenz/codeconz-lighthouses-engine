@@ -21,10 +21,14 @@ func (m *InMemoryState) SetGameState(gs GameState) {
 	m.GameState = gs
 }
 
-func (m *InMemoryState) SetNewRound(rId int, gs *GameStatus) {
+func (m *InMemoryState) SetFinalGameState(gStatus *GameStatus) {
+	m.GameState.FinalStatus = gStatus
+}
+
+func (m *InMemoryState) SetNewRound(rId int, gStatus *GameStatus) {
 	r := Round{
 		Id:    rId,
-		Setup: gs,
+		Setup: gStatus,
 	}
 	m.GameState.Rounds = append(m.GameState.Rounds, r)
 }

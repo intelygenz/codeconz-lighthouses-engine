@@ -115,16 +115,17 @@ func (e *Game) connectLighthouses(p *player.Player, action *player.Action) error
 	}
 
 	for _, l := range e.gameMap.GetLightHouses() {
-		// ignore checks below when l.Position is equal to curLighthousePos or destLighthousePos
+		// ignore checks inside loop when l.Position is equal to curLighthousePos or destLighthousePos
 		if l.Position.Equal(geom.XY, curLighthousePos) || l.Position.Equal(geom.XY, destLighthousePos) {
 			continue
 		}
-		if xy.IsPointWithinLineBounds(l.Position, curLighthousePos, destLighthousePos) {
+
+		if xy.IsPointWithinLineBounds(l.Position, curLighthousePos, destLighthousePos) && pointIsInLine(l.Position, curLighthousePos, destLighthousePos) {
 			return fmt.Errorf("connection cannot intersect a lighthouse")
 		}
 
 		for _, c := range l.Connections {
-			if xy.DoLinesOverlap(l.Position, c.Position, curLighthousePos, destLighthousePos) {
+			if xy.DoLinesOverlap(l.Position, c.Position, curLighthousePos, destLighthousePos) && pointIsInLine(l.Position, curLighthousePos, destLighthousePos) {
 				return fmt.Errorf("connection cannot intersect another connection")
 			}
 		}

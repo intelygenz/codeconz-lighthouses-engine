@@ -57,31 +57,38 @@ func (e *Game) GetPlayerByID(id int) *player.Player {
 	return nil
 }
 
-// TODO pending
 func (e *Game) CalcPlayersScores() {
 	for _, p := range e.players {
 		var lines []Line
 		for _, l := range e.gameMap.GetLightHouses() {
 			if l.Owner == p.ID {
+				// SCORE: sum 2 points for each lighthouse the player owns
 				p.Score += 2
-				// REVIEW: ojo, estamos duplicando el score por cada lighthouse?
-				p.Score += 2 * len(l.Connections)
-				// TODO: add 1 point for each cell inside connected triangles
 
 				// Calculate pairs of connected lighthouses
 				for _, conn := range l.Connections {
-					// get lines to calculate later triangles for the player
 					l := Line{A: &l.Position, B: &conn.Position}
 					lines = append(lines, l)
-					if conn.Owner == p.ID {
-						p.Score += 2
-					}
 				}
 			}
 		}
-		// get triangles for the player
-		_ = GenerateTrianglesFromLines(lines)
-		// calculate score inside each triangle
-		//p.Score += CalcScoreInsideTriangles(triangles)
+		// NOTE: as we are looping players and lighthouses,
+		// lines will be duplicated for each pair of lighthouses connected
+		// ex: if lighthouse 1 and 4 are connected, lines are: [[1, 4], [4,1]]
+		// but it is only 1 connection between lighthouses 1 and 4
+		connections := int(len(lines) / 2)
+
+		// SCORE: sum 2 points for each pair of lighthouses connected
+		p.Score += connections * 2
+
+		// SCORE: get triangles for the player and calculate score inside each triangle
+		triangles := GenerateTrianglesFromLines(lines)
+		for _, t := range triangles {
+			for _, coord := range renderTriangle(t) {
+				if e.gameMap.IsIsland(coord) {
+					p.Score++
+				}
+			}
+		}
 	}
 }
