@@ -56,13 +56,14 @@ func (e *Game) StartGame() {
 			})
 			if err != nil {
 				// handle error
-				fmt.Printf("Player %d has error %v\n", p.ID, err)
-				break
+				fmt.Printf("Requesting Turn to Player %d has error %v\n", p.ID, err)
+				// if by any reason the player does not respond, we skip the turn
+				continue
 			}
 
 			err = e.execPlayerAction(p, na)
 			if err != nil {
-				fmt.Printf("Player %d has error %v\n", p.ID, err)
+				fmt.Printf("Executing Player Action %d has error %v\n", p.ID, err)
 			}
 			fmt.Println("*************************************************")
 

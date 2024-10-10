@@ -35,7 +35,7 @@ test:
 docker-test: docker-net-up docker-build docker-game-simulation docker-destroy
 
 docker-net-up:
-	# crating docker network $(GAME_NETWORK)
+	# creating docker network $(GAME_NETWORK)
 	@docker network create $(GAME_NETWORK)
 
 docker-net-down:
@@ -55,14 +55,16 @@ docker-game-simulation:
 	@docker logs -tf game
 	@echo "==> game output files:"
 	@ls -lanh ./output/
+	# stopping docker containers
+	@docker ps -a | awk '/(gobot|game)/ {print $$1}' | xargs --no-run-if-empty docker stop
 
 docker-destroy:
 	# stopping docker containers
-	@docker ps -a | awk '/(gobot|game)/ {print $$1}' | xargs docker stop
+	@docker ps -a | awk '/(gobot|game)/ {print $$1}' | xargs --no-run-if-empty docker stop
 	# cleaning up all docker images
-	@docker images --format '{{.Repository}}' | awk '/^(gobot|game)/ {print $$1}' | sort -r | xargs docker rmi -f
+	@docker images --format '{{.Repository}}' | awk '/^(gobot|game)/ {print $$1}' | sort -r | xargs --no-run-if-empty docker rmi -f
 	# deleting docker network $(GAME_NETWORK)
-	@docker network rm $(GAME_NETWORK)
+	@docker network rm -f $(GAME_NETWORK)
 
 # Generate protobuf files
 proto:

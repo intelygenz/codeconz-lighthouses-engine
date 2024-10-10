@@ -2,7 +2,10 @@ package player
 
 import (
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/lighthouse"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 	"github.com/twpayne/go-geom"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -27,25 +30,33 @@ type Turn struct {
 }
 
 type Player struct {
-	ServerAddress    string                   `json:"-"`
-	ID               int                      `json:"id"`
-	Name             string                   `json:"name"`
-	Score            int                      `json:"score"`
-	Energy           int                      `json:"energy"`
-	Position         geom.Coord               `json:"position"`
-	LighthouseKeys   []*lighthouse.Lighthouse `json:"-"`
-	LighthouseKeyIds []int                    `json:"keys"`
+	ServerAddress     string                   `json:"-"`
+	ID                int                      `json:"id"`
+	Name              string                   `json:"name"`
+	Score             int                      `json:"score"`
+	Energy            int                      `json:"energy"`
+	Position          geom.Coord               `json:"position"`
+	LighthouseKeys    []*lighthouse.Lighthouse `json:"-"`
+	LighthouseKeyIds  []int                    `json:"keys"`
+	gameServiceClient coms.GameServiceClient   `json:"-"`
 }
 
 func NewPlayer(serverAddress string, name string) *Player {
+	grpcOpt := grpc.WithTransportCredentials(insecure.NewCredentials())
+	grpcClient, err := grpc.NewClient(serverAddress, grpcOpt)
+	if err != nil {
+		panic(err)
+	}
+
 	return &Player{
-		ServerAddress:  serverAddress,
-		ID:             -1,
-		Name:           name,
-		Score:          0,
-		Energy:         0,
-		Position:       geom.Coord{0, 0},
-		LighthouseKeys: make([]*lighthouse.Lighthouse, 0),
+		ServerAddress:     serverAddress,
+		ID:                -1,
+		Name:              name,
+		Score:             0,
+		Energy:            0,
+		Position:          geom.Coord{0, 0},
+		LighthouseKeys:    make([]*lighthouse.Lighthouse, 0),
+		gameServiceClient: coms.NewGameServiceClient(grpcClient),
 	}
 }
 

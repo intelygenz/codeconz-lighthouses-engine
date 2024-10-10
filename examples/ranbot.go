@@ -156,7 +156,7 @@ func (ps *BotComs) waitToJoinGame() {
 	for {
 		ctx, cancel := context.WithTimeout(context.Background(), timeoutToResponse)
 		playerID, err := npjc.Join(ctx, player)
-		// time.Sleep(timeoutToResponse)
+
 		if err != nil {
 			fmt.Printf("could not join game ERROR: %v\n", err)
 			cancel()
