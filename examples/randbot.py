@@ -81,7 +81,6 @@ class BotGame:
         # Mover aleatoriamente
         moves = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1))
         move = random.choice(moves)
-        print(f"Moving to {move}")
         action = game_pb2.NewAction(
             Action=game_pb2.MOVE,
             Destination=game_pb2.Position(
@@ -98,11 +97,12 @@ class BotGame:
 
 
 class BotComs:
-    def __init__(self, bot_name, my_address, game_server_address):
+    def __init__(self, bot_name, my_address, game_server_address, verbose=False):
         self.bot_id = None
         self.bot_name = bot_name
         self.my_address = my_address
         self.game_server_address = game_server_address
+        self.verbose = verbose
 
     def wait_to_join_game(self):
         channel = grpc.insecure_channel(self.game_server_address)
@@ -113,10 +113,10 @@ class BotComs:
         while True:
             try:
                 player_id = client.Join(player, timeout=timeout_to_response)
-                print(f"Joined game with ID {player_id.PlayerID}")
                 self.bot_id = player_id.PlayerID
-
-                print(json_format.MessageToJson(player_id))
+                print(f"Joined game with ID {player_id.PlayerID}")
+                if self.verbose:
+                    print(json_format.MessageToJson(player_id))
                 break
             except RpcError as e:
                 print(f"Could not join game: {e.details()}")
@@ -133,12 +133,12 @@ class BotComs:
         )
 
         # registry of the service
-        game_grpc.add_GameServiceServicer_to_server(ClientServer(bot_id=self.bot_id), grpc_server)
+        cs = ClientServer(bot_id=self.bot_id, verbose=self.verbose)
+        game_grpc.add_GameServiceServicer_to_server(cs, grpc_server)
 
         # server start
         grpc_server.add_insecure_port(self.my_address)
         grpc_server.start()
-        print("Server started.")
 
         try:
             grpc_server.wait_for_termination()  # wait until server finish
@@ -148,33 +148,37 @@ class BotComs:
 
 class ServerInterceptor(grpc.ServerInterceptor):
     def intercept_service(self, continuation, handler_call_details):
-        start_time = time.time() * 1000
+        start_time = time.time_ns()
         method_name = handler_call_details.method
 
         # Invoke the actual RPC
         response = continuation(handler_call_details)
 
         # Log after the call
-        duration = (time.time()  * 1000) - start_time
-        print(f"Unary call: {method_name}, Duration: {duration:.2f} milliseconds")
+        duration = time.time_ns() - start_time
+        print(f"Unary call: {method_name}, Duration: {duration:.2f} nanoseconds")
         return response
 
+
 class ClientServer(game_grpc.GameServiceServicer):
-    def __init__(self, bot_id):
+    def __init__(self, bot_id, verbose=False):
         self.bg = BotGame(bot_id)
+        self.verbose = verbose
 
     def Join(self, request, context):
         return None
 
     def InitialState(self, request, context):
-        print("Receiving InitialState: ")
-        print(json_format.MessageToJson(request))
+        print("Receiving InitialState")
+        if self.verbose:
+            print(json_format.MessageToJson(request))
         self.bg.initial_state = request
         return game_pb2.PlayerReady(Ready=True)
 
     def Turn(self, request, context):
         print(f"Processing turn: {self.bg.countT}")
-        print(json_format.MessageToJson(request))
+        if self.verbose:
+            print(json_format.MessageToJson(request))
         action = self.bg.new_turn_action(request)
         return action
 
@@ -198,12 +202,14 @@ def ensure_params():
 
 
 def main():
+    verbose = False
     bot_name, listen_address, game_server_address = ensure_params()
 
     bot = BotComs(
         bot_name=bot_name,
         my_address=listen_address,
         game_server_address=game_server_address,
+        verbose=verbose,
     )
     bot.wait_to_join_game()
     bot.start_listening()
