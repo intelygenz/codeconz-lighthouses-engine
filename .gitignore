@@ -4,4 +4,4 @@ node_nodules
 dist
 .gitconfig
 !/internal/engine/map/map.go
-output/*
+output/*.json
