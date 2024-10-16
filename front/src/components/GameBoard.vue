@@ -4,82 +4,48 @@
 </template>
 
 <script>
-import * as pixi from 'pixi.js';
-import water from '@/assets/Water+.png';
-
-class Tile extends pixi.Container {
-  constructor(x, y, width, height, sprite) {
-    super()
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-    this.sprite = sprite;
-
-    this.addChild(sprite);
-  }
-}
-
-class Board extends pixi.Container {
-  constructor(width, height, tiles, sprite) {
-    super()
-    this.tiles = tiles;
-    this.width = width;
-    this.height = height;
-
-    let tileWidth = this.width / this.tiles[0].length;
-    let tileHeight = this.height / this.tiles.length;
-
-    this.tiles.forEach((row, rowIndex) => {
-      row.forEach((col, colIndex) => {
-        let x = rowIndex * tileWidth;
-        let y = colIndex * tileHeight;
-        let tile = new Tile(x, y, tileWidth, tileHeight, sprite);
-        this.addChild(tile);
-      });
-    });
-  }
-}
+import * as pixi from 'pixi.js'
+import { Board } from '@/code/presentation.js'
+import { Game, Playback, PlaybackStatus } from '@/code/domain.js'
 
 export default {
   name: 'GameBoard',
   props: {
-    tiles: Array
+    game: Game,
+    playback: Playback,
   },
   async mounted() {
     const container = this.$refs.container;
-
     const app = new pixi.Application()
     await app.init({resizeTo: container});
-    app.renderer.backgroundColor = 0x000000;
     container.appendChild(app.canvas);
 
-    await pixi.Assets.load(water);
-    const spritesheet = new pixi.Spritesheet(
-        pixi.Texture.from(water),
-        {
-          frames: {
-            water: {
-              frame: {x: 0, y: 0, w: 16, h: 16},
-              spriteSourceSize: {x: 0, y: 0, w: 16, h: 16},
-              sourceSize: {w: 16, h: 16},
-              anchor: {x: 0, y: 0}
-            }
-          },
-          meta: {
-            image: "assets/Water+.png",
-            size: {w: 14*16, h: 12*16}
-          }
-        }
-    );
-    await spritesheet.parse();
+    const appWidth = app.renderer.width
+    const appHeight = app.renderer.height
+    const gridWidth = this.game.board.tiles[0].length;
+    const gridHeight = this.game.board.tiles.length;
+    const maxWidth = (appWidth - 100) / gridWidth;
+    const maxHeight = (appHeight - 100) / gridHeight;
+    const tileSize = Math.min(maxWidth, maxHeight);
+    const x = appWidth / 2 - gridWidth * tileSize / 2;
+    const y = appHeight / 2 - gridHeight * tileSize / 2;
 
-    const sprite = new pixi.Sprite(spritesheet.textures.water);
-    console.log(sprite)
-
-    const board = new Board(800, 800, this.tiles, sprite);
+    const board = new Board(this.game, tileSize, x, y);
     app.stage.addChild(board);
-  },
+
+    const ticker = pixi.Ticker.shared;
+    ticker.autoStart = false;
+    this.playback.init(
+      event => board.handle(event),
+      () => ticker.start(),
+      () => ticker.stop(),
+    );
+
+    ticker.add(() => {
+      this.playback.auto() === PlaybackStatus.done && ticker.stop();
+      console.log(ticker.started)
+    })
+  }
 }
 </script>
 

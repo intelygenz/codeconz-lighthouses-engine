@@ -1,11 +1,14 @@
-package engine
+package handler
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/jonasdacruz/lighthouses_aicontest/coms"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/game"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )
@@ -39,23 +42,19 @@ func StreamLoggingInterceptor(
 }
 
 type GameServer struct {
-	game *Game
+	game game.GameI
 }
 
-func NewGameServer(ge *Game) *GameServer {
+func NewGameServer(ge game.GameI) *GameServer {
 	return &GameServer{
 		game: ge,
 	}
 }
 
-// Join(context.Context, *NewPlayer) (*NewPlayerAccepted, error)
-func (gs *GameServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.NewPlayerInitialState, error) {
+func (gs *GameServer) Join(_ context.Context, req *coms.NewPlayer) (*coms.PlayerID, error) {
 	fmt.Printf("New player ask to join %s\n", req.Name)
 
-	np := Player{
-		Name:          req.Name,
-		ServerAddress: req.ServerAddress,
-	}
+	np := player.NewPlayer(req.ServerAddress, req.GetName())
 
 	err := gs.game.AddNewPlayer(np)
 	if err != nil {
@@ -63,11 +62,15 @@ func (gs *GameServer) Join(ctx context.Context, req *coms.NewPlayer) (*coms.NewP
 		return nil, err
 	}
 
-	fmt.Printf("New player joined %s\n", np.Name)
+	fmt.Printf("New player %s joined with ID %d\n", np.Name, np.ID)
 
-	return gs.game.CreateInitialState(np), nil
+	return &coms.PlayerID{PlayerID: int32(np.ID)}, nil
 }
 
-func (gs *GameServer) Turn(ctx context.Context, req *coms.NewTurn) (*coms.NewAction, error) {
-	return nil, fmt.Errorf("game server does not implement Turn sercvice")
+func (gs *GameServer) InitialState(_ context.Context, playerID *coms.NewPlayerInitialState) (*coms.PlayerReady, error) {
+	return nil, fmt.Errorf("game server does not implement InitialState service")
+}
+
+func (gs *GameServer) Turn(_ context.Context, _ *coms.NewTurn) (*coms.NewAction, error) {
+	return nil, fmt.Errorf("game server does not implement Turn service")
 }
