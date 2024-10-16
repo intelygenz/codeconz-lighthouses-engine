@@ -12,16 +12,12 @@ rungs:
 	go run ./cmd/main.go
 
 # Run bot 1
-runbot1:
+runbotgo:
 	go run ./examples/ranbot.go -bn=bot1 -la=:3001 -gs=:$(SERVER_PORT)
 
-# Run bot 2
-runbot2:
-	go run ./examples/ranbot.go -bn=bot2 -la=:3002 -gs=:$(SERVER_PORT)
-
-# Run bot 3
-runbot3:
-	go run ./examples/ranbot.go -bn=bot3 -la=:3003 -gs=:$(SERVER_PORT)
+# Run py bot
+runbotpy:
+	python -m examples.randbot --bn python-bot1 --la=localhost:3001 --gs=localhost:$(SERVER_PORT)
 
 # Run linter
 lint:

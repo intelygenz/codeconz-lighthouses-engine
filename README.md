@@ -39,3 +39,13 @@ If you want to test more bots, change the `GAME_BOTS` variable in `Makefile` and
 > ```bash
 > make docker-destroy
 > ```
+
+## Test with local Go/python
+
+If you want to test the game server and bots locally, you can run the following commands:
+
+- `make rungs`: Run the game server
+- `make runbotgo`: Run the Go bot (you need to have Go installed)
+- `make runbotpy`: Run the Python bot (you need to have python installed and
+  libraries from requirements.txt installed. You can create a virtualenv or use
+  poetry).
