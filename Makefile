@@ -67,15 +67,19 @@ docker-destroy:
 	@docker network rm -f $(GAME_NETWORK)
 
 # Generate protobuf files
-proto:
+proto-go:
 	protoc -I=./proto \
 	--go_out=./internal/handler/coms \
 	--go_opt=paths=source_relative \
 	--go-grpc_out=./internal/handler/coms \
 	--go-grpc_opt=paths=source_relative,require_unimplemented_servers=false \
-	--python_out=./internal/handler/coms \
-	--pyi_out=./internal/handler/coms \
-	--grpclib_python_out=./internal/handler/coms \
 	./proto/*.proto
 
-.PHONY: build rungs runbot1 runbot2 runbot3 lint test docker-net-up docker-net-down docker-build docker-game-simulation docker-destroy proto
+proto-py:
+	python3 -m grpc_tools.protoc -I=./proto \
+	--python_out=./internal/handler/coms \
+	--pyi_out=./internal/handler/coms \
+	--grpc_python_out=./internal/handler/coms \
+	./proto/*.proto
+
+.PHONY: build rungs runbot1 runbot2 runbot3 lint test docker-net-up docker-net-down docker-build docker-game-simulation docker-destroy proto-go proto-py
