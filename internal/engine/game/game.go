@@ -3,10 +3,9 @@ package game
 import (
 	"time"
 
-	"github.com/twpayne/go-geom"
-
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/state"
 )
 
 type GameI interface {
@@ -15,6 +14,7 @@ type GameI interface {
 	GetPlayerByID(id int) *player.Player
 	CreateInitialState(p *player.Player) *PlayerInitialState
 	SendInitialState()
+	CalcPlayersScores()
 	StartGame()
 }
 
@@ -23,22 +23,17 @@ type Game struct {
 	players     []*player.Player
 	gameMap     board.BoardI
 	turns       int
-}
-
-type Line struct {
-	A, B *geom.Coord
-}
-
-type Triangle struct {
-	A, B, C geom.Coord
+	state       state.State
 }
 
 func NewGame(islandPath string, turns int) GameI {
+	gState := state.NewInMemoryState()
 	return &Game{
 		gameStartAt: time.Now(),
 		players:     []*player.Player{},
 		gameMap:     board.NewBoard(islandPath),
 		turns:       turns,
+		state:       gState,
 	}
 }
 
@@ -62,76 +57,38 @@ func (e *Game) GetPlayerByID(id int) *player.Player {
 	return nil
 }
 
-// TODO pending
 func (e *Game) CalcPlayersScores() {
 	for _, p := range e.players {
+		var lines []Line
 		for _, l := range e.gameMap.GetLightHouses() {
 			if l.Owner == p.ID {
+				// SCORE: sum 2 points for each lighthouse the player owns
 				p.Score += 2
-				p.Score += 2 * len(l.Connections)
-				// TODO: add 1 point for each cell inside connected triangles
 
 				// Calculate pairs of connected lighthouses
 				for _, conn := range l.Connections {
-					if conn.Owner == p.ID {
-						p.Score += 2
-					}
+					l := Line{A: &l.Position, B: &conn.Position}
+					lines = append(lines, l)
+				}
+			}
+		}
+		// NOTE: as we are looping players and lighthouses,
+		// lines will be duplicated for each pair of lighthouses connected
+		// ex: if lighthouse 1 and 4 are connected, lines are: [[1, 4], [4,1]]
+		// but it is only 1 connection between lighthouses 1 and 4
+		connections := int(len(lines) / 2)
+
+		// SCORE: sum 2 points for each pair of lighthouses connected
+		p.Score += connections * 2
+
+		// SCORE: get triangles for the player and calculate score inside each triangle
+		triangles := GenerateTrianglesFromLines(lines)
+		for _, t := range triangles {
+			for _, coord := range renderTriangle(t) {
+				if e.gameMap.IsIsland(coord) {
+					p.Score++
 				}
 			}
 		}
 	}
-}
-
-// NormalizeLine ensures that a line is always stored with the smaller point first
-func (e *Game) NormalizeLine(line Line) Line {
-	if (line.A.X() < line.B.X()) || (line.A.X() == line.B.X() && line.A.Y() < line.B.Y()) {
-		return line
-	}
-
-	return Line{A: line.B, B: line.A}
-}
-
-// GenerateTrianglesFromLines generates all possible triangles from a given array of lines
-func (e *Game) GenerateTrianglesFromLines(lines []Line) []Triangle {
-	var triangles []Triangle
-
-	// Normalize lines to handle duplicates with reversed points
-	linesMap := make(map[Line]bool)
-	for _, line := range lines {
-		normalizedLine := e.NormalizeLine(line)
-		linesMap[normalizedLine] = true
-	}
-
-	// Create a slice of unique lines
-	var uniqueLines []Line
-	for line := range linesMap {
-		uniqueLines = append(uniqueLines, line)
-	}
-
-	// Generate all possible triangles from unique lines
-	n := len(uniqueLines)
-	for i := 0; i < n-2; i++ {
-		for j := i + 1; j < n-1; j++ {
-			for k := j + 1; k < n; k++ {
-				if e.HasCommonPoint(uniqueLines[i], uniqueLines[j]) &&
-					e.HasCommonPoint(uniqueLines[j], uniqueLines[k]) &&
-					e.HasCommonPoint(uniqueLines[k], uniqueLines[i]) {
-
-					//triangles = append(triangles, Triangle{
-					//	A: uniqueLines[i],
-					//	B: uniqueLines[j],
-					//	C: uniqueLines[k],
-					//})
-				}
-			}
-		}
-	}
-
-	return triangles
-}
-
-// HasCommonPoint checks if two lines share a common endpoint
-func (e *Game) HasCommonPoint(line1, line2 Line) bool {
-	return line1.A.Equal(geom.XY, *line2.A) || line1.A.Equal(geom.XY, *line2.B) ||
-		line1.B.Equal(geom.XY, *line2.A) || line1.B.Equal(geom.XY, *line2.B)
 }

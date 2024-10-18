@@ -20,6 +20,8 @@ const (
 	timeoutToResponse = 1 * time.Second
 )
 
+var countT = 1
+
 type BotGameTurn struct {
 	turn   *coms.NewTurn
 	action *coms.NewAction
@@ -31,13 +33,93 @@ type BotGame struct {
 }
 
 func (bg *BotGame) NewTurnAction(turn *coms.NewTurn) *coms.NewAction {
-	position := &coms.Position{
-		X: turn.Position.X + 1,
-		Y: turn.Position.Y + 1,
-	}
 	action := &coms.NewAction{
-		Action:      coms.Action_MOVE,
-		Destination: position,
+		Action: coms.Action_MOVE,
+		Destination: &coms.Position{
+			X: turn.Position.X + 1,
+			Y: turn.Position.Y,
+		},
+	}
+
+	if countT == 2 {
+		action = &coms.NewAction{
+			Action: coms.Action_MOVE,
+			Destination: &coms.Position{
+				X: turn.Position.X,
+				Y: turn.Position.Y + 1,
+			},
+		}
+	}
+
+	if countT == 3 || countT == 6 || countT == 10 || countT == 14 {
+		action = &coms.NewAction{
+			Action: coms.Action_ATTACK,
+			Energy: turn.Energy,
+			Destination: &coms.Position{
+				X: turn.Position.X,
+				Y: turn.Position.Y,
+			},
+		}
+	}
+
+	if countT == 4 || countT == 5 {
+		action = &coms.NewAction{
+			Action: coms.Action_MOVE,
+			Destination: &coms.Position{
+				X: turn.Position.X - 1,
+				Y: turn.Position.Y,
+			},
+		}
+	}
+
+	if countT == 7 {
+		action = &coms.NewAction{
+			Action: coms.Action_CONNECT,
+			Destination: &coms.Position{
+				X: 3,
+				Y: 3,
+			},
+		}
+	}
+
+	if countT == 8 || countT == 9 {
+		action = &coms.NewAction{
+			Action: coms.Action_MOVE,
+			Destination: &coms.Position{
+				X: turn.Position.X,
+				Y: turn.Position.Y - 1,
+			},
+		}
+	}
+
+	if countT == 11 {
+		action = &coms.NewAction{
+			Action: coms.Action_CONNECT,
+			Destination: &coms.Position{
+				X: 1,
+				Y: 3,
+			},
+		}
+	}
+
+	if countT == 12 || countT == 13 {
+		action = &coms.NewAction{
+			Action: coms.Action_MOVE,
+			Destination: &coms.Position{
+				X: turn.Position.X + 1,
+				Y: turn.Position.Y + 1,
+			},
+		}
+	}
+
+	if countT == 15 {
+		action = &coms.NewAction{
+			Action: coms.Action_CONNECT,
+			Destination: &coms.Position{
+				X: 1,
+				Y: 1,
+			},
+		}
 	}
 
 	bgt := BotGameTurn{
@@ -46,6 +128,7 @@ func (bg *BotGame) NewTurnAction(turn *coms.NewTurn) *coms.NewAction {
 	}
 	bg.turnStates = append(bg.turnStates, bgt)
 
+	countT += 1
 	return action
 }
 
@@ -73,7 +156,7 @@ func (ps *BotComs) waitToJoinGame() {
 	for {
 		ctx, cancel := context.WithTimeout(context.Background(), timeoutToResponse)
 		playerID, err := npjc.Join(ctx, player)
-		// time.Sleep(timeoutToResponse)
+
 		if err != nil {
 			fmt.Printf("could not join game ERROR: %v\n", err)
 			cancel()

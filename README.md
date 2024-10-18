@@ -18,7 +18,34 @@ I have updated from his original Python 2.7 code, to a Go 1.22 languaje and also
   - Container first approach, game server is a container, each bot is a container (no matter which language)
 
 # Pending tasks
+
 - [ ] Connect lighthouses and form triangles
 - [ ] Calculate player scores based on the triangles created
 - [ ] Implement "haveKey" on lighthouses
 - [ ] Implement player and game action history for the front / users
+
+## Test with docker
+
+The following command will build and start the game server + 3 bots and will show you the game progress until one of the bot wins, then all created resources (_docker containers, images, networks_) will be erased.
+
+```bash
+make docker-test
+```
+
+If you want to test more bots, change the `GAME_BOTS` variable in `Makefile` and retry.
+
+> In case the test crashes, you can clean docker leftovers by running:
+>
+> ```bash
+> make docker-destroy
+> ```
+
+## Test with local Go/python
+
+If you want to test the game server and bots locally, you can run the following commands:
+
+- `make rungs`: Run the game server
+- `make runbotgo`: Run the Go bot (you need to have Go installed)
+- `make runbotpy`: Run the Python bot (you need to have python installed and
+  libraries from requirements.txt installed. You can create a virtualenv or use
+  poetry).

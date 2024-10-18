@@ -2,7 +2,10 @@ package player
 
 import (
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/lighthouse"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 	"github.com/twpayne/go-geom"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -19,33 +22,41 @@ type Action struct {
 }
 
 type Turn struct {
-	Position           geom.Coord
-	Score              int
-	Energy             int
-	View               [][]int
-	Lighthouses        []*lighthouse.Lighthouse
-	UserLighthouseKeys []*lighthouse.Lighthouse
+	Position    geom.Coord
+	Score       int
+	Energy      int
+	View        [][]int
+	Lighthouses []*lighthouse.Lighthouse
 }
 
 type Player struct {
-	ServerAddress  string
-	ID             int
-	Name           string
-	Score          int
-	Energy         int
-	Position       geom.Coord
-	LighthouseKeys []*lighthouse.Lighthouse
+	ServerAddress     string                   `json:"-"`
+	ID                int                      `json:"id"`
+	Name              string                   `json:"name"`
+	Score             int                      `json:"score"`
+	Energy            int                      `json:"energy"`
+	Position          geom.Coord               `json:"position"`
+	LighthouseKeys    []*lighthouse.Lighthouse `json:"-"`
+	LighthouseKeyIds  []int                    `json:"keys"`
+	gameServiceClient coms.GameServiceClient   `json:"-"`
 }
 
 func NewPlayer(serverAddress string, name string) *Player {
+	grpcOpt := grpc.WithTransportCredentials(insecure.NewCredentials())
+	grpcClient, err := grpc.NewClient(serverAddress, grpcOpt)
+	if err != nil {
+		panic(err)
+	}
+
 	return &Player{
-		ServerAddress:  serverAddress,
-		ID:             -1,
-		Name:           name,
-		Score:          0,
-		Energy:         0,
-		Position:       geom.Coord{0, 0},
-		LighthouseKeys: make([]*lighthouse.Lighthouse, 0),
+		ServerAddress:     serverAddress,
+		ID:                -1,
+		Name:              name,
+		Score:             0,
+		Energy:            0,
+		Position:          geom.Coord{0, 0},
+		LighthouseKeys:    make([]*lighthouse.Lighthouse, 0),
+		gameServiceClient: coms.NewGameServiceClient(grpcClient),
 	}
 }
 
@@ -67,5 +78,12 @@ func (p *Player) RemoveLighthouseKey(lighthouse lighthouse.Lighthouse) {
 			p.LighthouseKeys = append(p.LighthouseKeys[:i], p.LighthouseKeys[i+1:]...)
 			break
 		}
+	}
+}
+
+func (p *Player) GenerateLighthouseKeysIds() {
+	p.LighthouseKeyIds = make([]int, 0)
+	for _, l := range p.LighthouseKeys {
+		p.LighthouseKeyIds = append(p.LighthouseKeyIds, l.ID)
 	}
 }
