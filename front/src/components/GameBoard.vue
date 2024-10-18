@@ -30,19 +30,22 @@ export default {
     const x = appWidth / 2 - gridWidth * tileSize / 2;
     const y = appHeight / 2 - gridHeight * tileSize / 2;
 
+    console.log(this.game)
     const board = new Board(this.game, tileSize, x, y);
     app.stage.addChild(board);
 
     const ticker = pixi.Ticker.shared;
     ticker.autoStart = false;
     this.playback.init(
-      event => board.handle(event),
+      frame => board.render(frame),
       () => ticker.start(),
       () => ticker.stop(),
     );
 
     ticker.add(() => {
-      this.playback.auto() === PlaybackStatus.done && ticker.stop();
+      if (this.playback.status() === PlaybackStatus.done) {
+        ticker.stop()
+      }
       console.log(ticker.started)
     })
   }

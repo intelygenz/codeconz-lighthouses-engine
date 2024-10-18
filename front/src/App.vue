@@ -14,14 +14,14 @@
 </template>
 
 <script>
-import ScoreBoard from './components/ScoreBoard.vue'
-import GameBoard from './components/GameBoard.vue'
-import PlaybackControls from './components/PlaybackControls.vue'
-import { Playback } from './code/domain.js'
-import * as games from './code/games.js'
+import ScoreBoard from '@/components/ScoreBoard.vue'
+import GameBoard from '@/components/GameBoard.vue'
+import PlaybackControls from '@/components/PlaybackControls.vue'
+import { Playback } from '@/code/domain.js'
+import * as games from '@/code/games.js'
 
-const game = games.two_players()
-const playback = new Playback(game, 50)
+const game = games.engine_game_4
+const playback = new Playback(game, 5)
 
 export default {
   name: 'App',

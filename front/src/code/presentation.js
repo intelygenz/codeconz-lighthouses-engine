@@ -1,5 +1,4 @@
 import * as pixi from 'pixi.js'
-import { Coordinates, PlaybackEventType } from '@/code/domain.js'
 
 class Tile extends pixi.Container {
   constructor(type, size, x, y) {
@@ -7,7 +6,6 @@ class Tile extends pixi.Container {
     this.label = `Tile(${x}, ${y})`
     this.type = type
     this.size = size
-    this.coordinates = new Coordinates(x, y)
     this.position.set(x * size, y * size)
 
     if (this.type.isGround) {
@@ -21,6 +19,7 @@ class Tile extends pixi.Container {
     this.players = new Players(this.label, this.size)
     this.addChild(this.players)
     this.addChild(this.players.mask)
+    this.energy = 0
   }
 
   move(player) {
@@ -73,6 +72,10 @@ class Player extends pixi.Graphics {
     this.pivot.set(this.size * 0.5)
     this.position.set(this.parentSize * 0.5)
     this.zIndex = index
+
+    const colorMatrix = new pixi.ColorMatrixFilter()
+    colorMatrix.brightness(0.6)
+    this.filters = [colorMatrix]
   }
 }
 
@@ -86,6 +89,20 @@ class Lighthouse extends pixi.Graphics {
     this.pivot.set(this.size * 0.5)
     this.rotation = Math.PI / 4
     this.rect(0, 0, this.size, this.size).fill({color: 0xf0f0f0})
+
+    this.colorMatrix = new pixi.ColorMatrixFilter()
+    this.filters = [this.colorMatrix]
+  }
+
+  update(lighthouse, owner) {
+    this.colorMatrix.reset()
+    if (owner) {
+      this.tint = owner.color
+      // this.colorMatrix.saturate(.9)
+      // this.colorMatrix.greyscale(.5)
+    } else {
+      this.tint = 0xffffff
+    }
   }
 }
 
@@ -130,40 +147,32 @@ export class Board extends pixi.Container {
       return tile
     })))
 
-    this.lighthouses = game.lighthouses.reduce((lighthouses, lighthouse) => {
-      lighthouses[lighthouse.id] = new Lighthouse(lighthouse, this.tileSize)
-      this.tiles[lighthouse.y][lighthouse.x].addChild(lighthouses[lighthouse.id])
-      return lighthouses
-    }, {})
-
-    this.players = game.players.reduce((players, player, index) => {
+    this.players = game.setup.players.reduce((players, player, index) => {
       players[player.id] = new Player(player.id, index, player.color, this.tileSize)
       this.tiles[player.y][player.x].move(players[player.id])
       return players
     }, {})
+
+    this.lighthouses = game.setup.lighthouses.reduce((lighthouses, lighthouse) => {
+      lighthouses[lighthouse.id] = new Lighthouse(lighthouse, this.tileSize)
+      lighthouses[lighthouse.id].update(lighthouse, this.players[lighthouse.ownerId])
+      this.tiles[lighthouse.y][lighthouse.x].addChild(lighthouses[lighthouse.id])
+      return lighthouses
+    }, {})
   }
 
-  handle(event) {
-    switch (event.type) {
-      case PlaybackEventType.gameStart:
-      case PlaybackEventType.roundStart:
-        this.updateTiles(event.data)
-        break
-      case PlaybackEventType.playerMove:
-        this.playerMove(event.data)
-        break
-    }
-  }
-
-  updateTiles(event) {
-    event.boardStatus.energyMatrix.forEach((row, y) => row.forEach((energy, x) => {
+  render(frame) {
+    frame.energy.forEach((row, y) => row.forEach((energy, x) => {
       this.tiles[y][x].energy = energy
     }))
-  }
 
-  playerMove(event) {
-    console.log(event)
-    const player = this.players[event.playerStatus.playerId]
-    this.tiles[event.coordinates.y][event.coordinates.x].move(player)
+    console.log(frame.players)
+    frame.players.forEach(player => {
+      this.tiles[player.y][player.x].move(this.players[player.id])
+    })
+
+    frame.lighthouses.forEach(lighthouse => {
+      this.lighthouses[lighthouse.id].update(lighthouse, this.players[lighthouse.ownerId])
+    })
   }
 }

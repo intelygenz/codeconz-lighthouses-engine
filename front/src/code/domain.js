@@ -1,306 +1,202 @@
-export class Coordinates {
+var clone = (object) => JSON.parse(JSON.stringify(object))
+
+export class Position {
   constructor(x, y) {
     this.x = x
     this.y = y
   }
-
-  equals(other) {
-    return this.x === other.x && this.y === other.y
-  }
 }
 
-export class Positionable {
-  constructor(coordinates) {
-    this.coordinates = coordinates
-  }
-
-  syncCoordinates(coordinates) {
-    this.coordinates = coordinates
+export class BoardItem {
+  constructor(position) {
+    this.position = position
   }
 
   get x() {
-    return this.coordinates.x
+    return this.position.x
   }
 
   get y() {
-    return this.coordinates.y
+    return this.position.y
   }
 }
 
-export class Game {
-  constructor(map, players, lighthouses, rounds) {
-    this.board = new Board(map)
+// ///////////////////////////////////////
+// Player model
+// ///////////////////////////////////////
 
-    this.players = players.sort((a, b) => a.id - b.id)
-    this.players.forEach(player => {
-      this.board.tileFor(player).players.push(player)
-    })
-
-    this.lighthouses = lighthouses.sort((a, b) => a.id - b.id)
-    this.lighthouses.forEach(lighthouse => {
-      this.board.tileFor(lighthouse).lighthouse = lighthouse
-    })
-
-    this.rounds = rounds.sort((a, b) => a.id - b.id)
-  }
-}
-
-export class Board {
-  constructor(map) {
-    this.tiles = map.map((row, y) => row.map((tileType, x) => 
-      new Tile(new Coordinates(x, y), new TileType(tileType), null)
-    ))
-  }
-
-  tileFor(positionable) {
-    return this.tiles[positionable.y][positionable.x]
-  }
-}
-
-export class BoardStatus {
-  constructor(energyMap) {
-    this.energyMap = energyMap
-  }
-}
-
-export class TileType {
-  constructor(tileType) {
-    this.tileType = tileType
-  }
-
-  get isGround() {
-    return this.tileType === "g"
-  }
-}
-
-export class Tile extends Positionable {
-  constructor(coordinates, type, energy) {
-    super(coordinates)
-    this.type = type
-    this.energy = energy
-    this.players = []
-  }
-}
-
-export class Player extends Positionable {
-  constructor(id, name, color, coordinates) {
-    super(coordinates)
+export class Player extends BoardItem {
+  constructor(id, position, energy, score, keys, name, color) {
+    super(position)
     this.id = id
-    this.index = id - 1
     this.name = name
     this.color = color
-    this.energy = 0
-    this.score = 0
-    this.keys = []
-
-    this.turnIndex = 0
-    this.turns = [new Turn(new PlayerStatus(this.id, 0, []), this.coordinates)]
-  }
-
-  get currentTurn() {
-    return this.turns[this.turnIndex]
-  }
-
-  advance() {
-    if (this.turnIndex < this.turns.length) {
-      this.turnIndex++
-      this.syncCurrent()
-      return playerMoveEvent(this.currentTurn)
-    }
-  }
-
-  rewind() {
-    if (this.turnIndex > 0) {
-      this.turnIndex--
-      this.syncCurrent()
-      return playerMoveEvent(this.currentTurn)
-    }
-  }
-
-  syncCurrent() {
-    this.syncStatus(this.currentTurn.playerStatus)
-    this.syncCoordinates(this.currentTurn.coordinates)
-  }
-
-  syncStatus(playerStatus) {
-    this.energy = playerStatus.energy
-    this.keys = playerStatus.keys
-  }
-
-  syncScore(playerScore) {
-    this.score = playerScore.score
-  }
-}
-
-export class Lighthouse extends Positionable {
-  constructor(id, coordinates) {
-    super(coordinates)
-    this.id = id
-    this.energy = 0
-    this.ownerId = null
-    this.connections = []
-  }
-
-  syncStatus(lighthouseStatus) {
-    this.energy = lighthouseStatus.energy
-    this.ownerId = lighthouseStatus.ownerId
-    this.connections = lighthouseStatus.connections
-  }
-}
-
-export class Round {
-  constructor(id, initialRoundStatus, turns) {
-    this.id = id
-    this.index = id - 1
-    this.initialStatus = initialRoundStatus
-    this.turns = turns
-  }
-
-  syncData(players, lighthouses) {
-    this.initialStatus.syncData(players, lighthouses)
-  }
-}
-
-export class InitialRoundStatus {
-  constructor(boardStatus, playerStatuses, playerScores, lighthouseStatuses) {
-    this.boardStatus = boardStatus
-    this.playerStatuses = playerStatuses
-    this.playerScores = playerScores
-    this.lighthouseStatuses = lighthouseStatuses
-  }
-
-  playerScore(playerId) {
-    return this.playerScores.find(score => score.playerId === playerId)
-  }
-
-  playerStatus(playerId) {
-    return this.playerStatuses.find(status => status.playerId === playerId)
-  }
-
-  lighthouseStatus(lighthouseId) {
-    return this.lighthouseStatuses.find(status => status.lighthouseId === lighthouseId)
-  }
-
-  syncData(players, lighthouses) {
-    players.forEach(player => {
-      player.syncScore(this.playerScore(player.id))
-      player.syncStatus(this.playerStatus(player.id))
-    })
-    lighthouses.forEach(lighthouse => 
-      lighthouse.syncStatus(this.lighthouseStatus(lighthouse.id))
-    )
-  }
-}
-
-export class Turn {
-  constructor(playerStatus, coordinates, lighthouseStatus) {
-    this.playerStatus = playerStatus
-    this.coordinates = coordinates
-    this.lighthouseStatus = lighthouseStatus
-  }
-
-  get playerId() {
-    return this.playerStatus.playerId
-  }
-}
-
-export class PlayerStatus {
-  constructor(playerId, energy, keys) {
-    this.playerId = playerId
     this.energy = energy
+    this.score = score
     this.keys = keys
   }
 }
 
-export class PlayerScore {
-  constructor(playerId, score) {
-    this.playerId = playerId
-    this.score = score
-  }
-}
-
-export class LighthouseStatus {
-  constructor(lighthouseId, ownerId, energy, connections) {
-    this.lighthouseId = lighthouseId
-    this.ownerId = ownerId
+export class Lighthouse extends BoardItem {
+  constructor(id, energy, ownerId, links, position) {
+    super(position)
+    this.id = id
     this.energy = energy
-    this.connections = connections
+    this.ownerId = ownerId
+    this.links = links
   }
 }
 
-const NO_ROUND = { isStub: true, syncData: () => {} }
-const NO_PLAYER = { isStub: true, advance: () => {}, rewind: () => {} }
+export class Turn {
+  constructor(player, lighthouses) {
+    this.player = player
+    this.lighthouses = lighthouses
+  }
+}
+
+export class Setup {
+  constructor(energy, players, lighthouses) {
+    this.energy = energy
+    this.players = players
+    this.lighthouses = lighthouses
+  }
+}
+
+export class Round {
+  constructor(setup, turns) {
+    this.setup = setup
+    this.turns = turns
+  }
+}
+
+export class Board {
+  constructor(topology) {
+    this.tiles = topology.map((row, y) => row.map((tileType, x) => 
+      new Tile(new Position(x, y), new TileType(tileType))
+    ))
+  }
+}
+
+export class Tile extends BoardItem {
+  constructor(position, type, energy) {
+    super(position)
+    this.type = type
+    this.energy = energy
+  }
+}
+
+export class TileType {
+  constructor(type) {
+    this.type = type
+  }
+
+  get isGround() {
+    return this.type === 'g'
+  }
+}
+
+export class Game {
+  constructor(topology, setup, rounds) {
+    this.board = new Board(topology)
+    this.setup = setup
+    this.rounds = rounds
+
+    this.players = clone(setup.players)
+    this.lighthouses = clone(setup.lighthouses)
+  }
+}
+
+// ///////////////////////////////////////
+// Playback model
+// ///////////////////////////////////////
+
+export class Frame extends Setup {
+  constructor(name, energy, players, lighthouses) {
+    super(energy, players, lighthouses)
+    this.name = name
+  }
+}
+
+export class GameStartFrame extends Frame {
+  constructor(energy, players, lighthouses) {
+    super("game.start", energy, players, lighthouses)
+  }
+}
+
+export class RoundFrame extends Frame {
+  constructor(roundIndex, energy, players, lighthouses) {
+    super(`round-${roundIndex + 1}`, energy, players, lighthouses)
+    this.roundIndex = roundIndex
+  }
+
+  get isRoundFrame() {
+    return true
+  }
+}
+
+export class TurnFrame extends Frame {
+  constructor(roundIndex, turnIndex, playerName, energy, players, lighthouses) {
+    super(`round-${roundIndex + 1}.turn-${turnIndex + 1}`, energy, players, lighthouses)
+    this.roundIndex = roundIndex
+    this.playerName = playerName
+  }
+}
 
 export class Playback {
   constructor(game, speed) {
     this.game = game
     this.speed = speed
-    this.game.rounds.forEach(round => round.turns.forEach(turn => {
-      this.game.players.find(player => player.id === turn.playerId).turns.push(turn)
-    }))
+    this.tick = this.speed
 
-    this.gameStart = new InitialRoundStatus(
-      new BoardStatus(this.game.board.tiles.map(row => row.map(() => 0))),
-      this.game.players.map(player => new PlayerStatus(player.id, 0, [])),
-      this.game.players.map(player => new PlayerScore(player.id, 0)),
-      this.game.lighthouses.map(lighthouse => new LighthouseStatus(lighthouse.id, null, 0, []))
-    )
+    this.frameIndex = 0
+    this.frames = [new GameStartFrame(game.setup.energy, game.setup.players, game.setup.lighthouses)]
+    this.game.rounds.reduce((frames, round, roundIndex) => {
+      frames.push(new RoundFrame(roundIndex, round.setup.energy, round.setup.players, round.setup.lighthouses))
 
-    this.currentRound = NO_ROUND
-    this.currentPlayer = NO_PLAYER
-    this.currentFrame = this.speed
+      var players = round.setup.players
+      round.turns.reduce((frames, turn, turnIndex) => {
+        players = players.map(player => (player.id === turn.player.id ? turn.player : player))
+        var playerName = this.game.players.find(p => p.id === turn.player.id).name
+        frames.push(new TurnFrame(roundIndex, turnIndex, playerName, round.setup.energy, players, turn.lighthouses))
+        return frames
+      }, frames)
+      return frames
+    }, this.frames)
   }
 
-  init(eventHandler, playHandler, pauseHandler) {
-    this.handle = eventHandler
-    this.playHandler = playHandler
-    this.pauseHandler = pauseHandler
-    this.reset()
+  sync() {
+    console.log(this.frames[0])
+    this.game.players.forEach(player => {
+      player.energy = this.currentFrame.players.find(p => p.id === player.id).energy
+      player.score = this.currentFrame.players.find(p => p.id === player.id).score
+    })
   }
 
-  reset() {
-    this.currentRound = NO_ROUND
-    this.currentPlayer = NO_PLAYER
-    this.currentFrame = this.speed
-    this.syncCurrentRound()
-    this.handle(gameStartEvent(this.gameStart))
+  init(renderHandler, playHandler, pauseHandler) {
+    this.render = renderHandler
+    this.play = playHandler
+    this.stop = pauseHandler
   }
 
-  play() {
-    this.playHandler()
+  restart() {
+    this.stop()
+    this.frameIndex = 0
+    this.render(this.currentFrame)
   }
 
-  pause() {
-    this.pauseHandler()
-  }
-
-  auto() {
-    if (--this.currentFrame > 0) {
+  status() {
+    if (--this.tick > 0) {
       return PlaybackStatus.playing
     }
 
-    this.currentFrame = this.speed
+    this.tick = this.speed
     return this.next();
   }
 
   next() {
-    if (this.currentRound.isStub) {
-      this.currentRound = this.rounds[0]
-      this.syncCurrentRound()
-      this.handle(roundStartEvent(this.currentRound.initialStatus))
-      return PlaybackStatus.playing
-    }
-
-    let event = this.nextPlayer?.advance()
-    if (event) {
-      this.currentPlayer = this.nextPlayer
-      this.handle(event)
-      return PlaybackStatus.playing
-    } else if (this.nextRound) {
-      this.currentRound = this.nextRound
-      this.currentPlayer = NO_PLAYER
-      this.syncCurrentRound()
-      this.handle(roundStartEvent(this.currentRound.initialStatus))
+    if (this.nextFrame) {
+      this.sync()
+      this.render(this.currentFrame)
       return PlaybackStatus.playing
     } else {
       return PlaybackStatus.done
@@ -308,59 +204,33 @@ export class Playback {
   }
 
   prev() {
-    this.currentFrame = this.speed
-
-    let event = this.currentPlayer.rewind()
-    if (event) {
-      this.currentPlayer = this.prevPlayer
-      this.handle(event)
-      return PlaybackStatus.playing
-    } else if (this.prevRound) {
-      this.currentRound = this.prevRound
-      this.currentPlayer = this.lastPlayer
-      this.syncCurrentRound()
-      this.handle(roundStartEvent(this.currentRound.initialStatus))
-      return PlaybackStatus.playing
-    } else if (!this.currentRound.isStub) {
-      this.currentRound = NO_ROUND
-      this.syncCurrentRound()
-      this.handle(gameStartEvent(this.gameStart))
+    if (this.prevFrame) {
+      this.sync()
+      this.render(this.currentFrame)
       return PlaybackStatus.playing
     } else {
       return PlaybackStatus.done
     }
   }
 
-  syncCurrentRound() {
-    this.currentRound.syncData(this.game.players, this.game.lighthouses)
+  get isGameStart() {
+    return this.frameIndex === 0
   }
 
-  get lastPlayer() {
-    return this.players[this.players.length - 1]
+  get hasGameEnded() {
+    return this.frameIndex === this.frames.length - 1
   }
 
-  get nextPlayer() {
-    return this.players[this.currentPlayer.isStub ? 0 : this.currentPlayer.index + 1]
+  get currentFrame() {
+    return this.frames[this.frameIndex]
   }
 
-  get prevPlayer() {
-    return this.players[this.currentPlayer.index - 1] || NO_PLAYER
+  get nextFrame() {
+    return this.hasGameEnded ? false : this.frames[++this.frameIndex]
   }
 
-  get nextRound() {
-    return this.rounds[this.currentRound.index + 1]
-  }
-
-  get prevRound() {
-    return this.rounds[this.currentRound.index - 1]
-  }
-
-  get players() {
-    return this.game.players
-  }
-
-  get rounds() {
-    return this.game.rounds
+  get prevFrame() {
+    return this.isGameStart ? false : this.frames[--this.frameIndex]
   }
 }
 
@@ -370,9 +240,8 @@ export const PlaybackStatus = {
 }
 
 export const PlaybackEventType = {
-  gameStart: 'gameStart',
-  roundStart: 'roundStart',
-  playerMove: 'playerMove',
+  renderTurn: 'renderTurn',
+  renderRound: 'renderRound',
 }
 
 export class PlaybackEvent {
@@ -382,18 +251,13 @@ export class PlaybackEvent {
   }
 }
 
-export const gameStartEvent = (data) => new PlaybackEvent(PlaybackEventType.gameStart, data)
-export const roundStartEvent = (data) => new PlaybackEvent(PlaybackEventType.roundStart, data)
-export const playerMoveEvent = (data) => new PlaybackEvent(PlaybackEventType.playerMove, data)
+export const renderTurnEvent = (data) => new PlaybackEvent(PlaybackEventType.renderTurn, data)
+export const renderRoundEvent = (data) => new PlaybackEvent(PlaybackEventType.renderRound, data)
 
 export const game = (...args) => new Game(...args)
 export const player = (...args) => new Player(...args)
 export const lighthouse = (...args) => new Lighthouse(...args)
 export const round = (...args) => new Round(...args)
 export const turn = (...args) => new Turn(...args)
-export const initialRoundStatus = (...args) => new InitialRoundStatus(...args)
-export const boardStatus = (...args) => new BoardStatus(...args)
-export const playerStatus = (...args) => new PlayerStatus(...args)
-export const playerScore = (...args) => new PlayerScore(...args)
-export const lighthouseStatus = (...args) => new LighthouseStatus(...args)
-export const c = (...args) => new Coordinates(...args)
+export const setup = (...args) => new Setup(...args)
+export const p = (...args) => new Position(...args)
