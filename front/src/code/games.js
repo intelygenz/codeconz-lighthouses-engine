@@ -12,6 +12,7 @@ import raw_engine_game_1 from '@/assets/game-2024_10_07_15_27_54.json'
 import raw_engine_game_2 from '@/assets/game-2024_10_10_08_49_43.json'
 import raw_engine_game_3 from '@/assets/game-2024_10_10_11_41_32.json'
 import raw_engine_game_4 from '@/assets/game-2024_10_16_15_34_24.json'
+import raw_engine_game_5 from '@/assets/game-2024_10_18_09_51_35.json'
 
 const palette = [
   0xff0000,
@@ -75,42 +76,30 @@ export const engine_game_1 = parse(raw_engine_game_1)
 export const engine_game_2 = parse(raw_engine_game_2)
 export const engine_game_3 = parse(raw_engine_game_3)
 export const engine_game_4 = parse(raw_engine_game_4)
+export const engine_game_5 = parse(raw_engine_game_5)
 
-export const map_1 = () => game([
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-    ['g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g'],
-  ],
+const map_1_tiles = [
+  '                     ',
+  '  gggg ggg  ggg    g ',
+  ' g  gg  g  g gggg gg ',
+  ' gg  gg g gg ggggg g ',
+  ' g g  ggggg  ggggggg ',
+  ' g ggg gggg gggggggg ',
+  '  gggg gg       g gg ',
+  ' ggggg g gggg  g  gg ',
+  ' gg   g  gg   gggg   ',
+  ' g   ggg  ggg  ggg   ',
+  ' g g ggggg ggg gg g  ',
+  '  ggg  gggg ggg g  g ',
+  '  g    ggg   g ggg   ',
+  ' g    gggg    ggg g  ',
+  '                     ',
+]
+
+export const map_1 = game(
+  map_1_tiles.map(row => row.split('').map(col => col === 'g' ? 'g' : 'w')),
   setup([], [
-    player(1, p(1, 1), 0, 0, [], 'Player', palette[0]),
-    player(2, p(1, 7), 0, 0, [], 'Player', palette[1]),
-    player(3, p(1, 13), 0, 0, [], 'Player', palette[2]),
-    player(4, p(18, 1), 0, 0, [], 'Player', palette[3]),
-    player(5, p(18, 7), 0, 0, [], 'Player', palette[4]),
-    player(6, p(18, 13), 0, 0, [], 'Player', palette[5]),
   ], [
-    lighthouse(1, 0, 1, [], p(1, 1)),
-    lighthouse(2, 0, 2, [], p(2, 1)),
-    lighthouse(3, 0, 3, [], p(3, 1)),
-    lighthouse(4, 0, 4, [], p(1, 2)),
-    lighthouse(5, 0, 5, [], p(2, 2)),
-    lighthouse(6, 0, 6, [], p(3, 2)),
-    lighthouse(7, 0, 7, [], p(1, 3)),
-    lighthouse(8, 0, 8, [], p(2, 3)),
-    lighthouse(9, 0, 9, [], p(3, 3)),
-    lighthouse(10, 0, 10, [], p(2, 4)),
   ]), 
   []
 )

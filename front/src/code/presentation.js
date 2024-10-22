@@ -110,7 +110,7 @@ class WaterBackground extends pixi.Graphics {
   constructor(parentSize) {
     super()
     this.label = "WaterBackground"
-    this.rect(0, 0, parentSize, parentSize).fill({color: 0x1a2238})
+    this.rect(0, 0, parentSize, parentSize).fill({color: 0x004e64})
   }
 }
 
@@ -131,7 +131,7 @@ class Marker extends pixi.Graphics {
     super()
     this.label = "Marker"
     this.position.set(parentSize * 0.5)
-    this.rect(0, 0, 2, 2).fill({color: 0xf0f0f0})
+    this.rect(0, 0, 1, 1).fill({color: 0xf0f0f0})
   }
 }
 

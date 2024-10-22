@@ -20,7 +20,7 @@ import PlaybackControls from '@/components/PlaybackControls.vue'
 import { Playback } from '@/code/domain.js'
 import * as games from '@/code/games.js'
 
-const game = games.engine_game_4
+const game = games.map_1
 const playback = new Playback(game, 5)
 
 export default {
