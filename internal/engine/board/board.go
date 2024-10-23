@@ -265,7 +265,7 @@ func (m *Board) CalcPlayerEnergy(players []*player.Player, currentPlayer *player
 			playersOnPosition = append(playersOnPosition, p)
 		}
 	}
-	// calculate how much energy is in the island, divide between all players in the position and give corresponding energy
+	// calculate how much energy is on the island, divide between all players in the position and give corresponding energy
 	energy := int(float64(islandCell.Energy / len(playersOnPosition)))
 	for _, p := range playersOnPosition {
 		p.Energy += energy

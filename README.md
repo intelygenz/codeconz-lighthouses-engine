@@ -17,15 +17,6 @@ I have updated from his original Python 2.7 code, to a Go 1.22 languaje and also
   - Focused on allowing many players in the same game
   - Container first approach, game server is a container, each bot is a container (no matter which language)
 
-# Pending tasks
-
-- [ ] Connect lighthouses and form triangles
-- [ ] Calculate player scores based on the triangles created
-- [ ] Implement "haveKey" on lighthouses
-- [ ] Implement player and game action history for the front / users
-
-## Test with docker
-
 The following command will build and start the game server + 3 bots and will show you the game progress until one of the bot wins, then all created resources (_docker containers, images, networks_) will be erased.
 
 ```bash
