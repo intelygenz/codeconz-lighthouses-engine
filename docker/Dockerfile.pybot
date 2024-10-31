@@ -10,7 +10,6 @@ COPY ./examples/randbot.py ./main.py
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE ${GAME_PORT}
 EXPOSE ${BOT_PORT}
 
 CMD python3 ./main.py --bn=${BOT_NAME} --la=${BOT_NAME}:${BOT_PORT} --gs=game:${GAME_PORT}
