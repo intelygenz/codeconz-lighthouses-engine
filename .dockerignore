@@ -1,0 +1,8 @@
+*.md
+*.yaml
+.pre-commit*
+docker/
+docs/
+front/
+output/
+pyold/
