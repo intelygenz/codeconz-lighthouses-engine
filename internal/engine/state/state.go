@@ -65,9 +65,15 @@ type Round struct {
 	Turns []*Turn     `json:"turns"`
 }
 
+type PlayerScore struct {
+	PlayerName string `json:"playerName"`
+	Score      int    `json:"score"`
+}
+
 type GameState struct {
-	Topology    [][]bool    `json:"topology"`
-	Setup       *GameStatus `json:"setup"`
-	Rounds      []Round     `json:"rounds"`
-	FinalStatus *GameStatus `json:"finalStatus"`
+	Topology          [][]bool      `json:"topology"`
+	Setup             *GameStatus   `json:"setup"`
+	Rounds            []Round       `json:"rounds"`
+	FinalStatus       *GameStatus   `json:"finalStatus"`
+	FinalPlayersScore []PlayerScore `json:"finalPlayersScore"`
 }

@@ -23,6 +23,15 @@ func (m *InMemoryState) SetGameState(gs GameState) {
 
 func (m *InMemoryState) SetFinalGameState(gStatus *GameStatus) {
 	m.GameState.FinalStatus = gStatus
+	// setting final players score
+	finalPlayersScore := make([]PlayerScore, 0)
+	for _, p := range m.GameState.FinalStatus.Players {
+		finalPlayersScore = append(finalPlayersScore, PlayerScore{
+			PlayerName: p.Name,
+			Score:      p.Score,
+		})
+	}
+	m.GameState.FinalPlayersScore = finalPlayersScore
 }
 
 func (m *InMemoryState) SetNewRound(rId int, gStatus *GameStatus) {
