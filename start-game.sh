@@ -209,7 +209,7 @@ function pull_image() {
 
 function add_all_bots() {
 	# calls add_bot for each participant defined in game-config
-	for i in ${BOT_LIST[@]}; do
+	for i in "${BOT_LIST[@]}"; do
 		add_bot "${i}"
 	done
 }
@@ -227,7 +227,7 @@ function add_bot() {
   ${THIS_BOT_NAME}:
     environment:
       BOT_NAME: ${THIS_BOT_NAME}
-    image: ${THIS_IMAGE}  
+    image: ${THIS_IMAGE}
     container_name: ${THIS_BOT_NAME}
     hostname: ${THIS_BOT_NAME}
     restart: no

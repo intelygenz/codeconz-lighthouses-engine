@@ -18,4 +18,3 @@ img {
   max-height: 100%;
 }
 </style>
-

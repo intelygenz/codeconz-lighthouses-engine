@@ -1,7 +1,7 @@
 # Go Bot Flow
 - Initialize Bot configuration:
     - `--bn`: Bot name
-    - `--la`: Bot listen address 
+    - `--la`: Bot listen address
     - `--gs`: Game server address
 - Connect to the Game server and Join the current game
     - Sends the `BotName` and the `BotAddress` to the Game server
