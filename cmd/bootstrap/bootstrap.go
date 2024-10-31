@@ -12,8 +12,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Bootstrap struct {
-}
+type Bootstrap struct{}
 
 func NewBootstrap() *Bootstrap {
 	return &Bootstrap{}
@@ -69,6 +68,7 @@ func (b *Bootstrap) Run() {
 func (b *Bootstrap) initializeConfiguration() {
 	// TODO add ENV variable and configuration file support
 
+	viper.AutomaticEnv()
 	viper.SetDefault("game.listen_address", ":50051")
 	viper.SetDefault("game.join_timeout", 5*time.Second)
 	viper.SetDefault("game.turn_request_timeout", 100*time.Millisecond)
