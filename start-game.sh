@@ -9,7 +9,7 @@
 #
 # Options:
 #
-#   -r    forced rebuild of the game server image (optional)
+#   -r    force rebuild of the game server image (optional)
 #   -f    specify game-config file REQUIRED for a real game round
 #   -d    dry-run: a 100% fake playground. It builds the
 #         server + 6 dummy bots, picks a random map and plays 1 round
@@ -20,7 +20,7 @@
 #     # these images MUST be public. 'latest' tag will always be used for pulling, ge:
 #     bots=('ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz')
 #
-#     # map file. must existinto ./maps/ folder, ge:
+#     # map file. must exist into ./maps/ folder, ge:
 #     map=square.txt
 #
 ###############################################################################
@@ -62,7 +62,7 @@ Usage:
 
 Options:
 
-  -r    forced rebuild of the game server image (optional)
+  -r    force rebuild of the game server image (optional)
   -f    specify game-config file ${MAGENTA}REQUIRED for a real game round${CLEAR}
   -d    ${CYAN}dry-run${CLEAR}: a 100% fake playground. It builds the
         server + 6 dummy bots, picks a random map and plays 1 round
@@ -73,7 +73,7 @@ Options:
     # these images MUST be public. 'latest' tag will always be used for pulling, ge:
     bots=(${YELLOW}'ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz'${CLEAR})
 
-    # map file. must existinto ./maps/ folder, ge:
+    # map file. must exist into ./maps/ folder, ge:
     map=${YELLOW}square.txt${CLEAR}
 "
 	exit ${1:-0}
@@ -97,9 +97,9 @@ function _error() {
 }
 
 function divider() {
-  [[ "${COLUMNS}" ]] || COLUMNS=80
-  eval printf '=%.0s' {1..$COLUMNS}
-  echo
+	[[ "${COLUMNS}" ]] || COLUMNS=80
+	eval printf '=%.0s' {1..$COLUMNS}
+	echo
 }
 
 function print_header() {
@@ -150,7 +150,7 @@ function load_config() {
 	for dir in log output; do
 		[ -d "${REPO_DIR}/${dir}" ] || mkdir -p "${REPO_DIR}/${dir}"
 	done
-  export GAME_CONFIG_FILE="${1}"
+	export GAME_CONFIG_FILE="${1}"
 }
 
 function create_docker_compose() {
@@ -283,15 +283,15 @@ EOF
 		THIS_DOCKERFILE="${TMPDIR}Dockerfile-${RANDOM}"
 		create_dockerfile "${THIS_DOCKERFILE}" "${THIS_NAME}"
 		_info "🐳 Building ${YELLOW}${i}${CLEAR} from ${CYAN}\$TMPDIR/$(basename ${THIS_DOCKERFILE})${CLEAR}\t"
-    local DOCKER_BUILD_COMMAND="docker build -f ${THIS_DOCKERFILE} . -t ${i}:latest &>/dev/null"
-    eval ${DOCKER_BUILD_COMMAND}
+		local DOCKER_BUILD_COMMAND="docker build -f ${THIS_DOCKERFILE} . -t ${i}:latest &>/dev/null"
+		eval ${DOCKER_BUILD_COMMAND}
 		if [[ "$?" -ne "0" ]]; then
 			_error "Something went wrong while building docker image with Dockerfile ${THIS_DOCKERFILE}\nCommand:  ${DOCKER_BUILD_COMMAND}\nDockerfile:"
 			cat "${THIS_DOCKERFILE}"
 			rm -f "${THIS_DOCKERFILE}"
 			rm -f "${TMP_CONFIG}"
 			echo "❌"
-      cleanup
+			cleanup
 			exit 1
 		fi
 		rm -f "${THIS_DOCKERFILE}"
@@ -318,13 +318,13 @@ function destroy_simulation() {
 }
 
 function cleanup() {
-  _info "🧹 ${GREEN}Cleaning up..."
-  docker compose -f ${DOCKER_COMPOSE_FILE} down 2>/dev/null
-  docker ps -a --format "{{.Names}}" | egrep -E '^(game|bot)' | xargs --no-run-if-empty docker stop 2>/dev/null
-  rm -f "${DOCKER_COMPOSE_FILE}"
-  if [[ "${DRY_RUN}" ]]; then
-    destroy_simulation
-  fi
+	_info "🧹 ${GREEN}Cleaning up..."
+	docker compose -f ${DOCKER_COMPOSE_FILE} down 2>/dev/null
+	docker ps -a --format "{{.Names}}" | egrep -E '^(game|bot)' | xargs --no-run-if-empty docker stop 2>/dev/null
+	rm -f "${DOCKER_COMPOSE_FILE}"
+	if [[ "${DRY_RUN}" ]]; then
+		destroy_simulation
+	fi
 }
 
 ###############################################################################
@@ -344,10 +344,10 @@ while getopts df:rxh Option; do
 		export REBUILD_SERVER=1
 		;;
 	x)
-    # dirty, I know..
-    export DONT_PULL=1
-    ;;
-  *)
+		# dirty, I know..
+		export DONT_PULL=1
+		;;
+	*)
 		_help 0
 		;;
 	esac
@@ -369,7 +369,7 @@ add_game_server
 COMMAND_UP="docker compose -f ${DOCKER_COMPOSE_FILE} up --timestamps --abort-on-container-exit"
 
 (
-  cat << EOF 
+	cat <<EOF
 # ::: CodeconZ 2024 ::: LighthouseS AI Contest :::
 #
 # Config file: ${GAME_CONFIG_FILE}
