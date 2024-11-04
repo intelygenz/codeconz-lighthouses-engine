@@ -22,7 +22,7 @@ from internal.handler.coms import game_pb2_grpc as game_grpc
 timeout_to_response = 1  # 1 second
 
 SAVED_MODEL = False
-STATE_MAPS = False
+STATE_MAPS = True
 MODEL_PATH = './saved_model'
 MODEL_FILENAME = 'mlp.pth'
 ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "connect", "pass")
@@ -81,7 +81,7 @@ class AgentCNN(nn.Module):
             layer_init(nn.Conv2d(16, 32, 5)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*12*12, 256)),
+            layer_init(nn.Linear(32*10*10, 256)),
             nn.Tanh(),
             layer_init(nn.Linear(256, 1), std=1)
         )
@@ -129,8 +129,8 @@ class BotGame:
             print("Using maps for state: PolicyCNN")
             state = self.convert_state_cnn(turn)
             self.num_maps = state.shape[2]
+            state = np.expand_dims(state, axis=0)
             state = np.transpose(state, (0,3,1,2))
-            self.s_size = state.shape
             self.agent = AgentCNN(self.num_maps, self.a_size).to(self.device)
         else:
             print("Using array for state: PolicyMLP")
@@ -284,6 +284,8 @@ class BotGame:
         if self.state_maps:
             print("Using maps for state: PolicyCNN")
             new_state = self.convert_state_cnn(turn)
+            new_state = np.expand_dims(new_state, axis=0)
+            new_state = np.transpose(new_state, (0,3,1,2))
         else:
             print("Using array for state: PolicyMLP")
             new_state = self.convert_state_mlp(turn)
