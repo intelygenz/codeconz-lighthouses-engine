@@ -36,14 +36,14 @@ func (e *Game) StartGame() {
 		e.gameMap.CalcIslandEnergy()
 		e.gameMap.CalcLighthouseEnergy()
 
-		// generate initial round state
-		round := state.NewGameStatus(e.gameMap.GetIslandEnergy(), e.GetPlayers(), e.gameMap.GetLightHouses())
-		e.state.SetNewRound(roundId, round)
-
 		// give energy to all players before turns starts
 		for _, p := range e.players {
 			e.gameMap.CalcPlayerEnergy(e.GetPlayers(), p)
 		}
+
+		// generate initial round state
+		round := state.NewGameStatus(e.gameMap.GetIslandEnergy(), e.GetPlayers(), e.gameMap.GetLightHouses())
+		e.state.SetNewRound(roundId, round)
 
 		for _, p := range e.players {
 			// send message to each Player with the info

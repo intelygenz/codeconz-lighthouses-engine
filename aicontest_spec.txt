@@ -192,7 +192,7 @@ forma:
 
   o-----o
    \`o'/
-    \|/     
+    \|/
      o
 
   Igualmente, es posible que un área de un jugador contenga completamente a
@@ -353,10 +353,10 @@ X - casilla no forma parte de la isla, pero entra dentro del área visible
 El mensaje describe los faros siguientes:
 
 X  X  X  X  X
-X 50 90  X  X 
-X  |     X  X 
-X 30     0  X 
-X  X  X  X  X 
+X 50 90  X  X
+X  |     X  X
+X 30     0  X
+X  X  X  X  X
 
 Donde cada número indica la energía del faro. Los faros con energía == 50, 30
 están controlados por el jugador 0 y conectados entre sí, y el faro con
@@ -447,4 +447,3 @@ En resumen, las comunicaciones con el bot siguien la siguiente progresión:
 << Resultado de la jugada
 << [EOF]
 >> [EOF]
-

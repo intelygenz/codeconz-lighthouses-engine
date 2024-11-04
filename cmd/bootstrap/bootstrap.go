@@ -12,8 +12,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Bootstrap struct {
-}
+type Bootstrap struct{}
 
 func NewBootstrap() *Bootstrap {
 	return &Bootstrap{}
@@ -22,11 +21,11 @@ func NewBootstrap() *Bootstrap {
 func (b *Bootstrap) Run() {
 	b.initializeConfiguration()
 
-	fmt.Println("Game server starting on", viper.GetString("game.listen_address"))
-
 	if viper.GetString("game.listen_address") == "" {
 		panic("addr is required")
 	}
+
+	fmt.Println("Game server starting on", viper.GetString("game.listen_address"))
 
 	lis, err := net.Listen("tcp", viper.GetString("game.listen_address"))
 	if err != nil {
@@ -67,6 +66,9 @@ func (b *Bootstrap) Run() {
 }
 
 func (b *Bootstrap) initializeConfiguration() {
+	// TODO add ENV variable and configuration file support
+
+	viper.AutomaticEnv()
 	viper.SetDefault("game.listen_address", ":50051")
 	viper.SetDefault("game.join_timeout", 5*time.Second)
 	viper.SetDefault("game.turn_request_timeout", 100*time.Millisecond)

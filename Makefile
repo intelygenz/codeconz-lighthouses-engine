@@ -12,16 +12,12 @@ rungs:
 	go run ./cmd/main.go
 
 # Run bot 1
-runbot1:
+runbotgo:
 	go run ./examples/ranbot.go -bn=bot1 -la=:3001 -gs=:$(SERVER_PORT)
 
-# Run bot 2
-runbot2:
-	go run ./examples/ranbot.go -bn=bot2 -la=:3002 -gs=:$(SERVER_PORT)
-
-# Run bot 3
-runbot3:
-	go run ./examples/ranbot.go -bn=bot3 -la=:3003 -gs=:$(SERVER_PORT)
+# Run py bot
+runbotpy:
+	python -m examples.randbot --bn python-bot1 --la=localhost:3001 --gs=localhost:$(SERVER_PORT)
 
 # Run linter
 lint:
@@ -47,8 +43,9 @@ docker-build:
 	@echo "==> building game server"
 	@docker build -f ./docker/Dockerfile.game . -t game
 	@for i in {1..$(GAME_BOTS)} ; do echo "==> building gobot$${i}" ; docker build -f ./docker/Dockerfile.gobot . --build-arg BOT_PORT=300$${i} --build-arg BOT_NAME=gobot$${i} -t gobot$${i} ; done
+	@for i in {1..$(GAME_BOTS)} ; do echo "==> building pybot$${i}" ; docker build -f ./docker/Dockerfile.pybot . --build-arg BOT_PORT=300$${i} --build-arg BOT_NAME=pybot$${i} -t pybot$${i} ; done
 
-docker-game-simulation:
+docker-game-simulation-gobot:
 	# simulating a game with $(GAME_BOTS) bots
 	@docker run -d --rm --net $(GAME_NETWORK) --name game -v ./output:/app/output -p $(SERVER_PORT):$(SERVER_PORT) game
 	@for i in {1..$(GAME_BOTS)} ; do docker run -d --rm --net $(GAME_NETWORK) --name gobot$${i} -p 300$${i}:300$${i} -e BOT_PORT=300$${i} -e BOT_NAME=gobot$${i} gobot$${i} ; done
@@ -58,11 +55,21 @@ docker-game-simulation:
 	# stopping docker containers
 	@docker ps -a | awk '/(gobot|game)/ {print $$1}' | xargs --no-run-if-empty docker stop
 
+docker-game-simulation-pybot:
+	# simulating a game with $(GAME_BOTS) bots
+	@docker run -d --rm --net $(GAME_NETWORK) --name game -v ./output:/app/output -p $(SERVER_PORT):$(SERVER_PORT) game
+	@for i in {1..$(GAME_BOTS)} ; do docker run -d --rm --net $(GAME_NETWORK) --name pybot$${i} -p 300$${i}:300$${i} -e BOT_PORT=300$${i} -e BOT_NAME=pybot$${i} pybot$${i} ; done
+	@docker logs -tf game
+	@echo "==> game output files:"
+	@ls -lanh ./output/
+	# stopping docker containers
+	@docker ps -a | awk '/(pybot|game)/ {print $$1}' | xargs --no-run-if-empty docker stop
+
 docker-destroy:
 	# stopping docker containers
-	@docker ps -a | awk '/(gobot|game)/ {print $$1}' | xargs --no-run-if-empty docker stop
+	@docker ps -a | awk '/(pybot|gobot|game)/ {print $$1}' | xargs --no-run-if-empty docker stop
 	# cleaning up all docker images
-	@docker images --format '{{.Repository}}' | awk '/^(gobot|game)/ {print $$1}' | sort -r | xargs --no-run-if-empty docker rmi -f
+	@docker images --format '{{.Repository}}' | awk '/^(pybot|gobot|game)/ {print $$1}' | sort -r | xargs --no-run-if-empty docker rmi -f
 	# deleting docker network $(GAME_NETWORK)
 	@docker network rm -f $(GAME_NETWORK)
 
@@ -82,4 +89,4 @@ proto-py:
 	--grpc_python_out=./internal/handler/coms \
 	./proto/*.proto
 
-.PHONY: build rungs runbot1 runbot2 runbot3 lint test docker-net-up docker-net-down docker-build docker-game-simulation docker-destroy proto-go proto-py
+.PHONY: build rungs runbotgo runbotpy lint test docker-net-up docker-net-down docker-build docker-game-simulation-gobot docker-game-simulation-pybot docker-destroy proto-go proto-py

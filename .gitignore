@@ -7,3 +7,4 @@ dist
 !/internal/engine/map/map.go
 output/*
 lighthouses_aicontest/*
+output/*.json
