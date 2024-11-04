@@ -53,6 +53,7 @@ RED="\033[1;31m"
 YELLOW="\033[1;93m"
 
 set -a
+[ "${TMPDIR}" ] || export TMPDIR='/var/tmp'
 
 function _help() {
 	echo -e "
@@ -245,7 +246,7 @@ EOF
 function create_simulation() {
 	# creates a e2e simulation with 6 fake registries/projects/bots
 	_info "‼️ ${YELLOW}Entering ${FUNCNAME}"
-	export TMP_CONFIG="${TMPDIR}game.cfg"
+	export TMP_CONFIG="${TMPDIR}/game.cfg"
 	declare -a bots
 	declare -a maps
 	local bots=('docker.io/fernando/bot' 'quay.io/shresth/bot' 'quay.io/yvette/bot' 'ghcr.io/amadis/bot' 'quay.io/loren/bot' 'ghcr.io/jose/bot')
@@ -279,8 +280,8 @@ EOF
 	}
 
 	for i in "${bots[@]}"; do
-		THIS_NAME="$(echo "${i}" | awk -F'/' '{print $2"-"$3}')"
-		THIS_DOCKERFILE="${TMPDIR}Dockerfile-${RANDOM}"
+		local THIS_NAME="$(echo "${i}" | awk -F'/' '{print $2"-"$3}')"
+		local THIS_DOCKERFILE="${TMPDIR}/Dockerfile-${RANDOM}"
 		create_dockerfile "${THIS_DOCKERFILE}" "${THIS_NAME}"
 		_info "🐳 Building ${YELLOW}${i}${CLEAR} from ${CYAN}\$TMPDIR/$(basename ${THIS_DOCKERFILE})${CLEAR}\t"
 		local DOCKER_BUILD_COMMAND="docker build -f ${THIS_DOCKERFILE} . -t ${i}:latest &>/dev/null"
