@@ -6,3 +6,4 @@ dist
 .DS_Store
 !/internal/engine/map/map.go
 output/*
+lighthouses_aicontest/*
