@@ -23,13 +23,13 @@ from internal.handler.coms import game_pb2_grpc as game_grpc
 
 timeout_to_response = 1  # 1 second
 
-SAVED_MODEL = False
+SAVED_MODEL = True
 STATE_MAPS = True
-MODEL_PATH = './saved_model'
-MODEL_FILENAME = 'mlp.pth'
+MODEL_PATH = './examples/saved_model'
+MODEL_FILENAME = 'reinforce_test_cnn_transfer.pth'
 ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "connect", "pass")
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class BotGameTurn:
@@ -106,18 +106,22 @@ class BotGame:
         self.initial_state = None
         self.turn_states = []
         self.countT = 1
-        self.state_maps = STATE_MAPS # use maps for state: True, or array for state: False
+        self.state_maps = STATE_MAPS # use maps for state (CNN): True, or array for state (MLP): False
         self.a_size = len(ACTIONS)
         self.layers_data = [(64, nn.ReLU()), (64, nn.ReLU())]
-        self.gamma = 0.99
-        self.lr = 1e-2
-        self.save_model = True 
         self.model_path = MODEL_PATH
         self.model_filename = MODEL_FILENAME
         self.use_saved_model = SAVED_MODEL
-        self.num_steps_update = 50000
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
+
+    def load_saved_model(self):
+        if os.path.isfile(os.path.join(self.model_path, self.model_filename)):
+            self.policy.load_state_dict(torch.load(os.path.join(self.model_path, self.model_filename)))
+            print(f"Loaded saved model: {self.model_filename}")
+        else:
+            print("No saved model")
+
     def initialize_game(self, turn):
         self.saved_log_probs = []
         if self.state_maps:
@@ -130,7 +134,6 @@ class BotGame:
             state = self.convert_state_mlp(turn)
             self.s_size = len(state)
             self.policy = PolicyMLP(self.s_size, self.a_size, self.layers_data).to(self.device)
-        self.optimizer = optim.Adam(self.policy.parameters(), lr=self.lr)
         if self.use_saved_model:
             self.load_saved_model()
 
@@ -253,7 +256,7 @@ class BotGame:
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
-        new_state = np.concatenate((player_layer, view_layer, lh_connections_layer, lh_key_layer, lh_control_layer, lh_key_layer), axis=2)
+        new_state = np.concatenate((player_layer, view_layer, lh_control_layer, lh_connections_layer, lh_key_layer), axis=2)
         return new_state
 
     def valid_lighthouse_connections(self, turn):
