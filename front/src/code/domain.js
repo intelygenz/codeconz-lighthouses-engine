@@ -71,7 +71,7 @@ export class Round {
 
 export class Board {
   constructor(topology) {
-    this.tiles = topology.map((row, y) => row.map((tileType, x) => 
+    this.tiles = topology.map((row, y) => row.map((tileType, x) =>
       new Tile(new Position(x, y), new TileType(tileType))
     ))
   }

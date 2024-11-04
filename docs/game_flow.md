@@ -35,7 +35,7 @@
                 - `View`: A map with the energy of the surroundings cells of the player up to 7 cells of distance
                     - `-1` is a Water cell, not playable
                     - `>0` is an Island or Lighthouse cells Energy
-                - `Lighthouses` information, including 
+                - `Lighthouses` information, including
                     - `Position`
                     - `Energy`
                     - `Owner`: `PlayerID` owning the Lighthouse or `-1` if it has no owner

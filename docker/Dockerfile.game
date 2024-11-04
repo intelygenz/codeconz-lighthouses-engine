@@ -11,5 +11,8 @@ WORKDIR /app
 COPY . ./
 COPY --from=builder /app/game ./
 EXPOSE ${GAME_PORT}
+RUN adduser -h /app -H -s /sbin/nologin -D -u 10000 gamesrv && \
+  chown -R gamesrv:gamesrv /app
+USER gamesrv
 # Command to run the Go binary
 CMD ["./game"]

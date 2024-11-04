@@ -1,8 +1,8 @@
-import { 
-  game, 
+import {
+  game,
   setup,
-  player, 
-  lighthouse, 
+  player,
+  lighthouse,
   round,
   turn,
   p
@@ -100,7 +100,7 @@ export const map_1 = game(
   map_1_tiles.map(row => row.split('').map(col => col === 'g' ? 'g' : 'w')),
   setup([], [
   ], [
-  ]), 
+  ]),
   []
 )
 
@@ -123,7 +123,7 @@ export const simple_demo = () => game([
     player(2, p(1, 2), 0, 0, [], 'Player 2', palette[1])
   ], [
     lighthouse(1, 0, null, [], p(2, 2))
-  ]), 
+  ]),
   [
     round(
       setup([
@@ -137,7 +137,7 @@ export const simple_demo = () => game([
         player(2, p(1, 2), 4, 0, [])
       ], [
         lighthouse(1, 0, null, [])
-      ]), 
+      ]),
       [
         turn(player(1, p(2, 1), 4, 0, []), [
           lighthouse(1, 0, null, [])
@@ -158,7 +158,7 @@ export const simple_demo = () => game([
         player(2, p(1, 3), 12, 0, [])
       ], [
         lighthouse(1, 0, null, [])
-      ]), 
+      ]),
       [
         turn(player(1, p(2, 2), 12, 0, []), [
           lighthouse(1, 0, null, [])
@@ -179,7 +179,7 @@ export const simple_demo = () => game([
         player(2, p(2, 3), 24, 0, [])
       ], [
         lighthouse(1, 0, null, [])
-      ]), 
+      ]),
       [
         turn(player(1, p(2, 2), 0, 0, []), [
           lighthouse(1, 27, 1, [])
@@ -200,7 +200,7 @@ export const simple_demo = () => game([
         player(2, p(2, 2), 26, 0, [])
       ], [
         lighthouse(1, 17, 1, [])
-      ]), 
+      ]),
       [
         turn(player(1, p(1, 2), 2, 0, []), [
           lighthouse(1, 17, 1, [])
@@ -218,7 +218,7 @@ export const nine_players = () => game([
     ['w', 'g', 'g', 'g', 'w'],
     ['w', 'w', 'g', 'w', 'w'],
     ['w', 'w', 'w', 'w', 'w'],
-  ], 
+  ],
   setup([
     [0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0],
@@ -248,7 +248,7 @@ export const nine_players = () => game([
     lighthouse(8, 0, 8, [], p(2, 3)),
     lighthouse(9, 0, 9, [], p(3, 3)),
     lighthouse(10, 0, 10, [], p(2, 4)),
-  ]), 
+  ]),
   [
     round(
       setup([
@@ -270,7 +270,7 @@ export const nine_players = () => game([
         player(9, p(2, 2), 0, 0, [], 'Player', palette[8]),
         player(10, p(2, 2), 0, 0, [], 'Player', palette[9]),
       ], [
-      ]), 
+      ]),
       [
       ]),
   ])
@@ -294,7 +294,7 @@ export const nine_players = () => game([
 //
 //   const rounds = [
 //     round(
-//       1, 
+//       1,
 //       roundStatus(
 //         boardStatus([
 //           [0, 0, 0, 0, 0],
@@ -313,7 +313,7 @@ export const nine_players = () => game([
 //       ],
 //     ),
 //     round(
-//       2, 
+//       2,
 //       roundStatus(
 //         boardStatus([
 //           [0, 0, 0, 0, 0],
@@ -332,7 +332,7 @@ export const nine_players = () => game([
 //       ],
 //     ),
 //     round(
-//       3, 
+//       3,
 //       roundStatus(
 //         boardStatus([
 //           [0, 0, 0, 0, 0],
@@ -383,7 +383,7 @@ export const nine_players = () => game([
 //           [0, 0, 0, 0],
 //         ]),
 //         [
-//           playerStatus(player1.id, 0, []), 
+//           playerStatus(player1.id, 0, []),
 //           playerStatus(player2.id, 0, []),
 //           playerStatus(player3.id, 0, []),
 //           playerStatus(player4.id, 0, []),
@@ -395,7 +395,7 @@ export const nine_players = () => game([
 //           playerStatus(player10.id, 0, []),
 //         ],
 //         [
-//           playerScore(player1.id, 0), 
+//           playerScore(player1.id, 0),
 //           playerScore(player2.id, 0),
 //           playerScore(player3.id, 0),
 //           playerScore(player4.id, 0),
@@ -407,7 +407,7 @@ export const nine_players = () => game([
 //           playerScore(player10.id, 0),
 //         ],
 //         []
-//       ), 
+//       ),
 //       []
 //     ),
 //   ]

@@ -55,7 +55,7 @@ GameStatus:
   energy: array[array[integer]]
 
   # Propiedades que cambian en cada Player:
-  # - por terminar la ronda anterior: 
+  # - por terminar la ronda anterior:
   #   - score: se calculan los puntos de la ronda anterior
   # - por preparar la ronda actual:
   #   - energy: energia de la casilla
@@ -63,7 +63,7 @@ GameStatus:
   players: array[Player]
 
   # Propiedades que cambian en cada Lighthouse:
-  # - por preparar la ronda actual: 
+  # - por preparar la ronda actual:
   #   - energy: decrece la energía
   #   - ownerId: el faro se queda sin energía
   lighthouses: array[Lighthouse]
@@ -95,7 +95,7 @@ Game:
   # - ['w', 'w', 'w', 'w', 'w']
   # Se visualiza mejor con 'w' y 'g' que con -1 y 0
   topology: array[array[string]]
-  
+
   # Estado inicial del juego
   setup: GameStatus
 
