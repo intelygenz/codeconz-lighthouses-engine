@@ -34,7 +34,6 @@
 default_stages: [pre-commit, pre-push]
 
 repos:
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -42,23 +41,25 @@ repos:
         args:
           - --allow-multiple-documents
           - --unsafe
-        exclude: (^chart/|^ci\/chart\/\w+)
       - id: end-of-file-fixer
       - id: mixed-line-ending
         args:
           - --fix=auto
       - id: trailing-whitespace
-        exclude: .vimrc
       - id: check-json
       - id: pretty-format-json
         args:
           - --autofix
           - --no-ensure-ascii
           - --no-sort-keys
+      - id: requirements-txt-fixer
       - id: check-merge-conflict
       - id: destroyed-symlinks
       - id: check-symlinks
       - id: check-shebang-scripts-are-executable
+      - id: no-commit-to-branch
+        args:
+          - --branch=main
 
   - repo: https://github.com/tcort/markdown-link-check
     rev: v3.12.2
