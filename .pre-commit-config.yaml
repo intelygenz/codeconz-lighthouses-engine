@@ -57,9 +57,6 @@ repos:
       - id: destroyed-symlinks
       - id: check-symlinks
       - id: check-shebang-scripts-are-executable
-      - id: no-commit-to-branch
-        args:
-          - --branch=main
 
   - repo: https://github.com/tcort/markdown-link-check
     rev: v3.12.2
