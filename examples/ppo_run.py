@@ -21,10 +21,10 @@ from internal.handler.coms import game_pb2_grpc as game_grpc
 
 timeout_to_response = 1  # 1 second
 
-SAVED_MODEL = False
+SAVED_MODEL = True
 STATE_MAPS = True
-MODEL_PATH = './saved_model'
-MODEL_FILENAME = 'mlp.pth'
+MODEL_PATH = './examples/saved_model'
+MODEL_FILENAME = 'ppo_transfer_cnn.pth'
 ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "connect", "pass")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -121,6 +121,14 @@ class BotGame:
         self.num_envs = 1 # the number of steps to run in each environment per policy rollout
         self.a_size = len(ACTIONS)
         self.state_maps = STATE_MAPS
+
+
+    def load_saved_model(self):
+        if os.path.isfile(os.path.join(self.model_path, self.model_filename)):
+            self.policy.load_state_dict(torch.load(os.path.join(self.model_path, self.model_filename)))
+            print(f"Loaded saved model: {self.model_filename}")
+        else:
+            print("No saved model")
 
     # Initialize agent, optimizer and buffer
     def initialize_game(self, turn):
@@ -259,7 +267,7 @@ class BotGame:
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
-        new_state = np.concatenate((player_layer, view_layer, lh_connections_layer, lh_key_layer, lh_control_layer, lh_key_layer), axis=2)
+        new_state = np.concatenate((player_layer, view_layer, lh_connections_layer, lh_control_layer, lh_key_layer), axis=2)
         return new_state
     
 

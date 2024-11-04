@@ -24,12 +24,13 @@ if __name__ == "__main__":
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
 
-    bots = [REINFORCE(state_maps=True, model_filename = "reinforce_cnn_0108.pth", use_saved_model=True),]
+    bots = [REINFORCE(state_maps=True, model_filename = "reinforce_test_cnn_transfer.pth", use_saved_model=False),]
+    #bots = [RandBot()]
 
-    NUM_EPISODES = 5
-    MAX_AGENT_UPDATES = 10 # Number of times to update the agent 
+    NUM_EPISODES = 2
+    MAX_AGENT_UPDATES = 5 # Number of times to update the agent 
     NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the agent
-    MAX_EVALUATION_ROUNDS = 10000
+    MAX_EVALUATION_ROUNDS = 10
     TRAIN = True # Whether to run training or evaluation
 
     #######################################################################

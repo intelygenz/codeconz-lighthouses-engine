@@ -69,7 +69,7 @@ class PolicyCNN(nn.Module):
             nn.Conv2d(64, 64, 3),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(64*11*11, 512),
+            nn.Linear(64*12*12, 512),
             nn.ReLU(),
             nn.Linear(512, a_size)
         )
@@ -101,7 +101,7 @@ class REINFORCE(bot.Bot):
         self.gamma = 0.99
         self.lr = 1e-2
         self.save_model = True 
-        self.model_path = './saved_model'
+        self.model_path = './saved_model_transfer'
         self.model_filename = model_filename
         self.use_saved_model = use_saved_model
         self.num_steps_update = 50000
@@ -134,6 +134,7 @@ class REINFORCE(bot.Bot):
         cx_min, cx_max = cx-3, cx+3
         cy_min, cy_max = cy-3, cy+3
         lighthouses = np.zeros((7,7), dtype=int)
+        #lighthouses_dict = dict((tuple(lh["position"]), lh['energy']) for lh in state["lighthouses"])
         lighthouses_dict = dict((tuple(lh["position"]), lh['energy']) for lh in state["lighthouses"])
         for key in lighthouses_dict.keys():
             if cx_min <= key[0] <= cx_max and cy_min <= key[1] <= cy_max:
@@ -142,7 +143,7 @@ class REINFORCE(bot.Bot):
         # Create array for lighthouses data (within 3 steps of the bot)
         for i in range(len(lighthouses)):
             lighthouses_info = lighthouses_info + list(lighthouses[i])
-        new_state = np.array([state['position'][0], state['position'][1], state['score'], state['energy'], len(state['lighthouses'])] + view + lighthouses_info)
+        new_state = np.array([state['position'][0], state['position'][1], state['energy'], len(state['lighthouses'])] + view + lighthouses_info)
         sc = StandardScaler()
         new_state = sc.fit_transform(new_state.reshape(-1, 1))
         new_state = new_state.squeeze()
@@ -243,7 +244,7 @@ class REINFORCE(bot.Bot):
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
-        new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_control_layer, lh_connections_layer, lh_key_layer), axis=2)
+        new_state = np.concatenate((player_layer, view_layer, lh_control_layer, lh_connections_layer, lh_key_layer), axis=2)
         return new_state
     
 
@@ -259,7 +260,6 @@ class REINFORCE(bot.Bot):
                         [cx, cy] not in lighthouses[dest]["connections"] and
                         lighthouses[dest]["owner"] == self.player_num):
                         possible_connections.append(dest)
-        # possible_connections = [lh["position"] for lh in state["lighthouses"]]
         return possible_connections
 
     def play(self, state):
@@ -336,3 +336,4 @@ class REINFORCE(bot.Bot):
         os.makedirs(self.model_path, exist_ok=True)
         torch.save(self.policy.state_dict(), os.path.join(self.model_path, self.model_filename))
         print("Saved model to disk")
+

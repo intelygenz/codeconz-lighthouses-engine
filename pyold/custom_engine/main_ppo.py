@@ -5,8 +5,6 @@ import engine, train_ppo
 import pandas as pd
 import os
 
-from bots.randbot import RandBot
-from bots.reinforce_multi_env import REINFORCE
 from bots.ppo import PPO
 
 
@@ -18,7 +16,7 @@ from bots.ppo import PPO
 if __name__ == "__main__":
     # Set the map
     cfg_files = ["maps/grid.txt", "maps/island.txt", "maps/random.txt"] #, "maps/square_xl.txt"]
-    cfg_file = "maps/grid_or.txt"
+    cfg_file = "maps/grid.txt"
     
     # Set the bots to play the game
 
@@ -26,15 +24,15 @@ if __name__ == "__main__":
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
     #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
 
-    NUM_EPISODES = 100
+    NUM_EPISODES = 2
     MAX_AGENT_UPDATES = 90 #90 # Number of times to update the agent within an episode
     NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the agent
-    MAX_EVALUATION_ROUNDS = 10000
+    MAX_EVALUATION_ROUNDS = 10
     TRAIN = True # Whether to run training or evaluation
-    NUM_ENVS = 3
+    NUM_ENVS = 1
     STATE_MAPS = True
-    MODEL_FILENAME = "test3.pth"
-    USE_SAVED_MODEL = True
+    MODEL_FILENAME = "ppo_transfer_cnn.pth"
+    USE_SAVED_MODEL = False
     MAX_TOTAL_UPDATES = NUM_EPISODES * MAX_AGENT_UPDATES
 
     #######################################################################

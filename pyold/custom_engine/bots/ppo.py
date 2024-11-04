@@ -215,7 +215,7 @@ class PPO(bot.Bot):
         # Create array for lighthouses data (within 3 steps of the bot)
         for i in range(len(lighthouses)):
             lighthouses_info = lighthouses_info + list(lighthouses[i])
-        new_state = np.array([state['position'][0], state['position'][1], state['score'], state['energy'], len(state['lighthouses'])] + view + lighthouses_info)
+        new_state = np.array([state['position'][0], state['position'][1], state['energy'], len(state['lighthouses'])] + view + lighthouses_info)
         sc = StandardScaler()
         new_state = sc.fit_transform(new_state.reshape(-1, 1))
         new_state = new_state.squeeze()
@@ -311,7 +311,7 @@ class PPO(bot.Bot):
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
-        new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_connections_layer, lh_key_layer), axis=2)
+        new_state = np.concatenate((player_layer, view_layer, lh_connections_layer, lh_control_layer, lh_key_layer), axis=2)
         return new_state
     
 
@@ -327,7 +327,6 @@ class PPO(bot.Bot):
                         [cx, cy] not in lighthouses[dest]["connections"] and
                         lighthouses[dest]["owner"] == self.player_num):
                         possible_connections.append(dest)
-        # possible_connections = [lh["position"] for lh in state["lighthouses"]]
         return possible_connections
 
     
