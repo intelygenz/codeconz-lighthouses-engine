@@ -134,7 +134,6 @@ class REINFORCE(bot.Bot):
         cx_min, cx_max = cx-3, cx+3
         cy_min, cy_max = cy-3, cy+3
         lighthouses = np.zeros((7,7), dtype=int)
-        #lighthouses_dict = dict((tuple(lh["position"]), lh['energy']) for lh in state["lighthouses"])
         lighthouses_dict = dict((tuple(lh["position"]), lh['energy']) for lh in state["lighthouses"])
         for key in lighthouses_dict.keys():
             if cx_min <= key[0] <= cx_max and cy_min <= key[1] <= cy_max:
@@ -244,7 +243,7 @@ class REINFORCE(bot.Bot):
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
-        new_state = np.concatenate((player_layer, view_layer, lh_control_layer, lh_connections_layer, lh_key_layer), axis=2)
+        new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_control_layer, lh_connections_layer, lh_key_layer), axis=2)
         return new_state
     
 

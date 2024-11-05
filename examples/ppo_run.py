@@ -21,7 +21,7 @@ from internal.handler.coms import game_pb2_grpc as game_grpc
 
 timeout_to_response = 1  # 1 second
 
-SAVED_MODEL = True
+SAVED_MODEL = False
 STATE_MAPS = True
 MODEL_PATH = './examples/saved_model'
 MODEL_FILENAME = 'ppo_transfer_cnn.pth'
@@ -158,11 +158,10 @@ class BotGame:
         cx_min, cx_max = cx-3, cx+3
         cy_min, cy_max = cy-3, cy+3
         lighthouses = np.zeros((7,7), dtype=int)
-        lighthouses_dict = dict((tuple((lh.Position.X, lh.Position.Y)), lh.Owner) for lh in turn.Lighthouses)
+        lighthouses_dict = dict((tuple((lh.Position.X, lh.Position.Y)), lh.Energy) for lh in turn.Lighthouses)
         for key in lighthouses_dict.keys():
             if cx_min <= key[0] <= cx_max and cy_min <= key[1] <= cy_max:
-                lighthouses[key[0]+3-cx, key[1]+3-cy] = lighthouses_dict[key] # for owner
-               # lighthouses[key[0]+3-cx, key[1]+3-cy] = lighthouses_dict[key] + 1 for energy
+               lighthouses[key[0]+3-cx, key[1]+3-cy] = lighthouses_dict[key] + 1
         lighthouses_info = []
         # Create array for lighthouses data (within 3 steps of the bot)
         for i in range(len(lighthouses)):
@@ -220,12 +219,12 @@ class BotGame:
 
         # Create layer that has the energy of the lighthouse + 1 where the lighthouse is located
         # 1 is added to the lighthouse energy to cover the case that the energy of the lighthouse is 0
-         # lh_energy_layer = base_layer.copy()
-        # lh = turn.Lighthouses
-        # for i in range(len(lh)):
-        #     x, y = lh[i].Position.X, lh[i].Position.Y
-        #     lh_energy_layer[x,y] = 1 - lh.Energy
-        # lh_energy_layer = self.z_score_scaling(lh_energy_layer)
+        lh_energy_layer = base_layer.copy()
+        lh = turn.Lighthouses
+        for i in range(len(lh)):
+            x, y = lh[i].Position.X, lh[i].Position.Y
+            lh_energy_layer[x,y] = 1 - lh[i].Energy
+        lh_energy_layer = self.z_score_scaling(lh_energy_layer)
 
         # Create layer that has the number of the player that controls each lighthouse
         # If no player controls the lighthouse, then a value of -1 is assigned
@@ -262,12 +261,12 @@ class BotGame:
         # Concatenate the maps into one state
         player_layer = np.expand_dims(player_layer, axis=2)
         view_layer = np.expand_dims(view_layer, axis=2)
-        # lh_energy_layer = np.expand_dims(lh_energy_layer, axis=2)
+        lh_energy_layer = np.expand_dims(lh_energy_layer, axis=2)
         lh_control_layer = np.expand_dims(lh_control_layer, axis=2)
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
-        new_state = np.concatenate((player_layer, view_layer, lh_connections_layer, lh_control_layer, lh_key_layer), axis=2)
+        new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_connections_layer, lh_control_layer, lh_key_layer), axis=2)
         return new_state
     
 
