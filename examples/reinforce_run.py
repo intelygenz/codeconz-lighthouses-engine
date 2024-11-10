@@ -21,10 +21,11 @@ from internal.handler.coms import game_pb2_grpc as game_grpc
 
 timeout_to_response = 1  # 1 second
 
-SAVED_MODEL = False
-STATE_MAPS = True
-MODEL_PATH = './examples/saved_model'
-MODEL_FILENAME = 'reinforce_test_cnn_transfer.pth'
+SAVED_MODEL = True # Set to True to use a saved model that you trained previously
+STATE_MAPS = True # Set to True to use the state format of maps and architecture CNN and set to False for vector format and architecture MLP
+MODEL_PATH = './examples/saved_model' # Path where the model has been saved
+MODEL_FILENAME = 'reinforce_test_cnn_transfer.pth' # Filename of the saved model
+
 ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "connect", "pass")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

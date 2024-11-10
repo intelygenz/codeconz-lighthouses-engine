@@ -21,10 +21,11 @@ from internal.handler.coms import game_pb2_grpc as game_grpc
 
 timeout_to_response = 1  # 1 second
 
-SAVED_MODEL = False
-STATE_MAPS = True
-MODEL_PATH = './examples/saved_model'
-MODEL_FILENAME = 'ppo_transfer_cnn.pth'
+SAVED_MODEL = True # Set to True to use a saved model that you trained previously
+STATE_MAPS = True # Set to True to use the state format of maps and architecture CNN and set to False for vector format and architecture MLP
+MODEL_PATH = './examples/saved_model' # Path where the model has been saved
+MODEL_FILENAME = 'ppo_transfer_mlp.pth' # Filename of the saved model
+
 ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "connect", "pass")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -118,20 +119,26 @@ class BotGame:
         self.use_saved_model = SAVED_MODEL
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.torch_deterministic = True
-        self.num_envs = 1 # the number of steps to run in each environment per policy rollout
+        self.num_envs = 1 # this should be 1 for inference/ playing the game
         self.a_size = len(ACTIONS)
         self.state_maps = STATE_MAPS
 
 
     def load_saved_model(self):
+        """
+        Load a saved model.
+        """
         if os.path.isfile(os.path.join(self.model_path, self.model_filename)):
             self.policy.load_state_dict(torch.load(os.path.join(self.model_path, self.model_filename)))
             print(f"Loaded saved model: {self.model_filename}")
         else:
             print("No saved model")
 
-    # Initialize agent, optimizer and buffer
+
     def initialize_game(self, turn):
+        """
+        Initialize the agent and load the saved model.
+        """
         self.saved_log_probs = []
         if self.state_maps:
             print("Using maps for state: PolicyCNN")
@@ -149,7 +156,10 @@ class BotGame:
             self.load_saved_model()
     
     def convert_state_mlp(self, turn):
-        # Create array for view data
+        """
+        Convert the state from the game engine into a state that can be used by the neural network (MLP).
+        The information in
+        """
         view = []
         for i in range(len(turn.View)):
             view = view + list(turn.View[i].Row)
