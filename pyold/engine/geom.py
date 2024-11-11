@@ -64,6 +64,6 @@ if __name__ == "__main__":
     assert orient2d((0,0),(1,0),(0,1)) > 0
     assert not intersect(((0,0),(2,2)),((4,1),(1,4)))
     assert not intersect(((0,0),(2,2)),((3,1),(1,3)))
-    assert intersect(((0,0),(2,2)),((2,1),(1,2))) 
+    assert intersect(((0,0),(2,2)),((2,1),(1,2)))
     _rendertest(((0,0),(5,0),(0,5)))
     _rendertest(((5,5),(5,0),(0,5)))

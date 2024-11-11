@@ -1,6 +1,7 @@
 # Build the Go binary
 FROM golang:1.22-alpine AS builder
 ARG BOT_NAME
+ARG GAME_PORT=50051
 WORKDIR /app
 COPY . ./
 RUN go mod download && \
@@ -12,7 +13,10 @@ ARG BOT_PORT
 WORKDIR /app
 COPY ./proto/ ./proto/
 COPY --from=builder /app/${BOT_NAME} ./
-EXPOSE 50051
+EXPOSE ${GAME_PORT}
+RUN adduser -h /app -H -s /sbin/nologin -D -u 10000 botuser && \
+  chown -R botuser:botuser /app
+USER botuser
 EXPOSE ${BOT_PORT}
 # Command to run the Go binary
-CMD ./${BOT_NAME} -bn=${BOT_NAME} -la=${BOT_NAME}:${BOT_PORT} -gs=game:50051
+CMD ./${BOT_NAME} -bn=${BOT_NAME} -la=${BOT_NAME}:${BOT_PORT} -gs=game:${GAME_PORT}

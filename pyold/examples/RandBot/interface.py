@@ -28,7 +28,7 @@ class Bot(object):
     def play(self, state):
         """Jugar: llamado cada turno.
         Debe devolver una acción (jugada).
-        
+
         state: estado actual del juego.
         """
         return self.nop()
@@ -64,7 +64,7 @@ class Bot(object):
 
     def move(self, x, y):
         """Mover a una casilla adyacente
-        
+
         x: delta x (0, -1, 1)
         y: delta y (0, -1, 1)
         """
@@ -76,7 +76,7 @@ class Bot(object):
 
     def attack(self, energy):
         """Atacar a un faro
-        
+
         energy: energía (entero positivo)
         """
         return {
@@ -86,7 +86,7 @@ class Bot(object):
 
     def connect(self, destination):
         """Conectar a un faro remoto
-        
+
         destination: tupla o lista (x,y): coordenadas del faro remoto
         """
         return {
@@ -102,7 +102,7 @@ class Interface(object):
     def __init__(self, bot_class):
         self.bot_class = bot_class
         self.bot = None
-    
+
     def _recv(self):
         line = sys.stdin.readline()
         if not line:
