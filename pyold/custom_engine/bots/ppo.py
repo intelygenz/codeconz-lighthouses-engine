@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 import numpy as np
 import os
 
@@ -17,7 +14,6 @@ import random
 import time
 from distutils.util import strtobool
 
-import gym
 from torch.utils.tensorboard import SummaryWriter
 
 import random
@@ -76,7 +72,7 @@ class AgentCNN(nn.Module):
             layer_init(nn.Conv2d(16, 32, 5)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*10*10, 256)),
+            layer_init(nn.Linear(32*10*10, 256)), #10, 11, 5
             nn.Tanh(),
             layer_init(nn.Linear(256, 1), std=1)
         )
@@ -87,7 +83,7 @@ class AgentCNN(nn.Module):
             layer_init(nn.Conv2d(16, 32, 5)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*10*10, 256)),
+            layer_init(nn.Linear(32*10*10, 256)), #10, 11, 5
             nn.Tanh(),
             layer_init(nn.Linear(256, a_size), std=0.01)
         )
@@ -311,7 +307,7 @@ class PPO(bot.Bot):
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
-        new_state = np.concatenate((player_layer, view_layer, lh_connections_layer, lh_control_layer, lh_key_layer), axis=2)
+        new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_connections_layer, lh_control_layer, lh_key_layer), axis=2)
         return new_state
     
 
@@ -491,6 +487,8 @@ class PPO(bot.Bot):
         self.writer.add_scalar("losses/explained_variance", explained_var, self.global_step)
         #print("SPS:", int(self.global_step / (time.time() - self.start_time)))
         self.writer.add_scalar("charts/SPS", int(self.global_step / (time.time() - self.start_time)), self.global_step)
+        print("policy loss: ", pg_loss.item())
+        print("value loss: ", v_loss.item())
 
     def save_trained_model(self):
         os.makedirs(self.model_path, exist_ok=True)

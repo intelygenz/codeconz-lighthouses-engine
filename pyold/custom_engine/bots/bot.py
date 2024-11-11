@@ -30,6 +30,9 @@ class Bot(object):
     def initialize_game(self, state):
         pass
 
+    def initialize_experience_gathering(self):
+        pass
+
     def play(self, state):
         """Jugar: llamado cada turno.
         Debe devolver una acción (jugada).

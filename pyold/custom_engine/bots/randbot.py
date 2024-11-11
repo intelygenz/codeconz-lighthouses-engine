@@ -10,7 +10,7 @@ class RandBot(bot.Bot):
     """Bot que juega aleatoriamente."""
     NAME = "RandBot"
 
-    def play(self, state):
+    def play(self, state, step=None):
         """Jugar: llamado cada turno.
         Debe devolver una acción (jugada)."""
         cx, cy = state["position"]

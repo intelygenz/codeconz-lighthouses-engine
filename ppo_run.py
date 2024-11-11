@@ -23,9 +23,8 @@ timeout_to_response = 1  # 1 second
 
 SAVED_MODEL = True # Set to True to use a saved model that you trained previously
 STATE_MAPS = True # Set to True to use the state format of maps and architecture CNN and set to False for vector format and architecture MLP
-MODEL_PATH = './examples/saved_model' # Path where the model has been saved
-MODEL_FILENAME = 'ppo_transfer_cnn_8envs.pth' # Filename of the saved model
-
+MODEL_PATH = './saved_model' # Path where the model has been saved
+MODEL_FILENAME = 'mlp.pth' # Filename of the saved model
 ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "connect", "pass")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -119,26 +118,12 @@ class BotGame:
         self.use_saved_model = SAVED_MODEL
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.torch_deterministic = True
-        self.num_envs = 1 # this should be 1 for inference/ playing the game
+        self.num_envs = 1 # the number of steps to run in each environment per policy rollout
         self.a_size = len(ACTIONS)
         self.state_maps = STATE_MAPS
 
-
-    def load_saved_model(self):
-        """
-        Load a saved model.
-        """
-        if os.path.isfile(os.path.join(self.model_path, self.model_filename)):
-            self.policy.load_state_dict(torch.load(os.path.join(self.model_path, self.model_filename)))
-            print(f"Loaded saved model: {self.model_filename}")
-        else:
-            print("No saved model")
-
-
+    # Initialize agent, optimizer and buffer
     def initialize_game(self, turn):
-        """
-        Initialize the agent and load the saved model.
-        """
         self.saved_log_probs = []
         if self.state_maps:
             print("Using maps for state: PolicyCNN")
@@ -155,11 +140,9 @@ class BotGame:
         if self.use_saved_model:
             self.load_saved_model()
     
+    
     def convert_state_mlp(self, turn):
-        """
-        Convert the state from the game engine into a state that can be used by the neural network (MLP).
-        The information in
-        """
+        # Create array for view data
         view = []
         for i in range(len(turn.View)):
             view = view + list(turn.View[i].Row)
@@ -168,10 +151,11 @@ class BotGame:
         cx_min, cx_max = cx-3, cx+3
         cy_min, cy_max = cy-3, cy+3
         lighthouses = np.zeros((7,7), dtype=int)
-        lighthouses_dict = dict((tuple((lh.Position.X, lh.Position.Y)), lh.Energy) for lh in turn.Lighthouses)
+        lighthouses_dict = dict((tuple((lh.Position.X, lh.Position.Y)), lh.Owner) for lh in turn.Lighthouses)
         for key in lighthouses_dict.keys():
             if cx_min <= key[0] <= cx_max and cy_min <= key[1] <= cy_max:
-               lighthouses[key[0]+3-cx, key[1]+3-cy] = lighthouses_dict[key] + 1
+                lighthouses[key[0]+3-cx, key[1]+3-cy] = lighthouses_dict[key] # for owner
+               # lighthouses[key[0]+3-cx, key[1]+3-cy] = lighthouses_dict[key] + 1 for energy
         lighthouses_info = []
         # Create array for lighthouses data (within 3 steps of the bot)
         for i in range(len(lighthouses)):
@@ -229,12 +213,12 @@ class BotGame:
 
         # Create layer that has the energy of the lighthouse + 1 where the lighthouse is located
         # 1 is added to the lighthouse energy to cover the case that the energy of the lighthouse is 0
-        lh_energy_layer = base_layer.copy()
-        lh = turn.Lighthouses
-        for i in range(len(lh)):
-            x, y = lh[i].Position.X, lh[i].Position.Y
-            lh_energy_layer[x,y] = 1 - lh[i].Energy
-        lh_energy_layer = self.z_score_scaling(lh_energy_layer)
+         # lh_energy_layer = base_layer.copy()
+        # lh = turn.Lighthouses
+        # for i in range(len(lh)):
+        #     x, y = lh[i].Position.X, lh[i].Position.Y
+        #     lh_energy_layer[x,y] = 1 - lh.Energy
+        # lh_energy_layer = self.z_score_scaling(lh_energy_layer)
 
         # Create layer that has the number of the player that controls each lighthouse
         # If no player controls the lighthouse, then a value of -1 is assigned
@@ -271,12 +255,12 @@ class BotGame:
         # Concatenate the maps into one state
         player_layer = np.expand_dims(player_layer, axis=2)
         view_layer = np.expand_dims(view_layer, axis=2)
-        lh_energy_layer = np.expand_dims(lh_energy_layer, axis=2)
+        # lh_energy_layer = np.expand_dims(lh_energy_layer, axis=2)
         lh_control_layer = np.expand_dims(lh_control_layer, axis=2)
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
-        new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_connections_layer, lh_control_layer, lh_key_layer), axis=2)
+        new_state = np.concatenate((player_layer, view_layer, lh_connections_layer, lh_key_layer, lh_control_layer, lh_key_layer), axis=2)
         return new_state
     
 

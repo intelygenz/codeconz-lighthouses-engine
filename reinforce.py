@@ -5,15 +5,17 @@ import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import os
+import torch.optim as optim
+import sys, os
 import numpy as np
 import random
 from concurrent import futures
 from grpc import RpcError
 from google.protobuf import json_format
+from torch.nn.modules import Module
 from torch.distributions import Categorical
 from sklearn.preprocessing import StandardScaler
-from distutils.util import strtobool
+from collections import deque
 
 from internal.handler.coms import game_pb2
 from internal.handler.coms import game_pb2_grpc as game_grpc
@@ -21,92 +23,82 @@ from internal.handler.coms import game_pb2_grpc as game_grpc
 
 timeout_to_response = 1  # 1 second
 
-SAVED_MODEL = True # Set to True to use a saved model that you trained previously
-STATE_MAPS = True # Set to True to use the state format of maps and architecture CNN and set to False for vector format and architecture MLP
-MODEL_PATH = './examples/saved_model' # Path where the model has been saved
-MODEL_FILENAME = 'ppo_transfer_cnn_8envs.pth' # Filename of the saved model
-
+SAVED_MODEL = False
+STATE_MAPS = False
+MODEL_PATH = './saved_model'
+MODEL_FILENAME = 'mlp.pth'
 ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "connect", "pass")
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class BotGameTurn:
     def __init__(self, turn, action):
         self.turn = turn
         self.action = action
-        
-
-def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
-    torch.nn.init.orthogonal_(layer.weight, std)
-    torch.nn.init.constant_(layer.bias, bias_const)
-    return layer
 
 # Define the neural network for the policy
-class AgentMLP(nn.Module):
-    def __init__(self, s_size, a_size,):
-        super(AgentMLP, self).__init__()
-        self.critic = nn.Sequential(
-            layer_init(nn.Linear(np.array(s_size).prod(), 64)),
-            nn.Tanh(),
-            layer_init(nn.Linear(64, 64)),
-            nn.Tanh(),
-            layer_init(nn.Linear(64, 1), std=1.0),
-        )
-        self.actor = nn.Sequential(
-            layer_init(nn.Linear(np.array(s_size).prod(), 64)),
-            nn.Tanh(),
-            layer_init(nn.Linear(64, 64)),
-            nn.Tanh(),
-            layer_init(nn.Linear(64, a_size), std=0.01),
-        )
+class PolicyMLP(nn.Module):
+    def __init__(self, s_size, a_size, layers_data: list):
+        super(PolicyMLP, self).__init__()
+        self.layers = nn.ModuleList()
+        input_size = s_size
+        for size, activation in layers_data:
+            self.layers.append(nn.Linear(input_size, size))
+            input_size = size
+            if activation is not None:
+                assert isinstance(activation, Module), \
+                    "Each tuple should contain a layer size (int) and an activation (ex. nn.ReLU())."
+                self.layers.append(activation)
+        self.layers.append(nn.Linear(size, a_size))
 
-    def get_value(self, x):
-        return self.critic(x)
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return torch.log_softmax(x, dim=-1)
+    
+    def act(self, state):
+        """
+        Given a state, take action
+        """
+        state = torch.from_numpy(state).float().unsqueeze(0).to(device)
+        probs = self.forward(state).cpu()
+        m = Categorical(probs)
+        action = m.sample()
+        return action.item(), m.log_prob(action)
 
-    def get_action_and_value(self, x, action=None):
-        logits = self.actor(x)
-        probs = Categorical(logits=logits)
-        if action is None:
-            action = probs.sample()
-        return action, probs.log_prob(action), probs.entropy(), self.critic(x)
-
-
-class AgentCNN(nn.Module):
+class PolicyCNN(nn.Module):
     def __init__(self, num_maps, a_size: list):
-        super(AgentCNN, self).__init__()
+        super(PolicyCNN, self).__init__()
 
-        self.critic = nn.Sequential(
-            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=7)),
+        self.network = nn.Sequential(
+            nn.Conv2d(in_channels=num_maps, out_channels=32, kernel_size=5), 
             nn.ReLU(),
-            layer_init(nn.Conv2d(16, 32, 5)),
+            nn.Conv2d(32, 64, 3),
             nn.ReLU(),
-            nn.Flatten(),
-            layer_init(nn.Linear(32*10*10, 256)),
-            nn.Tanh(),
-            layer_init(nn.Linear(256, 1), std=1)
-        )
-
-        self.actor = nn.Sequential(
-            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=7)),
-            nn.ReLU(),
-            layer_init(nn.Conv2d(16, 32, 5)),
+            nn.Conv2d(64, 64, 3),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*10*10, 256)),
-            nn.Tanh(),
-            layer_init(nn.Linear(256, a_size), std=0.01)
+            nn.Linear(64*12*12, 512),
+            nn.ReLU(),
+            nn.Linear(512, a_size)
         )
 
-    def get_value(self, x):
-        return self.critic(x)
-
-    def get_action_and_value(self, x, action=None):
-        logits = self.actor(x)
-        probs = Categorical(logits=logits)
-        if action is None:
-            action = probs.sample()
-        return action, probs.log_prob(action), probs.entropy(), self.critic(x)
+    def forward(self, x):
+        x = self.network(x)
+        return torch.log_softmax(x, dim=-1)
+    
+    def act(self, state):
+        """
+        Given a state, take action
+        """
+        state = np.transpose(state, (2,0,1))
+        state = torch.from_numpy(state).float().unsqueeze(0).to(device)
+        probs = self.forward(state).cpu()
+        m = Categorical(probs)
+        action = m.sample()
+        return action.item(), m.log_prob(action)
+    
 
 class BotGame:
     def __init__(self, player_num=None):
@@ -114,52 +106,36 @@ class BotGame:
         self.initial_state = None
         self.turn_states = []
         self.countT = 1
+        self.state_maps = STATE_MAPS # use maps for state: True, or array for state: False
+        self.a_size = len(ACTIONS)
+        self.layers_data = [(64, nn.ReLU()), (64, nn.ReLU())]
+        self.gamma = 0.99
+        self.lr = 1e-2
+        self.save_model = True 
         self.model_path = MODEL_PATH
         self.model_filename = MODEL_FILENAME
         self.use_saved_model = SAVED_MODEL
+        self.num_steps_update = 50000
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.torch_deterministic = True
-        self.num_envs = 1 # this should be 1 for inference/ playing the game
-        self.a_size = len(ACTIONS)
-        self.state_maps = STATE_MAPS
-
-
-    def load_saved_model(self):
-        """
-        Load a saved model.
-        """
-        if os.path.isfile(os.path.join(self.model_path, self.model_filename)):
-            self.policy.load_state_dict(torch.load(os.path.join(self.model_path, self.model_filename)))
-            print(f"Loaded saved model: {self.model_filename}")
-        else:
-            print("No saved model")
-
-
+    
     def initialize_game(self, turn):
-        """
-        Initialize the agent and load the saved model.
-        """
         self.saved_log_probs = []
         if self.state_maps:
             print("Using maps for state: PolicyCNN")
             state = self.convert_state_cnn(turn)
             self.num_maps = state.shape[2]
-            state = np.expand_dims(state, axis=0)
-            state = np.transpose(state, (0,3,1,2))
-            self.agent = AgentCNN(self.num_maps, self.a_size).to(self.device)
+            self.policy = PolicyCNN(self.num_maps, self.a_size).to(self.device)
         else:
             print("Using array for state: PolicyMLP")
             state = self.convert_state_mlp(turn)
             self.s_size = len(state)
-            self.agent = AgentMLP(self.s_size, self.a_size).to(self.device)
+            self.policy = PolicyMLP(self.s_size, self.a_size, self.layers_data).to(self.device)
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=self.lr)
         if self.use_saved_model:
             self.load_saved_model()
-    
+
     def convert_state_mlp(self, turn):
-        """
-        Convert the state from the game engine into a state that can be used by the neural network (MLP).
-        The information in
-        """
+        # Create array for view data
         view = []
         for i in range(len(turn.View)):
             view = view + list(turn.View[i].Row)
@@ -171,7 +147,8 @@ class BotGame:
         lighthouses_dict = dict((tuple((lh.Position.X, lh.Position.Y)), lh.Energy) for lh in turn.Lighthouses)
         for key in lighthouses_dict.keys():
             if cx_min <= key[0] <= cx_max and cy_min <= key[1] <= cy_max:
-               lighthouses[key[0]+3-cx, key[1]+3-cy] = lighthouses_dict[key] + 1
+                lighthouses[key[0]+3-cx, key[1]+3-cy] = lighthouses_dict[key] # for owner
+               # lighthouses[key[0]+3-cx, key[1]+3-cy] = lighthouses_dict[key] + 1 for energy
         lighthouses_info = []
         # Create array for lighthouses data (within 3 steps of the bot)
         for i in range(len(lighthouses)):
@@ -229,12 +206,12 @@ class BotGame:
 
         # Create layer that has the energy of the lighthouse + 1 where the lighthouse is located
         # 1 is added to the lighthouse energy to cover the case that the energy of the lighthouse is 0
-        lh_energy_layer = base_layer.copy()
-        lh = turn.Lighthouses
-        for i in range(len(lh)):
-            x, y = lh[i].Position.X, lh[i].Position.Y
-            lh_energy_layer[x,y] = 1 - lh[i].Energy
-        lh_energy_layer = self.z_score_scaling(lh_energy_layer)
+        # lh_energy_layer = base_layer.copy()
+        # lh = turn.Lighthouses
+        # for i in range(len(lh)):
+        #     x, y = lh[i].Position.X, lh[i].Position.Y
+        #     lh_energy_layer[x,y] = 1 - lh.Energy
+        # lh_energy_layer = self.z_score_scaling(lh_energy_layer)
 
         # Create layer that has the number of the player that controls each lighthouse
         # If no player controls the lighthouse, then a value of -1 is assigned
@@ -271,14 +248,13 @@ class BotGame:
         # Concatenate the maps into one state
         player_layer = np.expand_dims(player_layer, axis=2)
         view_layer = np.expand_dims(view_layer, axis=2)
-        lh_energy_layer = np.expand_dims(lh_energy_layer, axis=2)
+       # lh_energy_layer = np.expand_dims(lh_energy_layer, axis=2)
         lh_control_layer = np.expand_dims(lh_control_layer, axis=2)
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
-        new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_connections_layer, lh_control_layer, lh_key_layer), axis=2)
+        new_state = np.concatenate((player_layer, view_layer, lh_connections_layer, lh_key_layer, lh_control_layer, lh_key_layer), axis=2)
         return new_state
-    
 
     def valid_lighthouse_connections(self, turn):
         cx = turn.Position.X
@@ -295,20 +271,17 @@ class BotGame:
                         possible_connections.append(dest)
         return possible_connections
 
-    def new_turn_action(self, turn: game_pb2.NewTurn, step=None) -> game_pb2.NewAction:
+    def new_turn_action(self, turn: game_pb2.NewTurn) -> game_pb2.NewAction:
         if self.countT == 1:
             self.initialize_game(turn)
         if self.state_maps:
             print("Using maps for state: PolicyCNN")
             new_state = self.convert_state_cnn(turn)
-            new_state = np.expand_dims(new_state, axis=0)
-            new_state = np.transpose(new_state, (0,3,1,2))
         else:
             print("Using array for state: PolicyMLP")
             new_state = self.convert_state_mlp(turn)
-        new_state = torch.from_numpy(np.array(new_state)).float().to(device) 
-        with torch.no_grad():
-            action, log_prob, _, value = self.agent.get_action_and_value(new_state)
+        action, log_prob = self.policy.act(new_state)
+        self.saved_log_probs.append(log_prob)
         if ACTIONS[action] != "attack" and ACTIONS[action] != "connect" and ACTIONS[action] != "pass":
             move = ACTIONS[action]
             action = game_pb2.NewAction(
@@ -381,12 +354,6 @@ class BotGame:
                 self.countT += 1
                 return action
 
-    def load_saved_model(self):
-        if self.model_filename and os.path.isfile(os.path.join(self.model_path, self.model_filename)):
-            self.agent.load_state_dict(torch.load(os.path.join(self.model_path, self.model_filename)))
-            print(f"Loaded saved model: {self.model_filename}")
-        else:
-            print("No saved model")
 
 class BotComs:
     def __init__(self, bot_name, my_address, game_server_address, verbose=True):
@@ -472,7 +439,10 @@ class ClientServer(game_grpc.GameServiceServicer):
         print(f"Processing turn: {self.bg.countT}")
         if self.verbose:
             print(json_format.MessageToJson(request))
+        if self.bg.countT == 1:
+            self.bg.initialize_game(request)
         action = self.bg.new_turn_action(request)
+        print(action)
         return action
 
 

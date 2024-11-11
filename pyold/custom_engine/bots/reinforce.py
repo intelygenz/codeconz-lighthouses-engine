@@ -6,8 +6,6 @@ import os
 
 from collections import deque
 
-import matplotlib.pyplot as plt
-
 # PyTorch
 import torch
 import torch.nn as nn
@@ -261,7 +259,7 @@ class REINFORCE(bot.Bot):
                         possible_connections.append(dest)
         return possible_connections
 
-    def play(self, state):
+    def play(self, state, step=None):
         if self.state_maps:
             print("Using maps for state: PolicyCNN")
             new_state = self.convert_state_cnn(state)
