@@ -12,7 +12,7 @@ option go_package = "github.com/jonasdacruz/lighthouses_aicontest/coms";
  */
 message NewPlayer {
 	string name = 1; // Name of the player
-	string serverAddress = 2; // Address of the server
+	string serverAddress = 2; // Address to reach the player
 }
 
 /**
