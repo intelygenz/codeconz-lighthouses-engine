@@ -1,88 +1,181 @@
+<script setup>
+  import { reactive, computed, onMounted, useTemplateRef } from "vue";
+  import * as Icon from "lucide-vue-next";
+  import { Playback, PlaybackStatus } from "@/code/domain";
+  import { colorToHex, colorToString } from "@/code/palette";
+  import { init } from "@/code/presentation";
+  import * as Games from "@/code/maps";
+  // import * as EngineGames from "@/code/engine_games";
+
+  const game = reactive(Games.game_1);
+  const playback = reactive(new Playback(game, 5));
+  const boardContainer = useTemplateRef("boardContainer");
+
+  onMounted(async () => {
+    const { board, ticker } = await init(game, playback, boardContainer.value);
+    playback.init(board, ticker);
+  });
+</script>
+
 <template>
-  <div class="main">
-    <div class="sidebar">
-      <div class="header">
-        <img alt="Lighthouse logo" src="@/assets/logo.png">
+  <!-- Main -->
+  <div class="flex h-screen w-screen bg-black">
+    <!-- Left column -->
+    <div class="flex w-80 flex-col bg-[#0a1606]">
+      <!-- Header -->
+      <div class="flex justify-center border-b-2 border-[#12230d] py-4">
+        <img
+          alt="Lighthouse logo"
+          src="@/assets/logo-sin-fondo.png"
+          class="w-28" />
       </div>
-      <ScoreBoard :players="orderedPlayers" />
+      <!-- Header -->
+
+      <!-- Scoreboard -->
+      <transition-group
+        name="player-list"
+        tag="div"
+        class="flex w-full flex-col gap-4 p-4 text-slate-100">
+        <div
+          class="flex gap-4"
+          v-for="player in game.orderedPlayers"
+          :key="player.id">
+          <img
+            class="w-12"
+            alt="Player avatar"
+            :src="`https://api.dicebear.com/8.x/bottts-neutral/svg?backgroundColor=${colorToString(player.color)}&radius=50&seed=${player.name}`" />
+          <div class="flex grow flex-col justify-center">
+            <span class="text-sm font-bold">{{ player.name }}</span>
+            <div class="flex gap-3 text-xs">
+              <span class="flex items-center gap-1 text-yellow-300">
+                <Icon.Medal class="w-4" />
+                <span>{{ player.score }}</span>
+              </span>
+              <span class="flex items-center gap-1 text-blue-300">
+                <Icon.Zap class="w-4" />
+                <span>{{ player.energy }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </transition-group>
+      <!-- Scoreboard -->
     </div>
-    <div class="game">
-      <GameBoard :game="game" :playback="playback"/>
-      <PlaybackControls :playback="playback"/>
+    <!-- Left column -->
+
+    <!-- Center column -->
+    <div class="flex grow flex-col bg-black py-4 text-slate-100">
+      <!-- Game info -->
+      <div class="flex basis-1/12 flex-col justify-end text-center">
+        <p class="font-bold">{{ playback.currentFrame.title }}</p>
+        <p>{{ playback.currentFrame.subtitle }}</p>
+      </div>
+
+      <!-- Board -->
+      <div ref="boardContainer" class="w-full grow"></div>
+      <!-- Board -->
+
+      <!-- Playback controls -->
+      <div class="mx-auto basis-1/12">
+        <div class="flex gap-2">
+          <button @click="playback.restart">
+            <Icon.SkipBack />
+          </button>
+          <button @click="playback.prev">
+            <Icon.StepBack />
+          </button>
+          <button v-if="playback.isPlaying" @click="playback.stop">
+            <Icon.Pause />
+          </button>
+          <button v-else @click="playback.play">
+            <Icon.Play />
+          </button>
+          <button @click="playback.next">
+            <Icon.StepForward />
+          </button>
+        </div>
+      </div>
+      <!-- Playback controls -->
     </div>
   </div>
 </template>
 
-<script>
-import ScoreBoard from '@/components/ScoreBoard.vue'
-import GameBoard from '@/components/GameBoard.vue'
-import PlaybackControls from '@/components/PlaybackControls.vue'
-import { Playback } from '@/code/domain.js'
-import * as games from '@/code/games.js'
+<style scoped>
+  .player-list-move {
+    transition: all 0.25s ease;
+  }
 
-const game = games.map_1
-const playback = new Playback(game, 5)
+  .scoreboard {
+    direction: rtl;
+    overflow-y: auto;
+  }
 
-export default {
-  name: 'App',
-  components: {
-    ScoreBoard,
-    GameBoard,
-    PlaybackControls
-  },
-  data() {
-    return { game, playback }
-  },
-  computed: {
-    orderedPlayers() {
-      return this.game.players.slice().sort((a, b) => b.score - a.score);
-    },
-  },
-}
-</script>
+  .player-list {
+    color: #0a1606;
+    direction: ltr;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 10px;
+  }
 
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
+  /*.title {*/
+  /*  color: #A4F20D;*/
+  /*  text-shadow: 0px 0px 5px rgba(221, 235, 238, .5);*/
+  /*  text-align: center;*/
+  /*  font-size: 2.5em;*/
+  /*  /*font-family: 'JackSphinx', sans-serif;*/
+  /*  margin: 10px 0;*/
+  /*}*/
 
-#app {
-  background-color: #0A1606;
-  font-family: 'Space Grotest', 'Noto Sans', sans-serif;
-}
+  .player {
+    display: grid;
+    align-items: center;
+    grid-template-columns: 50px 1fr;
+    gap: 10px;
+  }
 
-.main {
-  display: flex;
-  height: 100vh; /* 100% viewport height */
-  width: 100vw; /* 100% viewport width */
-}
+  .player-data {
+    min-width: 0;
+  }
 
-.sidebar {
-  flex: 0 0 400px; /* fixed width */
-  display: flex;
-  flex-direction: column;
-  border-right: 2px solid #12230d;
-}
+  .avatar img {
+    display: block;
+  }
 
-.header {
-  flex: 0 0 120px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-bottom: 2px solid #12230d;
-  /*background: linear-gradient(to top, white, black 5px, black 6px, #0A1606 6px, #0A1606);*/
-}
+  .player-data {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto;
+    gap: 5px;
+  }
 
-.header img {
-  height: 100px;
-}
+  .player-name {
+    padding: 2px;
+    margin-top: auto;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-.game {
-  flex: 1; /* take up remaining space */
-  display: flex;
-  flex-direction: column;
-  background-color: black;
-}
+  .player-stats {
+    display: flex;
+    align-items: flex-start;
+    font-size: 0.75em;
+    color: #9ec9ea;
+    gap: 10px;
+  }
+
+  .fa-solid {
+    font-size: 0.8em;
+  }
+
+  .fa-medal {
+    color: yellow;
+  }
+
+  .fa-bolt {
+    color: #10fefd;
+  }
 </style>

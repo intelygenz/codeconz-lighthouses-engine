@@ -1,16 +1,23 @@
+<script setup>
+
+const { playback } = defineProps({
+  playback: Playback,
+});
+</script>
+
 <template>
-  <div id="playback-controls">
+  <div class="text-white mx-auto">
     <div v-if="playback.isGameStart">
       <p>Game</p>
       <p>Start</p>
     </div>
     <div v-else>
-      <p>Round {{playback.currentFrame.roundIndex + 1}}</p>
+      <p>Round {{ playback.currentFrame.roundIndex + 1 }}</p>
       <div v-if="playback.currentFrame.isRoundFrame">
         <p>Start</p>
       </div>
       <div v-else>
-        <p>End of {{playback.currentFrame.playerName}} turn</p>
+        <p>End of {{ playback.currentFrame.playerName }} turn</p>
       </div>
     </div>
 
@@ -26,11 +33,23 @@
       <p v-else>Turn {{playback.currentPlayer.name}}</p>
     </div>
     -->
-    <button @click="prev">Prev</button>
-    <button @click="next">Next</button>
-    <button @click="play">Play</button>
-    <button @click="stop">Stop</button>
-    <button @click="restart">Restart</button>
+    <div class="flex">
+      <button @click="playback.restart">
+        <SkipBack />
+      </button>
+      <button @click="playback.prev">
+        <StepBack />
+      </button>
+      <button v-if="playback.status == PlaybackStatus.done" @click="playback.play">
+        <Play />
+      </button>
+      <button v-else @click="playback.play">
+        <Pause />
+      </button>
+      <button @click="playback.next">
+        <StepForward />
+      </button>
+    </div>
     <!--
       round 1 > turn Alice < round 1
     <button @click="play">Play</button>
@@ -39,37 +58,3 @@
     -->
   </div>
 </template>
-
-<script>
-import { Playback } from '@/code/domain.js'
-
-export default {
-  name: 'PlayBack',
-  props: {
-    playback: Playback,
-  },
-  methods: {
-    next() {
-      this.playback.next();
-    },
-    prev() {
-      this.playback.prev();
-    },
-    play() {
-      this.playback.play();
-    },
-    stop() {
-      this.playback.stop();
-    },
-    restart() {
-      this.playback.restart();
-    }
-  }
-}
-</script>
-
-<style scoped>
-#playback-controls {
-  color: white;
-}
-</style>

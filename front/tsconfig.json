@@ -1,20 +1,18 @@
 {
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ],
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "strict": true,
-    "jsx": "preserve",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "noImplicitThis": true,
-    "sourceMap": true,
-    "experimentalDecorators": true,
-    "strictPropertyInitialization": false,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts"
-  ]
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  }
 }

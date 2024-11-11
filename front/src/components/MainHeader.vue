@@ -1,6 +1,6 @@
 <template>
   <div class="header">
-    <img alt="Lighthouse logo" src="../assets/logo.png">
+    <img alt="Lighthouse logo" src="../assets/logo-sin-fondo.png">
   </div>
 </template>
 
@@ -18,4 +18,3 @@ img {
   max-height: 100%;
 }
 </style>
-
