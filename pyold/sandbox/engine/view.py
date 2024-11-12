@@ -1,5 +1,9 @@
-#!/usr/bin/python3
-import pygame, sys, time, math
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# Adapted from https://github.com/marcan/lighthouses_aicontest
+
+import pygame, math
+
 
 CELL = 15
 
@@ -13,6 +17,7 @@ PLAYERC = [
     (255, 127, 0),
     (255, 127, 127),
 ]
+
 
 class GameView(object):
     def __init__(self, game):

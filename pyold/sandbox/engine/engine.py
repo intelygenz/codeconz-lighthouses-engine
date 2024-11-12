@@ -1,12 +1,17 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# Adapted from https://github.com/marcan/lighthouses_aicontest
 
 import geom, math
+
 
 class MoveError(Exception):
     pass
 
+
 class GameError(Exception):
     pass
+
 
 class Island(object):
     MAX_ENERGY = 100
@@ -69,6 +74,7 @@ class Island(object):
     def map(self):
         return self._island
 
+
 class Lighthouse(object):
     def __init__(self, game, pos):
         self.game = game
@@ -100,6 +106,7 @@ class Lighthouse(object):
             self.game.conns = set(i for i in self.game.conns if self.pos not in i)
             self.game.tris = dict(i for i in self.game.tris.items() if self.pos not in i[0])
 
+
 class Player(object):
     def __init__(self, game, num, init_pos):
         self.num = num
@@ -118,6 +125,7 @@ class Player(object):
         if not self.game.island[new_pos]:
             raise MoveError("Target pos is not in island")
         self.pos = new_pos
+
 
 class GameConfig(object):
     def __init__(self, mapfile):
@@ -149,6 +157,7 @@ class GameConfig(object):
             not all(not i for i in self.island[-1]) or
             not all(not (i[0] or i[-1]) for i in self.island)):
             raise GameError("Map border must not be part of island")
+
 
 class Game(object):
     RDIST = 5

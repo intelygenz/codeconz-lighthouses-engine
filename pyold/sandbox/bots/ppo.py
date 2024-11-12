@@ -1,39 +1,40 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
 import numpy as np
 import os
+import random
+import time
 
-# PyTorch
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.nn.modules import Module
-from torch.distributions import Categorical
-from sklearn.preprocessing import StandardScaler
 
-import random
-import time
+
 from distutils.util import strtobool
 
+from sklearn.preprocessing import StandardScaler
+from torch.distributions import Categorical
 from torch.utils.tensorboard import SummaryWriter
-
-import random
 
 from bots import bot
 
+
 # Actions for moving
 ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "connect", "attack", "pass")
-
 # Choose cpu or gpu
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        
 
 def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
     torch.nn.init.orthogonal_(layer.weight, std)
     torch.nn.init.constant_(layer.bias, bias_const)
     return layer
 
-# Define the neural network for the policy
+
 class AgentMLP(nn.Module):
+    # Define the neural network for the policy
     def __init__(self, s_size, a_size,):
         super(AgentMLP, self).__init__()
         self.critic = nn.Sequential(
@@ -98,6 +99,7 @@ class AgentCNN(nn.Module):
             action = probs.sample()
         return action, probs.log_prob(action), probs.entropy(), self.critic(x)
 
+
 class PPO(bot.Bot):
     def __init__(self, state_maps, num_envs, num_steps, num_updates, train=True, model_filename='model.pth', use_saved_model=False):
         super().__init__()
@@ -141,7 +143,6 @@ class PPO(bot.Bot):
         # torch.manual_seed(self.seed)
         # torch.backends.cudnn.deterministic = self.torch_deterministic
 
-
         # Initialize tensorboard
         self.writer = SummaryWriter(f"runs/ppo/cnn")
         self.writer.add_text(
@@ -183,7 +184,6 @@ class PPO(bot.Bot):
         self.values = torch.zeros((self.num_steps, self.num_envs)).to(device)
         self.global_step = 0
         self.start_time = time.time()
-
 
     def initialize_experience_gathering(self):
         # Annealing the rate if instructed to do so.
@@ -311,7 +311,6 @@ class PPO(bot.Bot):
         new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_connections_layer, lh_control_layer, lh_key_layer), axis=2)
         return new_state
     
-
     def valid_lighthouse_connections(self, state):
         cx = state['position'][0]
         cy = state['position'][1]
@@ -326,7 +325,6 @@ class PPO(bot.Bot):
                         possible_connections.append(dest)
         return possible_connections
 
-    
     def play(self, state, step=None):
         if self.train:
             self.global_step += 1 * self.num_envs
@@ -363,7 +361,6 @@ class PPO(bot.Bot):
                     actions_list.append(self.connect(random.choice(possible_connections)))
         return actions_list
 
-
     def calculate_advantage(self, next_obs):
             # bootstrap value if not done
         with torch.no_grad():
@@ -394,7 +391,6 @@ class PPO(bot.Bot):
                 self.advantages = self.returns - self.values
             print("advantages: ", self.advantages.sum(axis=0))
 
-    
     def optimize_model(self, transitions):
         # flatten the batch
         next_obs = transitions[-1][3]

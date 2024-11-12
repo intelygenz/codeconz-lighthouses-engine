@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Adapted from https://github.com/marcan/lighthouses_aicontest
 
 import random
 
@@ -7,27 +8,24 @@ from bots import bot
 
 
 class RandBot(bot.Bot):
-    """Bot que juega aleatoriamente."""
+    """Bot that executes random actions"""
     NAME = "RandBot"
 
     def play(self, state, step=None):
-        """Jugar: llamado cada turno.
-        Debe devolver una acción (jugada)."""
         cx, cy = state["position"]
         lighthouses = dict((tuple(lh["position"]), lh)
                             for lh in state["lighthouses"])
-        # Si estamos en un faro...
+        # If there is a lighthouse in the current position
         if (cx, cy) in lighthouses.keys():
-            # Probabilidad 60%: conectar con faro remoto válido
+            # Probability 60%: connect to valid remote lighthouse
             if lighthouses[(cx, cy)]["owner"] == self.player_num:
                 if random.randrange(100) < 60:
                     possible_connections = []
                     for dest in lighthouses.keys():
-                        # No conectar con sigo mismo
-                        # No conectar si no tenemos la clave
-                        # No conectar si ya existe la conexión
-                        # No conectar si no controlamos el destino
-                        # Nota: no comprobamos si la conexión se cruza.
+                        # Do not connect to itself
+                        # Do not connect if there is no key available
+                        # Do not connect if there is an existing connection
+                        # Do not connect if the destination is not controlled
                         if (dest != (cx, cy) and
                             lighthouses[dest]["have_key"] and
                             [cx, cy] not in lighthouses[dest]["connections"] and
@@ -37,14 +35,14 @@ class RandBot(bot.Bot):
                     if possible_connections:
                         return self.connect(random.choice(possible_connections))
 
-            # Probabilidad 60%: recargar el faro
+            # Probability 60%: recharge lighthouse
             if random.randrange(100) < 60:
                 energy = random.randrange(state["energy"] + 1)
                 return self.attack(energy)
 
-        # Mover aleatoriamente
+        # Random move
         moves = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1))
-        # Determinar movimientos válidos
+        # Check if the move is valid
         moves = [(x,y) for x,y in moves if self.map[cy+y][cx+x]]
         move = random.choice(moves)
 

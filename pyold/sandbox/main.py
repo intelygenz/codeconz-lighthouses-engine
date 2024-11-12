@@ -1,28 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import engine, train as train
-import pandas as pd
 import os
+
+import pandas as pd
+
+import pyold.sandbox.engine.engine as engine
+import pyold.sandbox.train as train
 
 from bots.ppo import PPO
 from bots.randbot import RandBot
 
-
-# ==============================================================================
-# MAIN
-# Main process for simulating matches of different types of bots
-# ==============================================================================
 
 if __name__ == "__main__":
     # Set the map
     cfg_files_train = ["./maps/game_map.txt"] #, "maps/island.txt", "maps/random.txt"] #, "maps/square_xl.txt"]
     cfg_file_eval = "./maps/game_map.txt"
     # Set the bots to play the game
-
-    # REINFORCE(state_maps=False, trained_model_filename='reinforce_mlp.pth', save_model_filename = "reinforce_mlp.pth", use_saved_model=True),
-    #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
-    #         REINFORCE(state_maps=False, trained_model_filename=None, save_model_filename = None, use_saved_model=False),
 
     NUM_EPISODES = 10
     MAX_AGENT_UPDATES = 90 # Number of times to update the agent within an episode
@@ -39,21 +33,23 @@ if __name__ == "__main__":
     # Total number of rounds = MAX_AGENT_UPATES * NUM_STEPS_POLICY_UPDATE #
     #######################################################################
 
-    #bots = [REINFORCE(state_maps=False, model_filename = "reinforce.pth", use_saved_model=True),]
-    bots = [PPO(state_maps=STATE_MAPS, num_envs=NUM_ENVS, num_steps=NUM_STEPS_POLICY_UPDATE, num_updates=MAX_TOTAL_UPDATES, train=TRAIN, model_filename = MODEL_FILENAME, use_saved_model=USE_SAVED_MODEL),]
+    bots = [
+         PPO(state_maps=STATE_MAPS,
+             num_envs=NUM_ENVS,
+             num_steps=NUM_STEPS_POLICY_UPDATE,
+             num_updates=MAX_TOTAL_UPDATES,
+             train=TRAIN,
+             model_filename = MODEL_FILENAME,
+             use_saved_model=USE_SAVED_MODEL),]
 
     if TRAIN:
         for i in range(1, NUM_EPISODES+1):
             for i in range(len(cfg_files_train)):
                 config = engine.GameConfig(cfg_files_train[i])
                 game = [engine.Game(config, len(bots)) for i in range(NUM_ENVS)]
-            # config = engine.GameConfig(cfg_file)
-            # game = [engine.Game(config, len(bots)) for i in range(NUM_ENVS)]
 
                 iface = train.Interface(game, bots, debug=False)
                 iface.train(max_updates=MAX_AGENT_UPDATES, num_steps_update=NUM_STEPS_POLICY_UPDATE)
-            # iface = train_ppo.Interface(game, bots, debug=False)
-            # iface.train(max_updates=MAX_AGENT_UPDATES, num_steps_update=NUM_STEPS_POLICY_UPDATE)
     
     if not TRAIN:
         for i in range(1, NUM_EPISODES+1):
@@ -69,14 +65,6 @@ if __name__ == "__main__":
         final_scores = pd.DataFrame()
         for bot in bots:
                 final_scores["bot_"+str(bot.player_num)] = bot.final_scores_list
+
         os.makedirs('./final_scores', exist_ok=True)
         final_scores.to_csv('./final_scores/final_scores_cnn_1env_extra_connect3_update.csv', index_label='episode')
-
-
-
-    
-
-
-
-
-       

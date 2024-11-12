@@ -1,12 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Adapted from https://github.com/marcan/lighthouses_aicontest
 
-import numpy as np
-import pygame
-import pandas as pd
+
 import os
+import pandas as pd
+import pygame
 
-import engine, view
+import pyold.sandbox.engine.engine as engine
+import pyold.sandbox.engine.view as view
 
 
 class CommError(Exception):

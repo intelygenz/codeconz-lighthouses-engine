@@ -1,5 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# Adapted from https://github.com/marcan/lighthouses_aicontest
+
 import math
+
 
 def dist(a, b):
     x0, y0 = a
@@ -42,7 +46,6 @@ def render(points):
             if w0 >= 0 and w1 >= 0 and w2 >= 0:
                 yield p
 
-
 def _rendertest(points):
     w = 1+max(p[0] for p in points)
     h = 1+max(p[1] for p in points)
@@ -54,6 +57,7 @@ def _rendertest(points):
     for l in s[::-1]:
         print("".join(l))
     print()
+
 
 if __name__ == "__main__":
     assert orient2d((0,0),(0,1),(1,0)) < 0

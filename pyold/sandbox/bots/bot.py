@@ -1,22 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Adapted from https://github.com/marcan/lighthouses_aicontest
 
-# ==============================================================================
-# ROBOT
-# Los robots definidos deben heredar de esta clase.
-# ==============================================================================
 
 class Bot(object):
-    """Bot base. Este bot no hace nada (pasa todos los turnos)."""
+    """Base bot. It does nothing (passing all turns)"""
     NAME = "NullBot"
 
-    # ==========================================================================
-    # Comportamiento del bot
-    # Métodos a implementar / sobreescribir (opcionalmente)
-    # ==========================================================================
-
     def __init__(self):
-        """Inicializar el bot: llamado al comienzo del juego."""
         self.transitions = []
         self.transitions_temp = []
         self.scores = []
@@ -34,10 +25,9 @@ class Bot(object):
         pass
 
     def play(self, state):
-        """Jugar: llamado cada turno.
-        Debe devolver una acción (jugada).
-        
-        state: estado actual del juego.
+        """Play: it is executed each turn.
+        It must return an action.
+        state: current state of the game.
         """
         return self.nop()
     
@@ -48,27 +38,26 @@ class Bot(object):
         pass
 
     def success(self):
-        """Éxito: llamado cuando la jugada previa es válida."""
+        """Executed when the previous action is valid"""
         pass
 
     def error(self, message, last_move):
-        """Error: llamado cuando la jugada previa no es válida."""
+        """Executed when the previous action is not valid"""
         print("Recibido error: %s", message)
         print("Jugada previa: %r", last_move)
 
     # ==========================================================================
-    # Jugadas posibles
-    # No es necesario sobreescribir estos métodos.
+    # Possible moves. Do not overwrite or modify.
     # ==========================================================================
 
     def nop(self):
-        """Pasar el turno"""
+        """Pass turn"""
         return {
             "command": "pass",
         }
 
     def move(self, x, y):
-        """Mover a una casilla adyacente
+        """Move to a specific position
         x: delta x (0, -1, 1)
         y: delta y (0, -1, 1)
         """
@@ -79,8 +68,8 @@ class Bot(object):
         }
 
     def attack(self, energy):
-        """Atacar a un faro
-        energy: energía (entero positivo)
+        """Attack a lighthouse
+        energy: energy used on the attack (positive integer)
         """
         return {
             "command": "attack",
@@ -88,8 +77,8 @@ class Bot(object):
         }
 
     def connect(self, destination):
-        """Conectar a un faro remoto
-        destination: tupla o lista (x,y): coordenadas del faro remoto
+        """Connect remote lighthouse
+        destination: tuple o list (x,y): coordinates of the remote lighthouse
         """
         return {
             "command": "connect",
