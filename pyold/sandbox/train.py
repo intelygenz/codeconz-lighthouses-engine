@@ -7,8 +7,8 @@ import os
 import pandas as pd
 import pygame
 
-import pyold.sandbox.engine.engine as engine
-import pyold.sandbox.engine.view as view
+import engine.engine as engine
+import engine.view as view
 
 
 class CommError(Exception):

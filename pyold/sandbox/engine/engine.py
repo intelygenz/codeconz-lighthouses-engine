@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 # Adapted from https://github.com/marcan/lighthouses_aicontest
 
-import geom, math
+import math
+import engine.geom as geom
 
 
 class MoveError(Exception):

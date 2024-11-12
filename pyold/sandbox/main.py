@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 
 import pandas as pd
 
-import pyold.sandbox.engine.engine as engine
-import pyold.sandbox.train as train
+import engine.engine as engine
+import train as train
 
 from bots.ppo import PPO
 from bots.randbot import RandBot
@@ -14,8 +15,8 @@ from bots.randbot import RandBot
 
 if __name__ == "__main__":
     # Set the map
-    cfg_files_train = ["./maps/game_map.txt"] #, "maps/island.txt", "maps/random.txt"] #, "maps/square_xl.txt"]
-    cfg_file_eval = "./maps/game_map.txt"
+    cfg_files_train = ["./maps/map_23x43.txt"] 
+    cfg_file_eval = "./maps/map_23x43.txt"
     # Set the bots to play the game
 
     NUM_EPISODES = 10

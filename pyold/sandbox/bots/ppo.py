@@ -73,7 +73,7 @@ class AgentCNN(nn.Module):
             layer_init(nn.Conv2d(16, 32, 5)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*10*10, 256)), #10, 11, 5
+            layer_init(nn.Linear(32*33*13, 256)),
             nn.Tanh(),
             layer_init(nn.Linear(256, 1), std=1)
         )
@@ -84,7 +84,7 @@ class AgentCNN(nn.Module):
             layer_init(nn.Conv2d(16, 32, 5)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*10*10, 256)), #10, 11, 5
+            layer_init(nn.Linear(32*33*13, 256)), #10, 11, 5
             nn.Tanh(),
             layer_init(nn.Linear(256, a_size), std=0.01)
         )
