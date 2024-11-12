@@ -82,28 +82,19 @@ class Interface(object):
     
     def estimate_reward(self, action, state, next_state, player, status, scores, i):
         """
-        The logic for estimating the reward is the following:
+        The logic for estimating the reward is the following. The reward values should be between 1 and -1.
         1. if "status" is False: -1
         2. if command is "move": -1
-        3. if "attack" and gain control of lighthouse: 0 (can also try 0.2 and 0.45)
+        3. if "attack" and gain control of lighthouse: 0
         4. if "attack" and do not gain control: -1
-        5. if "connect" and connect three lighthouses: 1 (can also try adding extra amount from score gained)
-        6. if "connect" and connect two lighthouses: 0 (can also try 0.5 and 0.85)
+        5. if "connect" and connect three lighthouses: 1 
+        6. if "connect" and connect two lighthouses: 0.2
         7. if "connect" and do not connect lighthouses: -1
         8. if command is "pass": -1
         9. anything not covered by the above: -1
         """
-        # TODO: this reward function should be simplified once the final one has been decided on
         state_lh = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
-        next_state_lh = dict((tuple(lh["position"]), lh) for lh in next_state["lighthouses"])
-        # Get difference between previous score and current score
-        score_temp = []
-        len_scores = len(scores)
-        for j in range(len(scores)):
-            score_temp.append(scores[j][i])
-        score_diff = score_temp[-1] - score_temp[len_scores - 2]
-        # Create small extra component to take into account the size of triangle created
-        extra = score_diff*0.01 
+        next_state_lh = dict((tuple(lh["position"]), lh) for lh in next_state["lighthouses"]) 
 
         # If status is False
         if status['success'] == False:
@@ -116,7 +107,7 @@ class Interface(object):
             # If attack a lighthouse and gain control of it
             if state['position'] in list(state_lh.keys()):
                 if state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] == player.num:
-                    return 0 # 0.2 
+                    return 0 
                 else: 
                     return -1
             else:
@@ -132,7 +123,7 @@ class Interface(object):
                     return 1 # + extra
                 # If connect two lighthouses
                 else:
-                    return 0 #0.5
+                    return 0.2
             else:
                 return -1      
         elif action['command'] == "pass":
@@ -142,6 +133,7 @@ class Interface(object):
     
 
     def train(self, max_updates=0, num_steps_update=0):
+        # Function for training the bot
         game_view = [view.GameView(self.game[i]) for i in range(len(self.game))]
         update = 0
         round = 0
@@ -212,15 +204,6 @@ class Interface(object):
                 for i in range(len(self.game)):
                     self.game[i].post_round()
 
-                ###########################################
-                # Print the scores after each round
-                ###########################################
-
-                # s = "########### ROUND %d SCORE: " % round
-                # for i in range(len(self.bots)):
-                #     s += "P%d: %d " % (i, self.game[i].players[i].score)
-                # print(s)
-
                 round += 1
             
             update += 1
@@ -233,16 +216,14 @@ class Interface(object):
             for bot in self.bots:
                 bot.optimize_model(bot.transitions_temp)
                 bot.transitions_temp = []
-                #print("updated policy")
             
                 policy_loss = pd.DataFrame()
                 policy_loss[str(bot.player_num)] = bot.policy_loss_list
-                os.makedirs('./losses', exist_ok=True)
-                policy_loss.to_csv(f'./losses/{str(bot.player_num)}_policy_loss.csv', index_label='episode')
             
                 bot.save_trained_model()
     
     def run(self, max_rounds=None):
+        # Function for evaluating the bot
         game_view = [view.GameView(self.game[i]) for i in range(len(self.game))]
         round = 0
         running = True

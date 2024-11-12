@@ -22,10 +22,11 @@ from torch.utils.tensorboard import SummaryWriter
 from bots import bot
 
 
-# Actions for moving
+# Available actions
 ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "connect", "attack", "pass")
 # Choose cpu or gpu
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 
 def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
     torch.nn.init.orthogonal_(layer.weight, std)
@@ -104,15 +105,8 @@ class PPO(bot.Bot):
     def __init__(self, state_maps, num_envs, num_steps, num_updates, train=True, model_filename='model.pth', use_saved_model=False):
         super().__init__()
         self.NAME = "PPO"
-        self.gamma = 0.99
-        self.learning_rate = 2.5e-4
-        self.save_model = True 
-        self.model_path = './artifacts/models'
-        self.model_filename = model_filename
-        self.use_saved_model = use_saved_model
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.torch_deterministic = True
-        self.num_envs = num_envs # the number of steps to run in each environment per policy rollout
+        self.gamma = 0.99 # Discount factor
+        self.learning_rate = 2.5e-4 # Learning rate
         self.anneal_lr = True #learning rate annealing for policy and value networks
         self.gae = True # Use GAE for advantage computation
         self.gae_lambda = 0.95 # lambda for the general advantage estimation
@@ -137,6 +131,13 @@ class PPO(bot.Bot):
         self.state_maps = state_maps
         self.seed = 1
         self.train = train
+        self.save_model = True # Save the model during training
+        self.model_path = './artifacts/models'
+        self.model_filename = model_filename
+        self.use_saved_model = use_saved_model
+        self.num_envs = num_envs
+        self.torch_deterministic = True
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # random.seed(self.seed)
         # np.random.seed(self.seed)
@@ -172,7 +173,7 @@ class PPO(bot.Bot):
             self.load_saved_model()
     
     def initialize_buffer_and_variables(self):
-         # ALGO Logic: Storage setup
+         # Storage setup
         if self.state_maps:
             self.obs = torch.zeros((self.num_steps, self.num_envs) + self.s_size).to(device)
         else:    
@@ -193,7 +194,6 @@ class PPO(bot.Bot):
             self.optimizer.param_groups[0]["lr"] = lrnow
     
     def convert_state_mlp(self, state):
-        # TODO: Add in information over owner and train with more than one bot
         # Create array for view data
         view = []
         for i in range(len(state['view'])):
@@ -312,6 +312,7 @@ class PPO(bot.Bot):
         return new_state
     
     def valid_lighthouse_connections(self, state):
+        # Check if exist possible lighthouse connections
         cx = state['position'][0]
         cy = state['position'][1]
         lighthouses = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
@@ -429,7 +430,6 @@ class PPO(bot.Bot):
                 ratio = logratio.exp()
 
                 with torch.no_grad():
-                    # calculate approx_kl http://joschu.net/blog/kl-approx.html
                     old_approx_kl = (-logratio).mean()
                     approx_kl = ((ratio - 1) - logratio).mean()
                     clipfracs += [((ratio - 1.0).abs() > self.clip_coef).float().mean().item()]
@@ -473,7 +473,7 @@ class PPO(bot.Bot):
         y_pred, y_true = b_values.cpu().numpy(), b_returns.cpu().numpy()
         var_y = np.var(y_true)
         explained_var = np.nan if var_y == 0 else 1 - np.var(y_true - y_pred) / var_y
-        # TRY NOT TO MODIFY: record rewards for plotting purposes
+        # Record losses, learning rate
         self.writer.add_scalar("charts/learning_rate", self.optimizer.param_groups[0]["lr"], self.global_step)
         self.writer.add_scalar("losses/value_loss", v_loss.item(), self.global_step)
         self.writer.add_scalar("losses/policy_loss", pg_loss.item(), self.global_step)
@@ -482,7 +482,6 @@ class PPO(bot.Bot):
         self.writer.add_scalar("losses/approx_kl", approx_kl.item(), self.global_step)
         self.writer.add_scalar("losses/clipfrac", np.mean(clipfracs), self.global_step)
         self.writer.add_scalar("losses/explained_variance", explained_var, self.global_step)
-        #print("SPS:", int(self.global_step / (time.time() - self.start_time)))
         self.writer.add_scalar("charts/SPS", int(self.global_step / (time.time() - self.start_time)), self.global_step)
         print("policy loss: ", pg_loss.item())
         print("value loss: ", v_loss.item())
@@ -490,7 +489,6 @@ class PPO(bot.Bot):
     def save_trained_model(self):
         os.makedirs(self.model_path, exist_ok=True)
         torch.save(self.agent.state_dict(), os.path.join(self.model_path, self.model_filename))
-        #print("Saved model to disk")
 
     def load_saved_model(self):
         if self.model_filename and os.path.isfile(os.path.join(self.model_path, self.model_filename)):

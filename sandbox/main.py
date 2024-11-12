@@ -14,20 +14,20 @@ from bots.randbot import RandBot
 
 
 if __name__ == "__main__":
-    # Set the map
+    # Map for training the bot. This can be one map or a list of maps that will 
     cfg_files_train = ["./maps/map_43x23.txt"] 
+    # Map for evaluating the bot.
     cfg_file_eval = "./maps/map_43x23.txt"
-    # Set the bots to play the game
 
-    NUM_EPISODES = 10
-    MAX_AGENT_UPDATES = 90 # Number of times to update the agent within an episode
-    NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the agent
-    MAX_EVALUATION_ROUNDS = 1000
+    NUM_EPISODES = 10 # Number of times to run the game. Game restarts with each new episode.
+    MAX_AGENT_UPDATES = 90 # Number of times to update (optimize parameters) the bot within an episode.
+    NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the bot.
+    MAX_EVALUATION_ROUNDS = 1000 # Number of rounds in a game to evaluate the bot.
     TRAIN = True # Whether to run training or evaluation
-    NUM_ENVS = 4
+    NUM_ENVS = 4 # Number of games to run at once. 
+    USE_SAVED_MODEL = False # Whether to start training or evaluation from a previously saved model.
+    MODEL_FILENAME = "ppo_cnn_test.pth" # Name of saved model to start training from and/or to save model to during training.
     STATE_MAPS = True
-    MODEL_FILENAME = "ppo_cnn_test.pth"
-    USE_SAVED_MODEL = False
     MAX_TOTAL_UPDATES = NUM_EPISODES * MAX_AGENT_UPDATES
 
     #######################################################################
@@ -42,13 +42,11 @@ if __name__ == "__main__":
              train=TRAIN,
              model_filename = MODEL_FILENAME,
              use_saved_model=USE_SAVED_MODEL), RandBot()]
-    
-    # bots = [RandBot(),]
 
     if TRAIN:
         for i in range(1, NUM_EPISODES+1):
-            for i in range(len(cfg_files_train)):
-                config = engine.GameConfig(cfg_files_train[i])
+            for j in range(len(cfg_files_train)):
+                config = engine.GameConfig(cfg_files_train[j])
                 game = [engine.Game(config, len(bots)) for i in range(NUM_ENVS)]
 
                 iface = train.Interface(game, bots, debug=False)

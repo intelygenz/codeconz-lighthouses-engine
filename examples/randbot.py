@@ -18,6 +18,7 @@ class BotGameTurn:
 
 
 class BotGame:
+    """Bot that executes random actions"""
     def __init__(self, player_num=None):
         self.player_num = player_num
         self.initial_state = None
@@ -30,19 +31,17 @@ class BotGame:
         lighthouses = dict()
         for lh in turn.Lighthouses:
             lighthouses[(lh.Position.X, lh.Position.Y)] = lh
-
-        # Si estamos en un faro...
+        # If there is a lighthouse in the current position
         if (cx, cy) in lighthouses:
-            # Probabilidad 60%: conectar con faro remoto válido
+            # Probability 60%: connect to valid remote lighthouse
             if lighthouses[(cx, cy)].Owner == self.player_num:
                 if random.randrange(100) < 60:
                     possible_connections = []
                     for dest in lighthouses:
-                        # No conectar con sigo mismo
-                        # No conectar si no tenemos la clave
-                        # No conectar si ya existe la conexión
-                        # No conectar si no controlamos el destino
-                        # Nota: no comprobamos si la conexión se cruza.
+                        # Do not connect to itself
+                        # Do not connect if there is no key available
+                        # Do not connect if there is an existing connection
+                        # Do not connect if the destination is not controlled
                         if (dest != (cx, cy) and
                             lighthouses[dest].HaveKey and
                             [cx, cy] not in lighthouses[dest].Connections and
@@ -61,7 +60,7 @@ class BotGame:
                         self.countT += 1
                         return action
 
-                # Probabilidad 60%: recargar el faro
+                # Probability 60%: recharge lighthouse
                 if random.randrange(100) < 60:
                     energy = random.randrange(turn.Energy + 1)
                     action = game_pb2.NewAction(
@@ -78,7 +77,7 @@ class BotGame:
                     self.countT += 1
                     return action
 
-        # Mover aleatoriamente
+        # Random move
         moves = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1))
         move = random.choice(moves)
         action = game_pb2.NewAction(
