@@ -8,6 +8,9 @@ It will run three main services to manage the game:
 
 > Checkout protos documentation at [protos docs](protos.md).
 
+
+> To create and test on new maps, you can use the [Map Generator](https://dovixman.github.io/lighthouses_map_generator/)
+
 ## Loading game configuration
 The game engine will load the configuration from the environment variables or the configuration file.
 
