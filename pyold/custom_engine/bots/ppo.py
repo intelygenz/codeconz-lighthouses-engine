@@ -227,6 +227,7 @@ class PPO(bot.Bot):
         # Create base layer that will serve as the base for all layers of the state
         # This layer has zeros in all cells except the border cells in which the value is -1
         base_layer = np.array(self.map[i].copy())
+        base_layer = np.transpose(base_layer)
 
         # Create player layer which has the value of the energy of the player + 1 where the player is located
         # 1 is added to the energy to cover the case that the energy of the player is 0
