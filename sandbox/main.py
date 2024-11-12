@@ -15,8 +15,8 @@ from bots.randbot import RandBot
 
 if __name__ == "__main__":
     # Set the map
-    cfg_files_train = ["./maps/map_23x43.txt"] 
-    cfg_file_eval = "./maps/map_23x43.txt"
+    cfg_files_train = ["./maps/map_43x23.txt"] 
+    cfg_file_eval = "./maps/map_43x23.txt"
     # Set the bots to play the game
 
     NUM_EPISODES = 10
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the agent
     MAX_EVALUATION_ROUNDS = 1000
     TRAIN = True # Whether to run training or evaluation
-    NUM_ENVS = 1
+    NUM_ENVS = 4
     STATE_MAPS = True
     MODEL_FILENAME = "ppo_cnn_test.pth"
     USE_SAVED_MODEL = False
@@ -41,7 +41,9 @@ if __name__ == "__main__":
              num_updates=MAX_TOTAL_UPDATES,
              train=TRAIN,
              model_filename = MODEL_FILENAME,
-             use_saved_model=USE_SAVED_MODEL),]
+             use_saved_model=USE_SAVED_MODEL), RandBot()]
+    
+    # bots = [RandBot(),]
 
     if TRAIN:
         for i in range(1, NUM_EPISODES+1):

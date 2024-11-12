@@ -114,9 +114,12 @@ class Interface(object):
         ### ATTACK ###
         elif action['command'] == "attack":
             # If attack a lighthouse and gain control of it
-            if state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] == player.num:
-                return 0 # 0.2 
-            else: 
+            if state['position'] in list(state_lh.keys()):
+                if state_lh[state['position']]['owner'] != player.num and next_state_lh[next_state['position']]['owner'] == player.num:
+                    return 0 # 0.2 
+                else: 
+                    return -1
+            else:
                 return -1
         ### CONNECT ###
         elif action['command'] == "connect":   
@@ -180,6 +183,7 @@ class Interface(object):
                     # Get action
                     ###########################################
                     action = bot.play(state, step)
+                    
                     ###########################################
                     # Execute action and get rewards and next state
                     ###########################################

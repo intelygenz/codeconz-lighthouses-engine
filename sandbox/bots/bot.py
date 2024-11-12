@@ -17,6 +17,7 @@ class Bot(object):
         self.final_scores_list = []
         self.last_episode_score = 0
         self.policy_loss_list = []
+        self.update = 0
 
     def initialize_game(self, state):
         pass
