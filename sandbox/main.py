@@ -26,7 +26,7 @@ if __name__ == "__main__":
     TRAIN = True # Whether to run training or evaluation
     NUM_ENVS = 1
     STATE_MAPS = True
-    MODEL_FILENAME = "ppo_transfer_cnn_1envs_new_rew.pth"
+    MODEL_FILENAME = "ppo_cnn_test.pth"
     USE_SAVED_MODEL = False
     MAX_TOTAL_UPDATES = NUM_EPISODES * MAX_AGENT_UPDATES
 
@@ -67,5 +67,5 @@ if __name__ == "__main__":
         for bot in bots:
                 final_scores["bot_"+str(bot.player_num)] = bot.final_scores_list
 
-        os.makedirs('./final_scores', exist_ok=True)
-        final_scores.to_csv('./final_scores/final_scores_cnn_1env_extra_connect3_update.csv', index_label='episode')
+        os.makedirs('./artifacts/final_scores', exist_ok=True)
+        final_scores.to_csv('./artifacts/final_scores/final_scores_cnn_1env_extra_connect3_update.csv', index_label='episode')

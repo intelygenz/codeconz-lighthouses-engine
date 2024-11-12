@@ -23,8 +23,8 @@ timeout_to_response = 1  # 1 second
 
 SAVED_MODEL = True # Set to True to use a saved model that you trained previously
 STATE_MAPS = True # Set to True to use the state format of maps and architecture CNN and set to False for vector format and architecture MLP
-MODEL_PATH = './examples/saved_model' # Path where the model has been saved
-MODEL_FILENAME = 'ppo_transfer_cnn_8envs.pth' # Filename of the saved model
+MODEL_PATH = './examples/models' # Path where the model has been saved
+MODEL_FILENAME = 'ppo_cnn_test.pth' # Filename of the saved model
 
 ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "connect", "pass")
 

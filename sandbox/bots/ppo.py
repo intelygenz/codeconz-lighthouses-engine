@@ -107,7 +107,7 @@ class PPO(bot.Bot):
         self.gamma = 0.99
         self.learning_rate = 2.5e-4
         self.save_model = True 
-        self.model_path = './saved_model'
+        self.model_path = './artifacts/models'
         self.model_filename = model_filename
         self.use_saved_model = use_saved_model
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -144,7 +144,7 @@ class PPO(bot.Bot):
         # torch.backends.cudnn.deterministic = self.torch_deterministic
 
         # Initialize tensorboard
-        self.writer = SummaryWriter(f"runs/ppo/cnn")
+        self.writer = SummaryWriter(f"artifacts/runs")
         self.writer.add_text(
             "hyperparameters",
             "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(self).items()])),
