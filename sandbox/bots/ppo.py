@@ -119,6 +119,7 @@ class PPO(bot.Bot):
         self.vf_coef = 0.5 # coefficient of the value function
         self.max_grad_norm = 0.5 # maximum norm for the gradient clipping
         self.target_kl = None # the target KL divergence threshold
+        self.num_envs = num_envs
         self.num_steps = num_steps
         self.num_updates = num_updates
         self.update = 0
@@ -135,7 +136,6 @@ class PPO(bot.Bot):
         self.model_path = './artifacts/models'
         self.model_filename = model_filename
         self.use_saved_model = use_saved_model
-        self.num_envs = num_envs
         self.torch_deterministic = True
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

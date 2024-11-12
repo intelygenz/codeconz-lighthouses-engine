@@ -88,7 +88,7 @@ class Interface(object):
         3. if "attack" and gain control of lighthouse: 0
         4. if "attack" and do not gain control: -1
         5. if "connect" and connect three lighthouses: 1 
-        6. if "connect" and connect two lighthouses: 0.2
+        6. if "connect" and connect two lighthouses: 0.4
         7. if "connect" and do not connect lighthouses: -1
         8. if command is "pass": -1
         9. anything not covered by the above: -1
@@ -123,7 +123,7 @@ class Interface(object):
                     return 1 # + extra
                 # If connect two lighthouses
                 else:
-                    return 0.2
+                    return 0.4
             else:
                 return -1      
         elif action['command'] == "pass":
