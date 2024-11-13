@@ -13,7 +13,7 @@ Requirements:
 Considerations:
 This version of the game is a one-process version where the bots actions are executed sequentially one by one, without subprocesses communication. The goal of this version is to execute the game easily to collect as many data as possible to implement AI bots.
 
-For modifying the game specifications, the map and the number/class of bots can be modified within the main function of pyold/sandbox/main.py file.
+For modifying the game specifications, the map and the number/class of bots can be modified within the main function of sandbox/main.py file.
 
 Usage:
-$ python3.x pyold/sandbox/main.py
+$ python3.x sandbox/main.py
