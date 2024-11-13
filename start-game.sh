@@ -90,7 +90,7 @@ function _info() {
 
 function _error() {
 	echo -e "${RED}[$(date +%F\ %T)] ❌ ${1}${CLEAR}\n"
-	return 1
+	exit 1
 }
 
 function divider() {
@@ -132,7 +132,7 @@ function load_config() {
 	declare -a newseq
 	source "${1}" || _error "Can't load game-config ${YELLOW}${1}"
 	if [[ ! -r "${MAPS_DIR}/${map}" ]]; then
-		_error "${map} does not exist!"
+		_error "Map file '$(basename "${MAPS_DIR}")/${map}' not found. Check your configuration: ${1}"
 	fi
 	export THIS_MAP="${map}"
 	_info "📝 Loaded configfile: ${YELLOW}${1}"
