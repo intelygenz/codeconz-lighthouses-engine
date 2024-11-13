@@ -12,7 +12,7 @@ import (
 func (p *Player) RequestNewTurn(t Turn) (*Action, error) {
 	fmt.Printf("Asking to Player %d to address %v\n", p.ID, p.ServerAddress)
 
-	ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("game.turn_request_timeout"))
+	ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("turn_request_timeout"))
 	defer cancel()
 
 	playerAction, err := p.gameServiceClient.Turn(ctx, &coms.NewTurn{
