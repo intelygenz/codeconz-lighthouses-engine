@@ -89,4 +89,7 @@ proto-py:
 	--grpc_python_out=./internal/handler/coms \
 	./proto/*.proto
 
-.PHONY: build rungs runbotgo runbotpy lint test docker-net-up docker-net-down docker-build docker-game-simulation-gobot docker-game-simulation-pybot docker-destroy proto-go proto-py
+proto-docs:
+	protoc --doc_out=./docs --doc_opt=markdown,protos.md proto/*.proto
+
+.PHONY: build rungs runbot1 runbot2 runbot3 lint test docker-net-up docker-net-down docker-build docker-game-simulation docker-destroy proto-go proto-py proto-docs

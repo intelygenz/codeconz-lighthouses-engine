@@ -47,5 +47,8 @@
                 - `Connect` two Lighthouses
                 - `Pass`, do nothing on this turn
             - Store the players turn in the game state
-        - When all the runs are executed, the `player scores` are calculated based on the number of connections and triangles they have.
+        - When all the runs are executed, the `player scores` are calc
+        - 
+        - 
+        - clearulated based on the number of connections and triangles they have.
     - Write game status to a file

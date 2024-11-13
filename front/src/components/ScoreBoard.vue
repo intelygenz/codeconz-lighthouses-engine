@@ -1,30 +1,44 @@
+<script setup>
+import { Player } from "@/code/domain";
+import { colorToHex } from "@/code/palette";
+defineProps({
+  players: Array,
+});
+</script>
+
 <template>
   <div class="scoreboard">
     <transition-group name="player-list" tag="div" class="player-list">
       <div class="player" v-for="player in players" :key="player.id">
         <div class="avatar">
-          <img alt="Player avatar" :src="`https://api.dicebear.com/8.x/bottts-neutral/svg?backgroundType=gradientLinear&radius=50&seed=${player.name}`">
+          <img
+            alt="Player avatar"
+            :src="`https://api.dicebear.com/8.x/bottts-neutral/svg?backgroundType=gradientLinear&radius=50&seed=${player.name}`"
+          />
         </div>
         <div class="player-data">
-          <div class="player-name">{{ player.name }}</div>
+          {{ colorToHex(player.color) }}
+          <div
+            class="player-name"
+            :style="{ 'background-color': colorToHex(player.color) }"
+          >
+            {{ player.name }}
+          </div>
           <div class="player-stats">
-            <span><i class="fa-solid fa-medal"></i> Score: <strong>{{ player.score }}</strong></span>
-            <span><i class="fa-solid fa-bolt energy"></i> Energy: <strong>{{ player.energy }}</strong></span>
+            <span
+              ><i class="fa-solid fa-medal"></i> Score:
+              <strong>{{ player.score }}</strong></span
+            >
+            <span
+              ><i class="fa-solid fa-bolt energy"></i> Energy:
+              <strong>{{ player.energy }}</strong></span
+            >
           </div>
         </div>
       </div>
     </transition-group>
   </div>
 </template>
-
-<script>
-export default {
-  name: 'PlayerList',
-  props: {
-    players: Array
-  }
-}
-</script>
 
 <style scoped>
 .scoreboard {
@@ -33,7 +47,7 @@ export default {
 }
 
 .player-list {
-  color: #0A1606;
+  color: #0a1606;
   direction: ltr;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -51,11 +65,9 @@ export default {
 /*}*/
 
 .player {
-  color: #F6FAFB;
   display: grid;
   align-items: center;
   grid-template-columns: 50px 1fr;
-  height: 50px;
   gap: 10px;
 }
 
@@ -75,8 +87,9 @@ export default {
 }
 
 .player-name {
+  padding: 2px;
   margin-top: auto;
-  font-size: .9em;
+  font-size: 0.9em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -85,13 +98,13 @@ export default {
 .player-stats {
   display: flex;
   align-items: flex-start;
-  font-size: .75em;
-  color: #9EC9EA;
+  font-size: 0.75em;
+  color: #9ec9ea;
   gap: 10px;
 }
 
 .fa-solid {
-  font-size: .8em;
+  font-size: 0.8em;
 }
 
 .fa-medal {
@@ -99,6 +112,6 @@ export default {
 }
 
 .fa-bolt {
-  color: #10FEFD;
+  color: #10fefd;
 }
 </style>
