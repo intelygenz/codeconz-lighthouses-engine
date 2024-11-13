@@ -1,10 +1,8 @@
 <script setup lang="ts">
-  import engineGame from "./games/game-2024_11_13_18_09_00.json";
   import {
     computed,
     ComputedRef,
     nextTick,
-    onMounted,
     reactive,
     Ref,
     ref,
@@ -36,6 +34,9 @@
     "text-[#be0aff]",
     "text-[#cccccc]",
   ];
+
+  const tailwindFor = (id: number | undefined) =>
+    id ? tailwind[id - 1] : "text-slate-100";
 
   var loadFile = ref(true);
   var game: Game = {} as Game;
@@ -234,7 +235,7 @@
             </div>
 
             <div v-if="hover.show" class="text-xs">
-              <div v-if="hover.tile.type == TileType.Ground">
+              <div v-if="hover.tile?.type == TileType.Ground">
                 <div class="flex items-center justify-center gap-2">
                   <span>Tile({{ hover.tile?.x }},{{ hover.tile?.y }})</span>
                   <div class="flex items-center gap-1 text-blue-300">
@@ -245,7 +246,7 @@
                 <div
                   v-if="hover.lighthouse"
                   class="flex items-center justify-center gap-2">
-                  <span :class="[tailwind[hover.lighthouse.ownerId - 1]]"
+                  <span :class="[tailwindFor(hover.lighthouse?.ownerId)]"
                     >Lighthouse({{ hover.lighthouse?.id }})</span
                   >
                   <div class="flex items-center gap-1 text-blue-300">
