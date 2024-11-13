@@ -23,7 +23,7 @@ class GameView(object):
     def __init__(self, game):
         self.game = game
         pygame.init()
-        size = width, height = 640, 480
+        size = width, height = 640, 720
         self.screen = pygame.display.set_mode(size)
         self.scale = 1
         self.fw = self.game.island.w * CELL * self.scale
