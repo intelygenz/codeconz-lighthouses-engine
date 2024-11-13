@@ -42,7 +42,7 @@ func (e *Game) SendInitialState() {
 		mapper := Mapper{}
 		comPlayerInitialState := mapper.MapPlayerInitialStateToComPlayerInitialState(pInitSt)
 
-		if viper.GetBool("game.verbosity") {
+		if viper.GetBool("verbosity") {
 			b, err := json.Marshal(comPlayerInitialState)
 			if err != nil {
 				panic(err)
@@ -57,7 +57,7 @@ func (e *Game) SendInitialState() {
 			panic(err)
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("game.turn_request_timeout"))
+		ctx, cancel := context.WithTimeout(context.Background(), viper.GetDuration("turn_request_timeout"))
 		defer cancel()
 
 		// sending initial state to player

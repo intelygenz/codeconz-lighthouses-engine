@@ -24,12 +24,12 @@ func (e *Game) StartGame() {
 
 	for i := 0; i < e.turns; i++ {
 		roundId := i + 1
-		if viper.GetBool("game.verbosity") {
+		if viper.GetBool("verbosity") {
 			cmd := exec.Command("clear") //Linux example, its tested
 			cmd.Stdout = os.Stdout
 			cmd.Run()
 		}
-		timeBetweenRounds := viper.GetDuration("game.time_between_rounds")
+		timeBetweenRounds := viper.GetDuration("time_between_rounds")
 		if timeBetweenRounds > 0 {
 			time.Sleep(timeBetweenRounds)
 		}
@@ -74,7 +74,7 @@ func (e *Game) StartGame() {
 
 		e.CalcPlayersScores()
 
-		if viper.GetBool("game.verbosity") {
+		if viper.GetBool("verbosity") {
 			e.gameMap.PrettyPrintMap(e.players)
 		}
 	}

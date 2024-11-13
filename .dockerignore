@@ -1,5 +1,4 @@
 *.md
-*.yaml
 .pre-commit*
 docker/
 docs/

@@ -1,8 +1,7 @@
-game:
-    listen_address: ":50051"
-    join_timeout: 5s
-    turn_request_timeout: 100ms
-    turns: 15
-    board_path: "./maps/island_simple.txt"
-    verbosity: true
-    time_between_rounds: 1s
+listen_address: ":50051"
+join_timeout: 5s
+turn_request_timeout: 100ms
+turns: 150
+board_path: "./maps/island_simple.txt"
+verbosity: true
+time_between_rounds: 1s

@@ -22,13 +22,13 @@ func NewBootstrap() *Bootstrap {
 func (b *Bootstrap) Run() {
 	b.initializeConfiguration()
 
-	if viper.GetString("game.listen_address") == "" {
+	if viper.GetString("listen_address") == "" {
 		panic("addr is required")
 	}
 
-	fmt.Println("Game server starting on", viper.GetString("game.listen_address"))
+	fmt.Println("Game server starting on", viper.GetString("listen_address"))
 
-	lis, err := net.Listen("tcp", viper.GetString("game.listen_address"))
+	lis, err := net.Listen("tcp", viper.GetString("listen_address"))
 	if err != nil {
 		panic(err)
 	}
@@ -38,13 +38,13 @@ func (b *Bootstrap) Run() {
 		grpc.StreamInterceptor(handler.StreamLoggingInterceptor),
 	)
 
-	ge := game.NewGame(viper.GetString("game.board_path"), viper.GetInt("game.turns"))
+	ge := game.NewGame(viper.GetString("board_path"), viper.GetInt("turns"))
 	gs := handler.NewGameServer(ge)
 
 	coms.RegisterGameServiceServer(grpcServer, gs)
 
 	go func() {
-		<-time.After(viper.GetDuration("game.join_timeout"))
+		<-time.After(viper.GetDuration("join_timeout"))
 		grpcServer.Stop()
 	}()
 
@@ -76,5 +76,10 @@ func (b *Bootstrap) initializeConfiguration() {
 	err := viper.ReadInConfig()
 	if err != nil {
 		os.Exit(1)
+	}
+
+	fmt.Println("Loaded configuration:")
+	for _, key := range viper.AllKeys() {
+		fmt.Println(key + " : " + viper.GetString(key))
 	}
 }
