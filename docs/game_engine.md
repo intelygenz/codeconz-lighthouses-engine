@@ -8,6 +8,10 @@ It will run three main services to manage the game:
 
 > Checkout protos documentation at [protos docs](protos.md).
 
+> Checkout the [project README](../README.md) for instructions on how to execute the Game Engine, and the Sample bots.
+
+> To create and test on new maps, you can use the [Map Generator](https://dovixman.github.io/lighthouses_map_generator/)
+
 ## Loading game configuration
 The game engine will load the configuration from the environment variables or the configuration file.
 
@@ -18,6 +22,8 @@ The game engine will load the configuration from the environment variables or th
 - `game.board_path` (defaults to `./maps/island_simple.txt`)
 - `game.verbosity` (defaults to `true`)
 - `game.time_between_rounds` (defaults to `1 second`)
+
+> You can check the default values at the [Configuration file](../cfg.yaml)
 
 ## Joining the game
 The players bot will call the Join service on the game server.
