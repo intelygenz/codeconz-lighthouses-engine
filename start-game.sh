@@ -4,15 +4,13 @@
 ###############################################################################
 #
 # Usage:
-#   ./start-game.sh  [-r] -f <configfile>   run a real game round
-#   ./start-game.sh  [-r] -d                dry-run (simulation)
+#   ./start-game.sh  [-r][-x] -f <configfile>   run a game round
 #
 # Options:
 #
-#   -r    force rebuild of the game server image (optional)
-#   -f    specify game-config file REQUIRED for a real game round
-#   -d    dry-run: a 100% fake playground. It builds the
-#         server + 6 dummy bots, picks a random map and plays 1 round
+#   -r    force rebuild the game server docker image (optional)
+#   -x    do not pull docker images (use local ones)
+#   -f    specify game-config file (required)
 #
 #   The game-config file format must be:
 #
@@ -26,10 +24,10 @@
 ###############################################################################
 
 # Configuration
+BOT_DEFAULT_PORT='3001'
+GAME_NETWORK_NAME='game_net'
 GAME_SERVER_NAME='game'
 GAME_SERVER_PORT='50051'
-DOCKER_NETWORK='game_net'
-BOT_DEFAULT_PORT='3001'
 
 ###############################################################################
 
@@ -41,6 +39,7 @@ GAME_TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 DOCKERFILE_GAME="${REPO_DIR}/docker/Dockerfile.game"
 DOCKER_COMPOSE_FILE="game-${GAME_TIMESTAMP}.yaml"
 LOG_FILE="${LOG_DIR}/game-${GAME_TIMESTAMP}.log"
+COMMAND_UP="docker compose -f ${DOCKER_COMPOSE_FILE} up --timestamps --abort-on-container-exit"
 
 # yay colors
 BLUE="\033[1;94m"
@@ -53,20 +52,17 @@ RED="\033[1;31m"
 YELLOW="\033[1;93m"
 
 set -a
-[ "${TMPDIR}" ] || export TMPDIR='/var/tmp'
 
 function _help() {
 	echo -e "
 Usage:
-  ./$(basename ${0}) [-r] -f <configfile>   ${MAGENTA}run a real game round${CLEAR}
-  ./$(basename ${0}) [-r] -d                ${CYAN}dry-run (simulation)${CLEAR}
+  ./$(basename "${0}") [-x][-r] -f <configfile>   ${MAGENTA}run a game round${CLEAR}
 
 Options:
 
-  -r    force rebuild of the game server image (optional)
-  -f    specify game-config file ${MAGENTA}REQUIRED for a real game round${CLEAR}
-  -d    ${CYAN}dry-run${CLEAR}: a 100% fake playground. It builds the
-        server + 6 dummy bots, picks a random map and plays 1 round
+  -r    force rebuild the game server docker image (optional)
+  -x    do not pull docker images (use local ones)
+  -f    specify game-config file (${MAGENTA}REQUIRED${CLEAR})
 
   The game-config file format must be:
 
@@ -85,16 +81,12 @@ if [[ "${#}" -eq "0" ]]; then
 fi
 
 function _info() {
-	if [[ "${DRY_RUN}" ]]; then
-		echo -e "${MAGENTA}[$(date +%F\ %T)] 🛟 DRY_RUN mode ${CLEAR}${1}${CLEAR}"
-	else
-		echo -e "${BLUE}[$(date +%F\ %T)] ${CLEAR}${1}${CLEAR}"
-	fi
+	echo -e "${BLUE}[$(date +%F\ %T)] ${CLEAR}${1}${CLEAR}"
 }
 
 function _error() {
 	echo -e "${RED}[$(date +%F\ %T)] ❌ ${1}${CLEAR}\n"
-	_help 1
+	exit 1
 }
 
 function divider() {
@@ -131,11 +123,12 @@ function print_header() {
 
 function load_config() {
 	# ARGV1 = game-config
-	unset BOT_LIST
+	unset BOT_LIST bots newseq
 	declare -a bots
+	declare -a newseq
 	source "${1}" || _error "Can't load game-config ${YELLOW}${1}"
 	if [[ ! -r "${MAPS_DIR}/${map}" ]]; then
-		_error "${map} does not exist!"
+		_error "Map file '$(basename "${MAPS_DIR}")/${map}' not found. Check your configuration: ${1}"
 	fi
 	export THIS_MAP="${map}"
 	_info "📝 Loaded configfile: ${YELLOW}${1}"
@@ -160,14 +153,14 @@ function create_docker_compose() {
 name: game
 
 networks:
-  ${DOCKER_NETWORK}:
+  ${GAME_NETWORK_NAME}:
 
 services:
 EOF
 }
 
 function build_game_server() {
-	_info "👷🏻‍♂️ Building game server"
+	_info "👷 Building game server"
 	docker build -f ${DOCKERFILE_GAME} . -t ${GAME_SERVER_NAME} &>/dev/null || _error "Something went wrong whithin function ${FUNCNAME}"
 }
 
@@ -182,7 +175,6 @@ function add_game_server() {
 		build_game_server
 	fi
 	# add the game-server to docker-compose file
-	# we send the map via GAME.BOARD_PATH env var
 	cat <<EOF >>${DOCKER_COMPOSE_FILE}
 
   ${GAME_SERVER_NAME}:
@@ -198,14 +190,14 @@ function add_game_server() {
     ports:
       - ${GAME_SERVER_PORT}
     networks:
-      - ${DOCKER_NETWORK}
+      - ${GAME_NETWORK_NAME}
 EOF
 	_info "🚥 ${GREEN}Added game server"
 }
 
 function pull_image() {
 	# pull the bot image from public registry
-	[ "${DONT_PULL}" ] || docker pull "${1}" || _error "Cannot pull image ${YELLOW}${1}"
+	docker pull "${1}" || _error "Cannot pull image ${YELLOW}${1}"
 }
 
 function add_all_bots() {
@@ -218,7 +210,7 @@ function add_all_bots() {
 function add_bot() {
 	# add the bot to docker-compose file
 	local THIS_IMAGE="${1}"
-	if [ ! "${DRY_RUN}" ]; then
+	if [ ! "${DONT_PULL}" ]; then
 		_info "⏬ ${BOLD}Pulling container image ${YELLOW}${THIS_IMAGE} ..."
 		pull_image "${THIS_IMAGE}" || _error "Something went wrong in ${FUNCNAME}: error while pulling image ${YELLOW}${THIS_IMAGE}"
 	fi
@@ -235,7 +227,7 @@ function add_bot() {
     ports:
       - ${BOT_DEFAULT_PORT}
     networks:
-      - ${DOCKER_NETWORK}
+      - ${GAME_NETWORK_NAME}
     depends_on:
       ${GAME_SERVER_NAME}:
         condition: service_started
@@ -243,110 +235,63 @@ EOF
 	_info "🤖 ${GREEN}Added ${YELLOW}${THIS_BOT_NAME}${CLEAR} from ${YELLOW}${THIS_IMAGE}"
 }
 
-function create_simulation() {
-	# creates a e2e simulation with 6 fake registries/projects/bots
-	_info "‼️ ${YELLOW}Entering ${FUNCNAME}"
-	export TMP_CONFIG="${TMPDIR}/game.cfg"
-	declare -a bots
-	declare -a maps
-	local bots=('docker.io/fernando/bot' 'quay.io/shresth/bot' 'quay.io/yvette/bot' 'ghcr.io/amadis/bot' 'quay.io/loren/bot' 'ghcr.io/jose/bot')
-	local maps=(${REPO_DIR}/maps/*)
-	local random_map="$(basename $(printf "%s\n" "${maps[@]}" | shuf -n 1))"
-	echo -e "bots=('docker.io/fernando/bot' 'quay.io/shresth/bot' 'quay.io/yvette/bot' 'ghcr.io/amadis/bot' 'quay.io/loren/bot' 'ghcr.io/jose/bot')\nmap=${random_map}" >${TMP_CONFIG}
-	_info "📒 Using tmp game-config:\n$(cat "${TMP_CONFIG}")"
-	_info "🗺️ Using random map ${random_map}:\n$(cat "${MAPS_DIR}/${random_map}")"
-
-	echo
-	REPO_DIR="$(git rev-parse --show-toplevel)"
-
-	function create_dockerfile() {
-		local BOT_NAME="$2"
-		cd "${REPO_DIR}" || _error "Error entering dir [${REPO_DIR}] in function ${FUNCNAME} while creating bot [${BOT_NAME}] image!"
-		cat <<EOF >${1}
-FROM golang:1.22-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN go mod download && CGO_ENABLED=0 GOOS=linux go build -o bot ./examples/ranbot.go
-
-FROM alpine:3.20.3
-WORKDIR /app
-COPY ./proto/ ./proto/
-COPY --from=builder /app/bot ./
-RUN adduser -h /app -H -s /sbin/nologin -D -u 10000 bot-user && chown -R bot-user:bot-user /app
-USER bot-user
-EXPOSE 3001
-CMD [ "./bot", "-bn=${BOT_NAME}", "-la=${BOT_NAME}:3001", "-gs=${GAME_SERVER_NAME}:${GAME_SERVER_PORT}" ]
-EOF
-	}
-
-	for i in "${bots[@]}"; do
-		local THIS_NAME="$(echo "${i}" | awk -F'/' '{print $2"-"$3}')"
-		local THIS_DOCKERFILE="${TMPDIR}/Dockerfile-${RANDOM}"
-		create_dockerfile "${THIS_DOCKERFILE}" "${THIS_NAME}"
-		_info "🐳 Building ${YELLOW}${i}${CLEAR} from ${CYAN}\$TMPDIR/$(basename ${THIS_DOCKERFILE})${CLEAR}\t"
-		local DOCKER_BUILD_COMMAND="docker build -f ${THIS_DOCKERFILE} . -t ${i}:latest &>/dev/null"
-		eval ${DOCKER_BUILD_COMMAND}
-		if [[ "$?" -ne "0" ]]; then
-			_error "Something went wrong while building docker image with Dockerfile ${THIS_DOCKERFILE}\nCommand:  ${DOCKER_BUILD_COMMAND}\nDockerfile:"
-			cat "${THIS_DOCKERFILE}"
-			rm -f "${THIS_DOCKERFILE}"
-			rm -f "${TMP_CONFIG}"
-			echo "❌"
-			cleanup
-			exit 1
-		fi
-		rm -f "${THIS_DOCKERFILE}"
-		unset THIS_REGISTRY
-		unset THIS_NAME
-		unset THIS_DOCKERFILE
-	done
-	# load the DRY_RUN game-config
-	load_config "${TMP_CONFIG}" || destroy_simulation
-}
-
-function destroy_simulation() {
-	_info "🐲 ${YELLOW}Entering ${FUNCNAME}"
-	source "${TMP_CONFIG}"
-	for i in ${bots[*]}; do
-		docker ps -a | grep '/bot' | awk '{print $1}' | while read foo; do
-			docker stop $foo &>/dev/null
-			docker rm $foo &>/dev/null
-		done
-		docker images | grep '/bot' | awk '{print $3}' | xargs --no-run-if-empty docker rmi -f &>/dev/null &&
-			_info "  🔥 ${YELLOW}${i}${CLEAR}\thas gone bye bye"
-	done
-	rm -f "${TMP_CONFIG}"
-}
-
 function cleanup() {
 	_info "🧹 ${GREEN}Cleaning up..."
 	docker compose -f ${DOCKER_COMPOSE_FILE} down 2>/dev/null
-	docker ps -a --format "{{.Names}}" | egrep -E '^(game|bot)' | xargs --no-run-if-empty docker stop 2>/dev/null
-	rm -f "${DOCKER_COMPOSE_FILE}"
-	if [[ "${DRY_RUN}" ]]; then
-		destroy_simulation
-	fi
+	docker ps -a --format "{{.Names}}" | grep -E '^(game|bot)' | xargs --no-run-if-empty docker stop 2>/dev/null
+	[ "${DEBUG}" ] || rm -f "${DOCKER_COMPOSE_FILE}"
+}
+
+function create_game_log() {
+	cat <<EOF >"${LOG_FILE}"
+# :::
+# ::: CodeconZ 2024
+# ::: LighthouseS AI Contest
+# :::
+# ::: Game Round:  ${GAME_TIMESTAMP}
+# ::: Config file: ${GAME_CONFIG_FILE}
+# ::: Players:     $(echo "${bots[@]}" | xargs)
+# ::: Map:         $(echo "${map}")
+# :::
+
+EOF
+}
+
+function create_player_log() {
+	for i in "${BOT_LIST[@]}"; do
+		local THIS_BOT_NAME="$(echo "${i}" | awk -F'/' '{print $2"-"$3}')"
+		local PLAYER_LOG_FILE="${LOG_DIR}/game-${GAME_TIMESTAMP}__${THIS_BOT_NAME}.log"
+		# "${i}"
+		# grep de c/bot-name y exportar a 1 file per player p/exportar
+		cat <<EOF >"${PLAYER_LOG_FILE}"
+# :::
+# ::: CodeconZ 2024
+# ::: LighthouseS AI Contest
+# :::
+# ::: Player      ${THIS_BOT_NAME}
+# ::: Game Round  ${GAME_TIMESTAMP}
+# :::
+
+EOF
+		# grep -E -i "game starts|game finished|${THIS_BOT_NAME}" "${LOG_FILE}" >>"${PLAYER_LOG_FILE}"
+		grep -E -i "game starts|game finished|${THIS_BOT_NAME}" "${LOG_FILE}" | grep -v '^Attaching' >>"${PLAYER_LOG_FILE}"
+		_info "📝 Created player log file: $(basename "${PLAYER_LOG_FILE}")"
+	done
 }
 
 ###############################################################################
 # 1. validate script args
 
-while getopts df:rxh Option; do
+while getopts rxf:h Option; do
 	case "${Option}" in
-	d)
-		export DRY_RUN=1
-		;;
-	f)
-		if [[ ! "${DRY_RUN}" ]]; then
-			load_config "${OPTARG}"
-		fi
-		;;
 	r)
 		export REBUILD_SERVER=1
 		;;
 	x)
-		# dirty, I know..
 		export DONT_PULL=1
+		;;
+	f)
+		load_config "${OPTARG}"
 		;;
 	*)
 		_help 0
@@ -357,7 +302,6 @@ done
 ###############################################################################
 # 2. prepare
 
-[[ "${DRY_RUN}" ]] && create_simulation
 print_header
 create_docker_compose
 add_all_bots
@@ -367,21 +311,11 @@ add_game_server
 # 3. start
 
 # initialize log & game round
-COMMAND_UP="docker compose -f ${DOCKER_COMPOSE_FILE} up --timestamps --abort-on-container-exit"
-
+create_game_log
 (
-	cat <<EOF
-# ::: CodeconZ 2024 ::: LighthouseS AI Contest :::
-#
-# Config file: ${GAME_CONFIG_FILE}
-$(cat "${GAME_CONFIG_FILE}")
-
-# Map: ${GAME_CONFIG_FILE}
-
-EOF
 	_info "🚀 ${GREEN}Launching new round on $(date +%F\ %T)"
-	eval ${COMMAND_UP}
-) | tee "${LOG_FILE}"
+	eval "${COMMAND_UP}"
+) | tee -a "${LOG_FILE}"
 
 ###############################################################################
 # 4. cleanup
@@ -389,10 +323,21 @@ EOF
 divider
 cleanup
 divider
-_info "📝 Log file:    ${CYAN}./log/$(basename "${LOG_FILE}")"
-_info "📊 Game Output: ${GREEN}$(ls -1t ./$(basename ${OUTPUT_DIR})/*.json | head -1)"
+_info "📝 Log file:    ${CYAN}$(basename "${LOG_DIR}")/$(basename "${LOG_FILE}")"
 divider
-_info "✅ ${GREEN}All done, bye 👋🏻"
+
+GAME_OUTPUT_JSON="$(ls -1t $(basename "${OUTPUT_DIR}")/*.json 2>/dev/null | head -1)"
+
+if [ -s "${GAME_OUTPUT_JSON}" ]; then
+	_info "📊 Game Output: ${GREEN}${GAME_OUTPUT_JSON}"
+	divider
+	create_player_log
+	divider
+	_info "✅ ${GREEN}All done, bye 👋🏻"
+else
+	_error "Something went wrong... 💥"
+fi
+
 echo
 
 # EOF

@@ -1,57 +1,244 @@
-import * as pixi from "pixi.js";
-import { PlaybackStatus } from "@/code/domain";
+import {
+  Game,
+  Lighthouse as LighthouseData,
+  Tile as TileData,
+  Player as PlayerData,
+  TileType,
+} from "./domain";
+import {
+  Application,
+  ColorMatrixFilter,
+  Container,
+  Graphics,
+  Ticker,
+} from "pixi.js";
+import { Frame, Playback } from "./playback";
 
-class Tile extends pixi.Container {
-  constructor(type, size, x, y) {
-    super();
-    this.label = `Tile(${x}, ${y})`;
-    this.type = type;
-    this.size = size;
-    this.position.set(x * size, y * size);
+export class Stage {
+  constructor(
+    public game: Game,
+    public hover: HoverTile,
+  ) {}
 
-    if (this.type.isGround) {
-      this.ground = new IslandBackground(size, x, y);
-      this.addChild(this.ground);
-      this.addChild(new Marker(size));
-    } else {
-      this.addChild(new WaterBackground(size, x, y));
-    }
+  async init(container: HTMLElement, playback: Playback) {
+    const app = new Application();
+    await app.init({ resizeTo: container });
+    container.appendChild(app.canvas);
 
-    this.players = new Players(this.label, this.size);
-    this.addChild(this.players);
-    this.addChild(this.players.mask);
-    this.energy = 0;
+    const width = this.game.board[0].length;
+    const height = this.game.board.length;
+    const maxTileWidth = (app.renderer.width - 50) / width;
+    const maxTileHeight = (app.renderer.height - 50) / height;
+    const tileSize = Math.min(maxTileWidth, maxTileHeight);
+    const x = app.renderer.width / 2 - (width * tileSize) / 2;
+    const y = app.renderer.height / 2 - (height * tileSize) / 2;
 
-    this.interactive = true;
-    this.onmouseover = (event) => {
-      console.log(this.label);
-    };
-  }
+    const tileset = new Tileset(this.game, tileSize, this.hover, x, y);
+    app.stage.addChild(tileset);
 
-  move(player) {
-    this.players.move(player);
-  }
+    const border = new Graphics();
+    border
+      .rect(x, y, tileSize * width, tileSize * height)
+      .stroke({ color: 0x606060, width: 1 });
+    app.stage.addChild(border);
 
-  set energy(energy) {
-    if (this.type.isGround) {
-      this.ground.energy = energy;
-    }
+    const ticker = Ticker.shared;
+    ticker.autoStart = false;
+    playback.init(tileset, ticker);
   }
 }
 
-class Players extends pixi.Container {
-  constructor(label, size) {
+export class Tileset extends Container {
+  public tiles: Array<Array<Tile>>;
+  public players: Map<number, Player>;
+  public lighthouses: Map<number, Lighthouse>;
+  public links: Map<string, Graphics> = new Map();
+
+  constructor(
+    public game: Game,
+    public tileSize: number,
+    hover: HoverTile,
+    x: number,
+    y: number,
+  ) {
     super();
-    this.label = `PlayersContainer(${label})`;
-    this.mask = new Player("mask", 0, 0xffffff, size);
+    this.position.set(x, y);
+
+    this.tiles = game.board.map((row) =>
+      row.map((gameTile) => {
+        const tile = new Tile(gameTile, this.tileSize, hover);
+        this.addChild(tile);
+        return tile;
+      }),
+    );
+
+    this.players = game.state.players.reduce((players, playerData) => {
+      const player = new Player(playerData, this.tileSize);
+      this.tiles[playerData.y][playerData.x].move(player);
+
+      players.set(playerData.id, player);
+      return players;
+    }, new Map());
+
+    this.lighthouses = game.state.lighthouses.reduce((lh, lhData) => {
+      const lighthouse = new Lighthouse(lhData, this.tileSize);
+      this.tiles[lhData.y][lhData.x].lighthouse = lighthouse;
+
+      lh.set(lhData.id, lighthouse);
+      return lh;
+    }, new Map());
+  }
+
+  render(frame: Frame) {
+    frame.energy.forEach((row, y) =>
+      row.forEach((energy, x) => {
+        this.tiles[y][x].setEnergy(energy);
+      }),
+    );
+
+    frame.players.forEach((playerData) => {
+      const player = this.players.get(playerData.id) as Player;
+      this.tiles[playerData.y][playerData.x].move(player);
+    });
+
+    const frameLinks = new Array<string>();
+    frame.lighthouses.forEach((lighthouseData) => {
+      const lighthouse = this.lighthouses.get(lighthouseData.id) as Lighthouse;
+      const owner = this.players.get(lighthouseData.ownerId);
+      lighthouse.update(owner);
+
+      lighthouseData.links.forEach((targetId) => {
+        if (owner === undefined) {
+          console.warn("Lighthouse has links but no owner", lighthouseData);
+          return;
+        }
+
+        const linkKey = keyFor(lighthouseData.id, targetId);
+        frameLinks.push(linkKey);
+        if (!this.links.has(linkKey)) {
+          this.registerLink(linkKey, lighthouseData.id, targetId, owner.color);
+        }
+      });
+    });
+
+    for (const [key, link] of this.links) {
+      if (!frameLinks.includes(key)) {
+        this.removeChild(link);
+        this.links.delete(key);
+      }
+    }
+
+    return true;
+  }
+
+  registerLink(linkKey: string, origin: number, target: number, color: number) {
+    if (this.links.get(linkKey)) {
+      return;
+    }
+
+    const from = this.lighthouses.get(origin) as Lighthouse;
+    const to = this.lighthouses.get(target) as Lighthouse;
+
+    const link = new Graphics();
+    link.moveTo(
+      from.parent.x + this.tileSize / 2,
+      from.parent.y + this.tileSize / 2,
+    );
+    link.lineTo(
+      to.parent.x + this.tileSize / 2,
+      to.parent.y + this.tileSize / 2,
+    );
+    link.stroke({ color, width: 1 });
+    // link.filters = [];
+    // link.tint = color;
+
+    this.addChild(link);
+    this.links.set(linkKey, link);
+    // link.filters = [];
+    // link.tint = 0x22f81f;
+  }
+}
+
+const keyFor = (origin: number, target: number) =>
+  origin < target ? `${origin},${target}` : `${target},${origin}`;
+
+class Tile extends Container {
+  public ground: IslandBackground | null;
+  public players: Players;
+  public lighthouseChild: Lighthouse | undefined;
+
+  constructor(
+    public data: TileData,
+    public size: number,
+    public hover: HoverTile,
+  ) {
+    super();
+    this.position.set(data.x * size, data.y * size);
+
+    this.ground = null;
+    if (data.type == TileType.Ground) {
+      this.ground = new IslandBackground(size);
+      this.addChild(this.ground);
+      this.addChild(new Marker(size));
+    } else {
+      this.addChild(new WaterBackground(size));
+    }
+
+    this.players = new Players(this.size);
+    this.addChild(this.players);
+    this.addChild(this.players.mask as Container);
+
+    this.on("mouseenter", this.buildHover.bind(this));
+    this.on("mouseleave", this.clearHover.bind(this));
+    this.eventMode = "static";
+  }
+
+  move(player: Player) {
+    this.players.move(player);
+  }
+
+  set lighthouse(lighthouse: Lighthouse) {
+    this.lighthouseChild = lighthouse;
+    this.addChild(lighthouse);
+  }
+
+  setEnergy(energy: number) {
+    if (this.ground) {
+      if (energy !== this.ground.energy) {
+        this.data.energy = energy;
+        this.ground.setEnergy(energy);
+      }
+    }
+  }
+
+  buildHover() {
+    this.hover.x = this.data.x;
+    this.hover.y = this.data.y;
+  }
+
+  clearHover() {
+    delete this.hover.x;
+    delete this.hover.y;
+  }
+}
+
+export interface HoverTile {
+  x: number | undefined;
+  y: number | undefined;
+}
+
+class Players extends Container {
+  constructor(size: number) {
+    super();
+    this.mask = new Player(null, size);
     this.sortableChildren = true;
   }
 
-  move(player) {
+  move(player: Player) {
     if (player.parent) {
-      const originalParent = player.parent;
-      originalParent.removeChild(player);
-      originalParent.accomodate();
+      const players = player.parent as Players;
+      players.removeChild(player);
+      players.accomodate();
     }
 
     this.addChild(player);
@@ -69,76 +256,74 @@ class Players extends pixi.Container {
   }
 }
 
-class Player extends pixi.Graphics {
-  constructor(id, index, color, parentSize) {
+class Player extends Graphics {
+  public size: number;
+  public color: number;
+
+  constructor(
+    data: PlayerData | null,
+    public parentSize: number,
+  ) {
     super();
-    this.label = `Player(${id})`;
-    this.color = color;
     this.size = parentSize * 0.75;
-    this.parentSize = parentSize;
+    this.color = data ? data.color : 0xffffff;
 
     this.rect(0, 0, this.size, this.size).fill({ color: this.color });
     this.pivot.set(this.size * 0.5);
     this.position.set(this.parentSize * 0.5);
-    this.zIndex = index;
 
-    const colorMatrix = new pixi.ColorMatrixFilter();
-    colorMatrix.brightness(0.7);
+    const colorMatrix = new ColorMatrixFilter();
+    colorMatrix.brightness(0.7, true);
     this.filters = [colorMatrix];
   }
 }
 
-class Lighthouse extends pixi.Graphics {
-  constructor(data, parentSize) {
+class Lighthouse extends Graphics {
+  public ownedBy: Player | undefined;
+
+  constructor(data: LighthouseData, parentSize: number) {
     super();
-    this.size = parentSize * 0.4;
+    const size = parentSize * 0.4;
 
     this.label = `Lighthouse(${data.id})`;
     this.position.set(parentSize * 0.5);
-    this.pivot.set(this.size * 0.5);
     this.rotation = Math.PI / 4;
-    this.rect(0, 0, this.size, this.size).fill({ color: 0xf0f0f0 });
-
-    this.colorMatrix = new pixi.ColorMatrixFilter();
-    this.filters = [this.colorMatrix];
+    this.pivot.set(size * 0.5);
+    this.rect(0, 0, size, size).fill({ color: 0xf0f0f0 });
   }
 
-  update(lighthouse, owner) {
-    this.colorMatrix.reset();
-    if (owner) {
-      this.tint = owner.color;
-      // this.colorMatrix.saturate(.9)
-      // this.colorMatrix.greyscale(.5)
-    } else {
-      this.tint = 0xffffff;
-    }
-
-    lighthouse.links.forEach((link) => {});
+  update(owner: Player | undefined) {
+    this.tint = owner ? owner.color : 0xffffff;
   }
 }
 
-class WaterBackground extends pixi.Graphics {
-  constructor(parentSize) {
+class WaterBackground extends Graphics {
+  constructor(parentSize: number) {
     super();
     this.label = "WaterBackground";
     this.rect(0, 0, parentSize, parentSize).fill({ color: 0x000000 });
   }
 }
 
-class IslandBackground extends pixi.Graphics {
-  constructor(parentSize) {
+class IslandBackground extends Graphics {
+  public energy: number;
+
+  constructor(public parentSize: number) {
     super();
     this.label = "IslandBackground";
+    this.energy = 0;
     this.rect(0, 0, parentSize, parentSize).fill({ color: 0x606060 });
+    this.setEnergy(0);
   }
 
-  set energy(energy) {
+  setEnergy(energy: number) {
+    this.energy = energy;
     this.tint = 0x606060 + Math.round(energy * 0.75) * 0x010101;
   }
 }
 
-class Marker extends pixi.Graphics {
-  constructor(parentSize) {
+class Marker extends Graphics {
+  constructor(parentSize: number) {
     super();
     this.label = "Marker";
     this.position.set(parentSize * 0.5);
@@ -146,124 +331,11 @@ class Marker extends pixi.Graphics {
   }
 }
 
-export class Board extends pixi.Container {
-  constructor(game, tileSize, x, y) {
-    super();
-    this.tileSize = tileSize;
-    this.position.set(x, y);
-
-    this.tiles = game.board.tiles.map((row, y) =>
-      row.map((gameTile, x) => {
-        const tile = new Tile(gameTile.type, this.tileSize, x, y);
-        this.addChild(tile);
-        return tile;
-      }),
-    );
-
-    this.players = game.setup.players.reduce((players, player, index) => {
-      players[player.id] = new Player(
-        player.id,
-        index,
-        player.color,
-        this.tileSize,
-      );
-
-      this.tiles[player.y][player.x].move(players[player.id]);
-      return players;
-    }, {});
-
-    this.lighthouses = game.setup.lighthouses.reduce(
-      (lighthouses, lighthouse) => {
-        lighthouses[lighthouse.id] = new Lighthouse(lighthouse, this.tileSize);
-        lighthouses[lighthouse.id].update(
-          lighthouse,
-          this.players[lighthouse.ownerId],
-        );
-        this.tiles[lighthouse.y][lighthouse.x].addChild(
-          lighthouses[lighthouse.id],
-        );
-        return lighthouses;
-      },
-      {},
-    );
-
-    game.setup.lighthouses.forEach((origin) => {
-      game.setup.lighthouses.forEach((target) => {
-        const link = new pixi.Graphics();
-        const from = this.lighthouses[origin.id];
-        const to = this.lighthouses[target.id];
-        link.moveTo(from.parent.x + tileSize / 2, from.parent.y + tileSize / 2);
-        link.lineTo(to.parent.x + tileSize / 2, to.parent.y + tileSize / 2);
-        link.stroke({ width: 1 });
-        link.filters = [new pixi.AlphaFilter({ alpha: 1 })];
-        link.tint = 0x1f22f8;
-        // link.alpha = -1;
-        this.addChild(link);
-        // link.filters = [];
-        link.tint = 0x22f81f;
-        // link.alpha = 1;
-      });
-    });
-  }
-
-  render(frame) {
-    frame.energy.forEach((row, y) =>
-      row.forEach((energy, x) => {
-        this.tiles[y][x].energy = energy;
-      }),
-    );
-
-    frame.players.forEach((player) => {
-      this.tiles[player.y][player.x].move(this.players[player.id]);
-    });
-
-    frame.lighthouses.forEach((lighthouse) => {
-      this.lighthouses[lighthouse.id].update(
-        lighthouse,
-        this.players[lighthouse.ownerId],
-      );
-
-      lighthouse.links.forEach((targetId) => {
-        const link = new pixi.Graphics();
-        const origin = this.lighthouses[lighthouse.id];
-        const target = this.lighthouses[targetId];
-        link.moveTo(origin.parent.x, origin.parent.y);
-        link.lineTo(target.parent.x, target.parent.y);
-        link.stroke({ color: 0x606060, width: 1 });
-        this.addChild(link);
-        link.zIndex = 1;
-      });
-    });
-  }
-}
-
-export const init = async (game, playback, container) => {
-  const app = new pixi.Application();
-  await app.init({ resizeTo: container });
-  container.appendChild(app.canvas);
-
-  const appWidth = app.renderer.width;
-  const appHeight = app.renderer.height;
-
-  const gridWidth = game.board.tiles[0].length;
-  const gridHeight = game.board.tiles.length;
-  const maxWidth = (appWidth - 100) / gridWidth;
-  const maxHeight = (appHeight - 100) / gridHeight;
-  const tileSize = Math.min(maxWidth, maxHeight);
-  const x = appWidth / 2 - (gridWidth * tileSize) / 2;
-  const y = appHeight / 2 - (gridHeight * tileSize) / 2;
-
-  const board = new Board(game, tileSize, x, y);
-  app.stage.addChild(board);
-
-  const border = new pixi.Graphics();
-  border
-    .rect(x, y, tileSize * gridWidth, tileSize * gridHeight)
-    .stroke({ color: 0x606060, width: 1 });
-  app.stage.addChild(border);
-
-  const ticker = pixi.Ticker.shared;
-  ticker.autoStart = false;
-
-  return { board, ticker };
-};
+// status() {
+//   if (--this.tick > 0) {
+//     return PlaybackStatus.playing;
+//   }
+//
+//   this.tick = this.speed;
+//   return this.next();
+// }
