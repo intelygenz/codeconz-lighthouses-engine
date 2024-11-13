@@ -81,11 +81,7 @@ if [[ "${#}" -eq "0" ]]; then
 fi
 
 function _info() {
-	if [[ "${DRY_RUN}" ]]; then
-		echo -e "${MAGENTA}[$(date +%F\ %T)] 🛟 DRY_RUN mode ${CLEAR}${1}${CLEAR}"
-	else
-		echo -e "${BLUE}[$(date +%F\ %T)] ${CLEAR}${1}${CLEAR}"
-	fi
+	echo -e "${BLUE}[$(date +%F\ %T)] ${CLEAR}${1}${CLEAR}"
 }
 
 function _error() {
@@ -201,7 +197,7 @@ EOF
 
 function pull_image() {
 	# pull the bot image from public registry
-	[ "${DONT_PULL}" ] || docker pull "${1}" || _error "Cannot pull image ${YELLOW}${1}"
+	docker pull "${1}" || _error "Cannot pull image ${YELLOW}${1}"
 }
 
 function add_all_bots() {
@@ -214,7 +210,7 @@ function add_all_bots() {
 function add_bot() {
 	# add the bot to docker-compose file
 	local THIS_IMAGE="${1}"
-	if [ ! "${DRY_RUN}" ]; then
+	if [ ! "${DONT_PULL}" ]; then
 		_info "⏬ ${BOLD}Pulling container image ${YELLOW}${THIS_IMAGE} ..."
 		pull_image "${THIS_IMAGE}" || _error "Something went wrong in ${FUNCNAME}: error while pulling image ${YELLOW}${THIS_IMAGE}"
 	fi
@@ -295,9 +291,7 @@ while getopts rxf:h Option; do
 		export DONT_PULL=1
 		;;
 	f)
-		if [[ ! "${DRY_RUN}" ]]; then
-			load_config "${OPTARG}"
-		fi
+		load_config "${OPTARG}"
 		;;
 	*)
 		_help 0
