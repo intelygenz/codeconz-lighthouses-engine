@@ -8,6 +8,7 @@ It will run three main services to manage the game:
 
 > Checkout protos documentation at [protos docs](protos.md).
 
+> Checkout the [project README](../README.md) for instructions on how to execute the Game Engine, and the Sample bots.
 
 > To create and test on new maps, you can use the [Map Generator](https://dovixman.github.io/lighthouses_map_generator/)
 
