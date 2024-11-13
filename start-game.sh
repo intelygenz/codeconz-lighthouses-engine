@@ -183,7 +183,7 @@ function add_game_server() {
     hostname: ${GAME_SERVER_NAME}
     restart: no
     environment:
-      GAME.BOARD_PATH: "/maps/${THIS_MAP}"
+      BOARD_PATH: "/maps/${THIS_MAP}"
     volumes:
       - ${MAPS_DIR}:/maps:ro
       - ${OUTPUT_DIR}:/app/output:rw
