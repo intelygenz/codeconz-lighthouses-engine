@@ -9,11 +9,11 @@ import {
 } from "@/code/domain.js";
 import { colorFor } from "@/code/palette";
 
-import engine_game_1 from "@/games/game-2024_10_07_15_27_54.json";
-import engine_game_2 from "@/games/game-2024_10_10_08_49_43.json";
-import engine_game_3 from "@/games/game-2024_10_10_11_41_32.json";
-import engine_game_4 from "@/games/game-2024_10_16_15_34_24.json";
-import engine_game_5 from "@/games/game-2024_10_18_09_51_35.json";
+import eg_2p from "@/games/game-2024_11_11_21_29_31.json";
+import eg_9p from "@/games/game-2024_11_11_21_38_03.json";
+import eg_demo from "@/games/game-2024_11_12_12_22_16.json";
+import eg_demo_2 from "@/games/game-2024_11_12_12_30_33.json";
+import eg_demo_3 from "@/games/game-2024_11_12_12_38_13.json";
 
 const parsePosition = (raw) => p(raw[1], raw[0]);
 
@@ -62,8 +62,8 @@ const parse = (raw) =>
     raw.rounds.map(parseRound),
   );
 
-export const game_1 = parse(engine_game_1);
-export const game_2 = parse(engine_game_2);
-export const game_3 = parse(engine_game_3);
-export const game_4 = parse(engine_game_4);
-export const game_5 = parse(engine_game_5);
+export const g2p = parse(eg_2p);
+export const g9p = parse(eg_9p);
+export const demo = parse(eg_demo);
+export const demo2 = parse(eg_demo_2);
+export const demo3 = parse(eg_demo_3);

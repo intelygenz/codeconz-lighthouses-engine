@@ -18,21 +18,21 @@ palette = [
   0xff924c, 0xffca3a, 0x8ac926,
 ];
 
-export const colorFor = (index) => palette[index];
+palette = [
+  0xff0000, 0xff8700, 0xffd300, 0xdeff0a, 0xa1ff0a, 0x0aff99, 0x0aefff,
+  0x147df5, 0x580aff, 0xbe0aff, 0xcccccc,
+];
 
-export const colorToString = (color) => {
-  // Convert the number to a hexadecimal string
+export const colorFor = (index: number): number => palette[index];
+
+export const colorToString = (color: number): String => {
   let hexString = color.toString(16);
-
-  // Ensure the string is 6 characters long, adding leading zeros if necessary
   while (hexString.length < 6) {
     hexString = "0" + hexString;
   }
-
-  // Prepend the pound sign to make it a valid CSS hex color
   return hexString;
 };
 
-export const colorToHex = (color) => {
+export const colorToHex = (color: number): String => {
   return "#" + colorToString(color);
 };
