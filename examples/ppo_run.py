@@ -22,9 +22,9 @@ from internal.handler.coms import game_pb2_grpc as game_grpc
 timeout_to_response = 1  # 1 second
 
 SAVED_MODEL = True # Set to True to use a saved model that you trained previously
-STATE_MAPS = True # Set to True to use the state format of maps and architecture CNN and set to False for vector format and architecture MLP
-MODEL_PATH = './examples/models' # Path where the model has been saved
-MODEL_FILENAME = 'ppo_cnn_test.pth' # Filename of the saved model
+STATE_MAPS = False # Set to True to use the state format of maps and architecture CNN and set to False for vector format and architecture MLP
+MODEL_PATH = './examples/saved_models' # Path where the model has been saved
+MODEL_FILENAME = 'ppo_mlp_test.pth' # Filename of the saved model
 
 ACTIONS = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1), "attack", "connect", "pass")
 
@@ -77,24 +77,24 @@ class AgentCNN(nn.Module):
         super(AgentCNN, self).__init__()
 
         self.critic = nn.Sequential(
-            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=7)),
+            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=5, stride=2)),
             nn.ReLU(),
-            layer_init(nn.Conv2d(16, 32, 5)),
+            layer_init(nn.Conv2d(16, 32, kernel_size=3)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*33*13, 256)),
-            nn.Tanh(),
+            layer_init(nn.Linear(32*18*8, 256)), 
+            nn.ReLU(),
             layer_init(nn.Linear(256, 1), std=1)
         )
 
         self.actor = nn.Sequential(
-            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=7)),
+            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=5, stride=2)),
             nn.ReLU(),
-            layer_init(nn.Conv2d(16, 32, 5)),
+            layer_init(nn.Conv2d(16, 32, kernel_size=3)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*33*13, 256)),
-            nn.Tanh(),
+            layer_init(nn.Linear(32*18*8, 256)), 
+            nn.ReLU(),
             layer_init(nn.Linear(256, a_size), std=0.01)
         )
 
@@ -299,12 +299,10 @@ class BotGame:
         if self.countT == 1:
             self.initialize_game(turn)
         if self.state_maps:
-            print("Using maps for state: PolicyCNN")
             new_state = self.convert_state_cnn(turn)
             new_state = np.expand_dims(new_state, axis=0)
             new_state = np.transpose(new_state, (0,3,1,2))
         else:
-            print("Using array for state: PolicyMLP")
             new_state = self.convert_state_mlp(turn)
         new_state = torch.from_numpy(np.array(new_state)).float().to(device) 
         with torch.no_grad():

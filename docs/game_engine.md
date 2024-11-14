@@ -19,7 +19,7 @@ The game engine will load the configuration from the environment variables or th
 - `game.join_timeout` (defaults to `5 seconds`)
 - `game.turn_request_timeout` (defaults to `100 milliseconds`)
 - `game.turns` (defaults to `15`)
-- `game.board_path` (defaults to `./maps/island_simple.txt`)
+- `game.board_path` (defaults to `./maps/map_43x23_1.txt`)
 - `game.verbosity` (defaults to `true`)
 - `game.time_between_rounds` (defaults to `1 second`)
 

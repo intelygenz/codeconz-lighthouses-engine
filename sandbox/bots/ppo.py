@@ -40,16 +40,16 @@ class AgentMLP(nn.Module):
         super(AgentMLP, self).__init__()
         self.critic = nn.Sequential(
             layer_init(nn.Linear(np.array(s_size).prod(), 64)),
-            nn.Tanh(),
+            nn.ReLU(),
             layer_init(nn.Linear(64, 64)),
-            nn.Tanh(),
+            nn.ReLU(),
             layer_init(nn.Linear(64, 1), std=1.0),
         )
         self.actor = nn.Sequential(
             layer_init(nn.Linear(np.array(s_size).prod(), 64)),
-            nn.Tanh(),
+            nn.ReLU(),
             layer_init(nn.Linear(64, 64)),
-            nn.Tanh(),
+            nn.ReLU(),
             layer_init(nn.Linear(64, a_size), std=0.01),
         )
 
@@ -69,24 +69,24 @@ class AgentCNN(nn.Module):
         super(AgentCNN, self).__init__()
 
         self.critic = nn.Sequential(
-            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=7)),
+            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=5, stride=2)),
             nn.ReLU(),
-            layer_init(nn.Conv2d(16, 32, 5)),
+            layer_init(nn.Conv2d(16, 32, kernel_size=3)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*33*13, 256)),
-            nn.Tanh(),
+            layer_init(nn.Linear(32*18*8, 256)), 
+            nn.ReLU(),
             layer_init(nn.Linear(256, 1), std=1)
         )
 
         self.actor = nn.Sequential(
-            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=7)),
+            layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=5, stride=2)),
             nn.ReLU(),
-            layer_init(nn.Conv2d(16, 32, 5)),
+            layer_init(nn.Conv2d(16, 32, kernel_size=3)),
             nn.ReLU(),
             nn.Flatten(),
-            layer_init(nn.Linear(32*33*13, 256)), #10, 11, 5
-            nn.Tanh(),
+            layer_init(nn.Linear(32*18*8, 256)), 
+            nn.ReLU(),
             layer_init(nn.Linear(256, a_size), std=0.01)
         )
 
@@ -113,9 +113,9 @@ class PPO(bot.Bot):
         self.num_minibatches = 4 # the number of mini-batches
         self.update_epochs = 4 # the K epochs to update the policy
         self.norm_adv = True # advantages normalization
-        self.clip_coef = 0.1 # the surrogate clipping coefficient
+        self.clip_coef = 0.2 # the surrogate clipping coefficient
         self.clip_vloss = True # whether or not to use a clipped loss for the value function, as per the paper
-        self.ent_coef = 0.01 # coefficient of the entropy
+        self.ent_coef = 0.0 # coefficient of the entropy
         self.vf_coef = 0.5 # coefficient of the value function
         self.max_grad_norm = 0.5 # maximum norm for the gradient clipping
         self.target_kl = None # the target KL divergence threshold
@@ -145,7 +145,7 @@ class PPO(bot.Bot):
         # torch.backends.cudnn.deterministic = self.torch_deterministic
 
         # Initialize tensorboard
-        self.writer = SummaryWriter(f"artifacts/runs")
+        self.writer = SummaryWriter(f"./artifacts/runs")
         self.writer.add_text(
             "hyperparameters",
             "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(self).items()])),
@@ -308,7 +308,7 @@ class PPO(bot.Bot):
         lh_connections_layer = np.expand_dims(lh_connections_layer, axis=2)
         lh_key_layer = np.expand_dims(lh_key_layer, axis=2)
 
-        new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_connections_layer, lh_control_layer, lh_key_layer), axis=2)
+        new_state = np.concatenate((player_layer, view_layer, lh_energy_layer, lh_connections_layer, lh_control_layer, lh_key_layer), axis=2) 
         return new_state
     
     def valid_lighthouse_connections(self, state):
@@ -346,13 +346,16 @@ class PPO(bot.Bot):
                 self.actions[step] = action
                 self.logprobs[step] = log_prob
         for i in range(len(action)):
+            # Move
             if ACTIONS[action[i]] != "attack" and ACTIONS[action[i]] != "connect" and ACTIONS[action[i]] != "pass":
                 actions_list.append(self.move(*ACTIONS[action[i]]))
+            # Pass
             elif ACTIONS[action[i]] == "pass":
                 actions_list.append(self.nop())
+            # Attack
             elif ACTIONS[action[i]] == "attack":
-                #TODO: improve selection of energy for attacking
                 actions_list.append(self.attack(state[i]['energy']))
+            # Connect
             elif ACTIONS[action[i]] == "connect":
                 # TODO: improve selection of lighthouse connection, right now uses function to select them
                 possible_connections = self.valid_lighthouse_connections(state[i])

@@ -4,3 +4,5 @@ pandas
 scikit-learn
 pygame
 tensorboard
+grpcio
+protobuf
