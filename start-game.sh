@@ -3,23 +3,8 @@
 #               ::: CodeconZ 2024 ::: LighthouseS AI Contest :::              #
 ###############################################################################
 #
-# Usage:
-#   ./start-game.sh  [-r][-x] -f <configfile>   run a game round
-#
-# Options:
-#
-#   -r    force rebuild the game server docker image (optional)
-#   -x    do not pull docker images (use local ones)
-#   -f    specify game-config file (required)
-#
-#   The game-config file format must be:
-#
-#     # bots array with all round participants, these are docker pull URIs,
-#     # these images MUST be public. 'latest' tag will always be used for pulling, ge:
-#     bots=('ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz')
-#
-#     # map file. must exist into ./maps/ folder, ge:
-#     map=square.txt
+# For usage instructions run:
+#   ./start-game.sh -h
 #
 ###############################################################################
 
@@ -57,7 +42,7 @@ set -a
 function _help() {
 	echo -e "
 Usage:
-  ./$(basename "${0}") [-x][-r] -f <configfile>   ${MAGENTA}run a game round${CLEAR}
+  ./$(basename "${0}") [-x][-r] -f <configfile>   ${MAGENTA}run a game${CLEAR}
 
 Options:
 
@@ -133,7 +118,7 @@ function print_header() {
 
 function load_config() {
 	# ARGV1 = game-config
-  export THIS_GAME_CONFIG="${1}"
+	export THIS_GAME_CONFIG="${1}"
 
 	unset BOT_LIST bots newseq
 	declare -a bots
@@ -146,20 +131,20 @@ function load_config() {
 
 	# check if turns is defined
 	if [[ ! "${turns}" ]]; then
-    _error "Missing 'turns' from configuration file"
-  fi
+		_error "Missing 'turns' from configuration file"
+	fi
 	export THIS_GAME_TURNS="${turns}"
 
 	# check if turn_request_timeout is defined
 	if [[ ! "${turn_request_timeout}" ]]; then
-    _error "Missing 'turn_request_timeout' from configuration file"
-  fi
+		_error "Missing 'turn_request_timeout' from configuration file"
+	fi
 	export THIS_GAME_REQ_TIMEOUT="${turn_request_timeout}"
 
 	# check if time_between_rounds is defined
 	if [[ ! "${time_between_rounds}" ]]; then
-    _error "Missing 'time_between_rounds' from configuration file"
-  fi
+		_error "Missing 'time_between_rounds' from configuration file"
+	fi
 	export THIS_GAME_TIME_ROUNDS="${time_between_rounds}"
 
 	# randomize bot list
@@ -178,16 +163,16 @@ function load_config() {
 }
 
 function print_config() {
-	_info "   ${GREEN}Loaded configfile: ${YELLOW}${THIS_GAME_CONFIG}"
+	_info "📔 ${GREEN}Loaded configfile: ${YELLOW}${THIS_GAME_CONFIG}"
+	_info "   bots: ${YELLOW}${BOT_LIST[*]}"
 	_info "   map: ${YELLOW}${THIS_MAP}"
 	_info "   turns: ${YELLOW}${THIS_GAME_TURNS}"
 	_info "   turn_request_timeout: ${YELLOW}${THIS_GAME_REQ_TIMEOUT}"
 	_info "   time_between_rounds: ${YELLOW}${THIS_GAME_TIME_ROUNDS}"
-	_info "   🤖Loaded ${#BOT_LIST[@]} bots: ${YELLOW}${BOT_LIST[*]}"
 }
 
 function create_docker_compose() {
-	_info "🐳 ${BOLD}Creating docker compose file: ${YELLOW}${DOCKER_COMPOSE_FILE}"
+	_info "🐳 ${GREEN}Creating docker compose file: ${YELLOW}${DOCKER_COMPOSE_FILE}"
 	cat <<EOF >${DOCKER_COMPOSE_FILE}
 name: game
 
@@ -199,15 +184,15 @@ EOF
 }
 
 function build_game_server() {
-	_info "👷 Building game server"
+	_info "  👷 ${GREEN}Building ${YELLOW}${GAME_IMAGE_NAME}"
 	docker build -f ${DOCKERFILE_GAME} . -t ${GAME_IMAGE_NAME} &>/dev/null || _error "Something went wrong whithin function ${FUNCNAME}"
 }
 
 function add_game_server() {
 	if (docker image inspect ${GAME_IMAGE_NAME} &>/dev/null); then
 		if [[ ${REBUILD_SERVER} ]]; then
-			_info "🚩 force REBUILD_SERVER was set"
-			docker rmi -f $(docker images | awk "/^${GAME_IMAGE_NAME//\//\\/}/ {print \$3}")
+			_info "  🚩 ${RED}force REBUILD_SERVER was set"
+			docker rmi -f $(docker images | awk "/^${GAME_IMAGE_NAME//\//\\/}/ {print \$3}") 1>/dev/null
 			build_game_server
 		fi
 	else
@@ -234,12 +219,16 @@ function add_game_server() {
     networks:
       - ${GAME_NETWORK_NAME}
 EOF
-	_info "🚥 ${GREEN}Added game server"
+	_info "  🧠 ${GREEN}Added ${YELLOW}${GAME_IMAGE_NAME}${CLEAR} as ${YELLOW}${GAME_CONTAINER_NAME}"
 }
 
 function pull_image() {
 	# pull the bot image from public registry
-	docker pull "${1}" || _error "Cannot pull image ${YELLOW}${1}"
+	if [[ "${DEBUG}" ]]; then
+		docker pull "${1}" || _error "Cannot pull image ${YELLOW}${1}"
+	else
+		docker pull "${1}" &>/dev/null || _error "Cannot pull image ${YELLOW}${1}"
+	fi
 }
 
 function add_all_bots() {
@@ -253,7 +242,7 @@ function add_bot() {
 	# add the bot to docker-compose file
 	local THIS_IMAGE="${1}"
 	if [ ! "${DONT_PULL}" ]; then
-		_info "⏬ ${BOLD}Pulling container image ${YELLOW}${THIS_IMAGE} ..."
+		_info "  ⏬ ${BOLD}Pulling container image ${YELLOW}${THIS_IMAGE} ..."
 		pull_image "${THIS_IMAGE}" || _error "Something went wrong in ${FUNCNAME}: error while pulling image ${YELLOW}${THIS_IMAGE}"
 	fi
 	local THIS_BOT_NAME="$(echo "${THIS_IMAGE}" | awk -F'/' '{print $2"-"$3}')"
@@ -274,13 +263,13 @@ function add_bot() {
       ${GAME_CONTAINER_NAME}:
         condition: service_started
 EOF
-	_info "🤖 ${GREEN}Added ${YELLOW}${THIS_BOT_NAME}${CLEAR} from ${YELLOW}${THIS_IMAGE}"
+	_info "  🤖 ${GREEN}Added ${YELLOW}${THIS_IMAGE}${CLEAR} as ${YELLOW}${THIS_BOT_NAME}"
 }
 
 function cleanup() {
 	_info "🧹 ${GREEN}Cleaning up..."
 	docker compose -f ${DOCKER_COMPOSE_FILE} down 2>/dev/null
-	docker ps -a --format "{{.Names}}" | grep -E '^(game|bot)' | xargs --no-run-if-empty docker stop 2>/dev/null
+	docker ps -a --format "{{.Names}}" | grep -E '^(engine|bot)' | xargs --no-run-if-empty docker stop 2>/dev/null
 	[ "${DEBUG}" ] || rm -f "${DOCKER_COMPOSE_FILE}"
 }
 
@@ -315,9 +304,8 @@ function create_player_log() {
 # :::
 
 EOF
-		# grep -E -i "game starts|game finished|${THIS_BOT_NAME}" "${LOG_FILE}" >>"${PLAYER_LOG_FILE}"
 		grep -E -i "game starts|game finished|${THIS_BOT_NAME}" "${LOG_FILE}" | grep -v '^Attaching' >>"${PLAYER_LOG_FILE}"
-		_info "📝 Created player log file: ${GREEN}$(basename "${PLAYER_LOG_FILE}")"
+		_info "📝 Created player log file: ${GREEN}$(basename "${LOG_DIR}")/$(basename "${PLAYER_LOG_FILE}")"
 	done
 }
 
@@ -347,7 +335,7 @@ done
 divider
 print_config
 divider
-_info "🚀 ${GREEN}Setting up game and bots"
+_info "👷 ${GREEN}Setting up game and bots"
 create_docker_compose
 add_all_bots
 add_game_server
@@ -357,7 +345,7 @@ add_game_server
 
 # initialize log & game round
 divider
-_info "🚀 ${GREEN}Starting game"
+_info "🚀 ${GREEN}Starting game!"
 create_game_log
 print_header
 (
@@ -369,7 +357,7 @@ print_header
 
 divider
 cleanup
-_info "🚀 ${GREEN}Game ended!"
+_info "🏁 ${GREEN}Game ended!"
 _info "📝 Log file:    ${CYAN}$(basename "${LOG_DIR}")/$(basename "${LOG_FILE}")"
 
 GAME_OUTPUT_JSON="$(ls -1t $(basename "${OUTPUT_DIR}")/*.json 2>/dev/null | head -1)"
