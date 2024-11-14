@@ -52,20 +52,22 @@ Options:
 
   The game-config file format must be:
 
-    # bots array with all round participants, these are docker pull URIs,
-    # these images MUST be public. 'latest' tag will always be used for pulling, e.g.:
+    # An array of bot images that will play the game.
+    # Each element in the array needs to be a docker pull URI for a PUBLIC image.
+    # A ':latest' tag will always be used when pulling images.
     bots=(${YELLOW}'ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz'${CLEAR})
 
-    # map file. must exist into ./maps/ folder, e.g.:
+    # The map file that will be used in the game.
+    # The map file MUST exist in the ./maps/ folder.
     map=${YELLOW}square.txt${CLEAR}
 
-    # game turns, e.g.
+    # The number of turns the game will last.
     turns=${YELLOW}500${CLEAR}
 
-    # the time the game engine will wait for a bot to answer, e.g:
+    # The time the engine will wait for a bot to respond to a turn request.
     turn_request_timeout=${YELLOW}100ms${CLEAR}
 
-    # the time the game engine will wait between rounds, e.g:
+    # The time the engine will wait between rounds.
     time_between_rounds=${YELLOW}0s${CLEAR}
 "
 	exit ${1:-0}
