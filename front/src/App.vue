@@ -48,7 +48,6 @@
   const hoverTile = reactive<HoverTile>({ x: undefined, y: undefined });
 
   const fileUploaded = async (event: Event) => {
-    console.log("fileUploaded");
     const target = event.target as HTMLInputElement;
     if (!target.files || target.files.length == 0) return;
 
@@ -68,6 +67,9 @@
   };
 
   const initStage = async () => {
+    if (loadFile) {
+      return;
+    }
     if (!stageContainer.value) {
       console.error("Stage container not found");
       return;
