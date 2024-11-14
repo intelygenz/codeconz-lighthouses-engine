@@ -68,14 +68,20 @@ Options:
   The game-config file format must be:
 
     # bots array with all round participants, these are docker pull URIs,
-    # these images MUST be public. 'latest' tag will always be used for pulling, ge:
+    # these images MUST be public. 'latest' tag will always be used for pulling, e.g.:
     bots=(${YELLOW}'ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz'${CLEAR})
 
-    # map file. must exist into ./maps/ folder, ge:
+    # map file. must exist into ./maps/ folder, e.g.:
     map=${YELLOW}square.txt${CLEAR}
 
-    # game turns
-    turns=${YELLOW}1000${CLEAR}
+    # game turns, e.g.
+    turns=${YELLOW}500${CLEAR}
+
+    # the time the game engine will wait for a bot to answer, e.g:
+    turn_request_timeout=${YELLOW}100ms${CLEAR}
+
+    # the time the game engine will wait between rounds, e.g:
+    time_between_rounds=${YELLOW}0s${CLEAR}
 "
 	exit ${1:-0}
 }
@@ -127,6 +133,8 @@ function print_header() {
 
 function load_config() {
 	# ARGV1 = game-config
+  export THIS_GAME_CONFIG="${1}"
+
 	unset BOT_LIST bots newseq
 	declare -a bots
 	declare -a newseq
@@ -138,14 +146,22 @@ function load_config() {
 
 	# check if turns is defined
 	if [[ ! "${turns}" ]]; then
-		_error "Game turns not defined"
-	fi
+    _error "Missing 'turns' from configuration file"
+  fi
 	export THIS_GAME_TURNS="${turns}"
 
-	_info "📝 Loaded configfile: ${YELLOW}${1}"
-	_info "🗺️ Loaded game map: ${YELLOW}${map}"
-	_info "🗺️ Loaded game turns: ${YELLOW}${turns}"
-	_info "🤖 Loaded ${#bots[@]} bots: ${YELLOW}${bots[*]}"
+	# check if turn_request_timeout is defined
+	if [[ ! "${turn_request_timeout}" ]]; then
+    _error "Missing 'turn_request_timeout' from configuration file"
+  fi
+	export THIS_GAME_REQ_TIMEOUT="${turn_request_timeout}"
+
+	# check if time_between_rounds is defined
+	if [[ ! "${time_between_rounds}" ]]; then
+    _error "Missing 'time_between_rounds' from configuration file"
+  fi
+	export THIS_GAME_TIME_ROUNDS="${time_between_rounds}"
+
 	# randomize bot list
 	botnum=$((${#bots[@]} - 1))
 	newseq=$(shuf -i 0-$botnum)
@@ -159,6 +175,15 @@ function load_config() {
 	# fix output dir permissions *required*
 	chmod 0777 "${OUTPUT_DIR}"
 	export GAME_CONFIG_FILE="${1}"
+}
+
+function print_config() {
+	_info "   ${GREEN}Loaded configfile: ${YELLOW}${THIS_GAME_CONFIG}"
+	_info "   map: ${YELLOW}${THIS_MAP}"
+	_info "   turns: ${YELLOW}${THIS_GAME_TURNS}"
+	_info "   turn_request_timeout: ${YELLOW}${THIS_GAME_REQ_TIMEOUT}"
+	_info "   time_between_rounds: ${YELLOW}${THIS_GAME_TIME_ROUNDS}"
+	_info "   🤖Loaded ${#BOT_LIST[@]} bots: ${YELLOW}${BOT_LIST[*]}"
 }
 
 function create_docker_compose() {
@@ -199,6 +224,8 @@ function add_game_server() {
     environment:
       BOARD_PATH: "/maps/${THIS_MAP}"
       TURNS: "${THIS_GAME_TURNS}"
+      TURN_REQUEST_TIMEOUT: "${THIS_GAME_REQ_TIMEOUT}"
+      TIME_BETWEEN_ROUNDS: "${THIS_GAME_TIME_ROUNDS}"
     volumes:
       - ${MAPS_DIR}:/maps:ro
       - ${OUTPUT_DIR}:/app/output:rw
@@ -263,10 +290,10 @@ function create_game_log() {
 # ::: CodeconZ 2024
 # ::: LighthouseS AI Contest
 # :::
-# ::: Game Round:  ${GAME_TIMESTAMP}
+# ::: Game:        ${GAME_TIMESTAMP}
 # ::: Config file: ${GAME_CONFIG_FILE}
 # ::: Players:     $(echo "${BOT_LIST[*]}" | xargs)
-# ::: Map:         $(echo "${map}")
+# ::: Map:         $(echo "${THIS_MAP}")
 # :::
 
 EOF
@@ -283,14 +310,14 @@ function create_player_log() {
 # ::: CodeconZ 2024
 # ::: LighthouseS AI Contest
 # :::
-# ::: Player      ${THIS_BOT_NAME}
-# ::: Game Round  ${GAME_TIMESTAMP}
+# ::: Game:       ${GAME_TIMESTAMP}
+# ::: Player:     ${THIS_BOT_NAME}
 # :::
 
 EOF
 		# grep -E -i "game starts|game finished|${THIS_BOT_NAME}" "${LOG_FILE}" >>"${PLAYER_LOG_FILE}"
 		grep -E -i "game starts|game finished|${THIS_BOT_NAME}" "${LOG_FILE}" | grep -v '^Attaching' >>"${PLAYER_LOG_FILE}"
-		_info "📝 Created player log file: $(basename "${PLAYER_LOG_FILE}")"
+		_info "📝 Created player log file: ${GREEN}$(basename "${PLAYER_LOG_FILE}")"
 	done
 }
 
@@ -317,6 +344,10 @@ done
 ###############################################################################
 # 2. prepare
 
+divider
+print_config
+divider
+_info "🚀 ${GREEN}Setting up game and bots"
 create_docker_compose
 add_all_bots
 add_game_server
@@ -325,10 +356,11 @@ add_game_server
 # 3. start
 
 # initialize log & game round
+divider
+_info "🚀 ${GREEN}Starting game"
 create_game_log
 print_header
 (
-	_info "🚀 ${GREEN}Launching new round on $(date +%F\ %T)"
 	eval "${COMMAND_UP}"
 ) | tee -a "${LOG_FILE}"
 
@@ -337,18 +369,15 @@ print_header
 
 divider
 cleanup
-divider
+_info "🚀 ${GREEN}Game ended!"
 _info "📝 Log file:    ${CYAN}$(basename "${LOG_DIR}")/$(basename "${LOG_FILE}")"
-divider
 
 GAME_OUTPUT_JSON="$(ls -1t $(basename "${OUTPUT_DIR}")/*.json 2>/dev/null | head -1)"
-
 if [ -s "${GAME_OUTPUT_JSON}" ]; then
 	_info "📊 Game Output: ${GREEN}${GAME_OUTPUT_JSON}"
-	divider
 	create_player_log
 	divider
-	_info "✅ ${GREEN}All done, bye 👋🏻"
+	_info "✅ ${GREEN}All done, may the force be with you!"
 else
 	_error "Something went wrong... 💥"
 fi
