@@ -1,6 +1,17 @@
+<p align=center>
+    <img src="./front/src/assets/logo-sin-fondo.png" />
+</p>
+
 # Lighthouses AI Contest "Reloaded"
 
-Lighthouses AI Contest is a turn based game built by [Hector Martin aka "marcan"](https://github.com/marcan/lighthouses_aicontest), as the challenge for the AI contest within one of the largest and oldest demoparty and LAN party, the [Euskal Encounter](https://ee32.euskalencounter.org/) in Bilbao, Spain.
+Lighthouses AI Contest is a turn based game built by [Hector Martin aka "marcan"](https://github.com/marcan/lighthouses_aicontest), 
+as the challenge for the AI contest within one of the largest and oldest demoparty and LAN party, 
+the [Euskal Encounter](https://ee32.euskalencounter.org/) in Bilbao, Spain.
+
+We are proud to present the "Reloaded" version of the contest, which features a new engine from scratch written in Go
+and a proper GRPC API for the engine to communicate with the bots.
+
+You can find the Game mechanics and rules at our [Game Documentation](https://coda.io/@gabri-igz/lighthouses).
 
 To start building a bot, you will need to take the following steps:
 
@@ -52,33 +63,48 @@ There's no need to include the `:latest` tag.
 
 ### Run the game
 
-Go to the engine repository and run the `./start-game.sh -h` command to see the available options.
-Among those, you will be instructuted on how to create a `.cfg` file with the bots and map you want to use.
-
-For a quick start, you can create a `game.cfg` file with the following content (make sure to replace `{username}` and `{repository}` with the correct values):
-```
-bots=('ghcr.io/{username}/{repository}')
-map=square.txt
-turns=1000
-```
-
-You can now run the game engine by executing `./start-game.sh -f game.cfg`.
+Go to the engine repository and folder and run `./start-game.sh -f game.cfg`.
 
 After the game ends, some resources will be generated:
 - `/logs`: logs of the game and each bot that participated.
 - `/output`: JSON files to be used for visualization.
 
-### Visualizing the game
+You can also run `./start-game.sh -h` to see the available options.
 
-To visualize and analyze the game, you can upload a JSON file to the [Lighthouses Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/).
+### Visualizing and diagnosing a game
+
+To visualize and analyze the game, you can upload a JSON file from the `/output` folder to the [Lighthouses Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/).
+This tool will help you check what your bot did during the game and how it performed.
 
 ### Customizing the game
+
+If you are running the game with no changes at the `game.cfg` file, the game will run with the competition configuration,
+a single random python bot playing against itself and a simple map.
+
+You will probably want to:
+- Add your own bot to the game: `bots=('ghcr.io/{username}/{repository}' 'ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest')`
+- change the configuration to test your bot under different scenarios.
+
+#### Configuration
+
+To change the game configuration, you can edit the `game.cfg` file at the root of the engine repository:
+
+- `bots`: an array of bot images that will play the game:  
+  `bots=('ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz')`
+- `map`: the map file that will be used in the game:  
+  `map=square.txt`
+- `turns`: the number of turns the game will last:  
+  `turns=500`
+- `turn_request_timeout`: the time the engine will wait for a bot to respond to a turn request:  
+  `turn_request_timeout=100ms`
+- `time_between_rounds`: the time the engine will wait between rounds:  
+  `time_between_rounds=0s`
 
 #### Add more maps
 
 You can find some included maps in the engine repository at the `/maps` folder,
 but those are not very challenging and will only serve you as a starting point.
-You are expected to create your own maps and test your bot in different scenarios.
+You are expected to create your own maps to test your bot under different scenarios.
 
 To do so:
 
@@ -87,11 +113,7 @@ To do so:
 - update the `game.cfg` file to use the new map: `map={map_name}.txt`
 
 E.g., after downloading a map named `island.txt`, you would update the `game.cfg` file as follows:
-
-```
-bots=('ghcr.io/{username}/{repository}')
-map=island.txt
-```
+`map=island.txt`
 
 *Remember that the competition will take place on a 43x23 grid!*
 *Also remember that the competition will take place on maps that will not be revealed until the contest starts!
@@ -102,7 +124,7 @@ Be prepared for anything!*
 You will probably want to test your bot against other bots.
 You can add more bots to the game by adding more elements to the `bots` array in the `game.cfg` file.
 
-The base python bot is a random bot that you can add to your game.
+The base python bot is a random bot that you can use for testing purposes.
 To be able to add as many instances of this bot as you want, you need to follow these steps:
 - Make sure you pulled the bot image: `docker pull ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest`
 - Generate as many tags from the base image as you want: `docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest {}/{}/{}`.  
@@ -114,26 +136,8 @@ E.g., by issuing the following commands:
 - `docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest local/local/bot-2`
 - `docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest anything/anything/bot-3`
 
-And updating your `game.cfg` file to include the new bots:
-
-```
-bots=('ghcr.io/{username}/{repository}' 'local/local/bot-1' 'local/local/bot-2' 'anything/anything/bot-3')
-map=island.txt
-```
+And updating your `game.cfg` file to include the new bots:  
+`bots=('ghcr.io/{username}/{repository}' 'local/local/bot-1' 'local/local/bot-2' 'anything/anything/bot-3')`
 
 These tags will only be available locally and `./start-game.sh` will fail when trying to pull them.
 To overcome this, you can use the `-x` option: `./start-game.sh -xf game.cfg`.
-
-#### Configure the game
-
-There are several options you can use to configure the engine:
-- `turn_request_timeout`: the time the engine will wait for a bot to respond to a turn request.
-- `turns`: the number of turns the game will last.
-- `time_between_rounds`: the time the engine will wait between rounds.
-
-You can check what values will be used in the competition in the `cfg.yml` file at the root of the engine repository.
-
-There are several ways to change these values:
-- Providing it as an environment variable when running the engine: `TURNS=5 ./start-game.sh -f game.cfg`.
-- Exporting them as environment variables and then running the engine.
-- Updating the `cfg.yml` file and building the engine image again by passing the `-r` option: `./start-game.sh -rf game.cfg`.
