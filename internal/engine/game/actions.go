@@ -47,7 +47,8 @@ func (e *Game) moveToPosition(p *player.Player, action *player.Action) error {
 			if err != nil {
 				return err
 			}
-			p.AddLighthouseKey(*l)
+			p.AddLighthouseKey(l)
+			fmt.Printf("Player %d got key for lighthouse %d in position %v\n", p.ID, l.ID, l.Position)
 		}
 	}
 
