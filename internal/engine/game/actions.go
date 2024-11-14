@@ -41,11 +41,14 @@ func (e *Game) moveToPosition(p *player.Player, action *player.Action) error {
 	p.Position = action.Destination
 
 	if e.gameMap.IsLighthouse(action.Destination) {
-		l, err := e.gameMap.GetLightHouse(action.Destination)
-		if err != nil {
-			return err
+		// add keys only if user doesn't have any key
+		if len(p.LighthouseKeys) == 0 {
+			l, err := e.gameMap.GetLightHouse(action.Destination)
+			if err != nil {
+				return err
+			}
+			p.AddLighthouseKey(*l)
 		}
-		p.AddLighthouseKey(*l)
 	}
 
 	return nil
@@ -60,6 +63,7 @@ func (e *Game) attackPosition(p *player.Player, action *player.Action) error {
 
 	for _, l := range e.gameMap.GetLightHouses() {
 		if l.Position.Equal(geom.XY, action.Destination) {
+			change_owner := false
 			if l.Owner == p.ID {
 				l.Energy += action.Energy
 			}
@@ -69,15 +73,21 @@ func (e *Game) attackPosition(p *player.Player, action *player.Action) error {
 			if lighthouseEnergy == 0 {
 				l.Energy = 0
 				l.Owner = -1
+				change_owner = true
 			}
 
 			if lighthouseEnergy < 0 {
 				l.Energy = int(math.Abs(float64(lighthouseEnergy)))
 				l.Owner = p.ID
+				change_owner = true
 			}
 
 			p.Energy -= action.Energy
 			fmt.Printf("Player %d attacked lighthouse %d. Current energy and owner are: %d, %d \n", p.ID, l.ID, l.Energy, l.Owner)
+
+			if change_owner {
+				l.Disconnect()
+			}
 			break
 		}
 	}

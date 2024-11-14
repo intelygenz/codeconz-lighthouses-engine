@@ -43,6 +43,22 @@ func (l *Lighthouse) Connect(lighthouse *Lighthouse) error {
 	return nil
 }
 
+func (l *Lighthouse) Disconnect() error {
+	for _, conn := range l.Connections {
+		for i, c := range conn.Connections {
+			if c.Position.Equal(geom.XY, l.Position) {
+				conn.Connections = append(conn.Connections[:i], conn.Connections[i+1:]...)
+				break
+			}
+		}
+	}
+
+	l.Connections = make([]*Lighthouse, 0)
+
+	return nil
+
+}
+
 func (l *Lighthouse) GenerateConnectionsId() {
 	l.ConnectionsId = make([]int, 0)
 	for _, c := range l.Connections {
