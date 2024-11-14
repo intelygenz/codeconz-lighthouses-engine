@@ -15,8 +15,8 @@ and a proper GRPC API for the engine to communicate with the bots.
 - [Game Engine Documentation](docs/game_engine.md)
 - [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/)
 - [Map Generator](https://dovixman.github.io/lighthouses_map_generator/)
-- [Go bot template](https://github.com/new?owner=intelygenz&template_name=codeconz-lighthouses-go-bot&template_owner=intelygenz)
-- [Python random bot template](https://github.com/new?owner=intelygenz&template_name=codeconz-lighthouses-py-bot&template_owner=intelygenz)
+- [Go bot template](https://github.com/intelygenz/codeconz-lighthouses-go-bot)
+- [Python random bot template](https://github.com/intelygenz/codeconz-lighthouses-py-bot)
 
 To start building a bot, you will need to take the following steps:
 
@@ -36,8 +36,9 @@ To start building a bot, you will need to take the following steps:
 Considerations:
 
 - Make sure the bot repository is owned by one of your team members.
-- The project can be public or private.
+- The repository can be public or private.
 - Only one repository is needed per bot.
+- The name of the bot that will show at the [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/) will be `{username}-{repository}`. E.g. `intelygenz-codeconz-lighthouses-py-bot`
 
 ## Build an amazing bot!
 
@@ -81,6 +82,8 @@ You can also run `./start-game.sh -h` to see the available options.
 To visualize and analyze the game, you can upload a JSON file from the `/output` folder to the [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/).
 This tool will help you check what your bot did during the game and how it performed.
 
+*Remember that the name of the bot in the [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/) will correspond with the name of the image `{username}/{repository}`*
+
 ### Customizing the game
 
 If you are running the game with no changes at the `game.cfg` file, the game will run with the competition configuration,
@@ -95,7 +98,9 @@ You will probably want to:
 To change the game configuration, you can edit the `game.cfg` file at the root of the engine repository:
 
 - `bots`: an array of bot images that will play the game:  
-  `bots=('ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz')`
+  ```
+  bots=('ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz')
+  ```
 - `map`: the map file that will be used in the game:  
   `map=square.txt`
 - `turns`: the number of turns the game will last:  
