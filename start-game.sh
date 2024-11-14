@@ -138,8 +138,8 @@ function load_config() {
 
 	# check if turns is defined
 	if [[ ! "${turns}" ]]; then
-    _error "Game turns not defined"
-  fi
+		_error "Game turns not defined"
+	fi
 	export THIS_GAME_TURNS="${turns}"
 
 	_info "📝 Loaded configfile: ${YELLOW}${1}"
@@ -156,6 +156,8 @@ function load_config() {
 	for dir in log output; do
 		[ -d "${REPO_DIR}/${dir}" ] || mkdir -p "${REPO_DIR}/${dir}"
 	done
+	# fix output dir permissions *required*
+	chmod 0777 "${OUTPUT_DIR}"
 	export GAME_CONFIG_FILE="${1}"
 }
 
@@ -263,7 +265,7 @@ function create_game_log() {
 # :::
 # ::: Game Round:  ${GAME_TIMESTAMP}
 # ::: Config file: ${GAME_CONFIG_FILE}
-# ::: Players:     $(echo "${bots[@]}" | xargs)
+# ::: Players:     $(echo "${BOT_LIST[*]}" | xargs)
 # ::: Map:         $(echo "${map}")
 # :::
 
@@ -315,7 +317,6 @@ done
 ###############################################################################
 # 2. prepare
 
-print_header
 create_docker_compose
 add_all_bots
 add_game_server
@@ -325,6 +326,7 @@ add_game_server
 
 # initialize log & game round
 create_game_log
+print_header
 (
 	_info "🚀 ${GREEN}Launching new round on $(date +%F\ %T)"
 	eval "${COMMAND_UP}"
