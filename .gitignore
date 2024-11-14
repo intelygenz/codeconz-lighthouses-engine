@@ -5,3 +5,4 @@ dist
 .gitconfig
 !/internal/engine/map/map.go
 output/*.json
+log

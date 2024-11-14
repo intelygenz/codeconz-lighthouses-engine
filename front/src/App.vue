@@ -2,7 +2,6 @@
   import {
     computed,
     ComputedRef,
-    nextTick,
     reactive,
     Ref,
     ref,
@@ -63,30 +62,18 @@
       status = playback.status;
       hover = computed(() => status.value.hoverInfo(hoverTile));
       loadFile.value = false;
-      //
-      // await nextTick();
-      // if (!stageContainer.value) return;
-      // stage.init(stageContainer.value, playback);
     };
 
     reader.readAsText(file);
   };
 
   const initStage = async () => {
-    if (!stageContainer.value) return;
+    if (!stageContainer.value) {
+      console.error("Stage container not found");
+      return;
+    }
     stage.init(stageContainer.value, playback);
   };
-
-  // const game = mapGame(engineGame as EngineGame);
-  // const hoverTile = reactive<HoverTile>({ x: undefined, y: undefined });
-  // const stage = new Stage(game, hoverTile);
-  //
-  //
-  // const stageContainer = useTemplateRef("stageContainer");
-  // onMounted(async () => {
-  //   if (!stageContainer.value) return;
-  //   stage.init(stageContainer.value, playback);
-  // });
 </script>
 
 <template>
@@ -209,11 +196,7 @@
                 <button @click="playback.next" title="Next Frame">
                   <Icon.StepForward />
                 </button>
-                <button
-                  title="Load new game"
-                  @click="
-                    loadFile = window.confirm('Do you want to load a new game?')
-                  ">
+                <button title="Load new game" @click="loadFile = true">
                   <Icon.Upload />
                 </button>
               </div>
