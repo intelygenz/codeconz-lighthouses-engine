@@ -317,7 +317,6 @@ done
 ###############################################################################
 # 2. prepare
 
-print_header
 create_docker_compose
 add_all_bots
 add_game_server
@@ -327,6 +326,7 @@ add_game_server
 
 # initialize log & game round
 create_game_log
+print_header
 (
 	_info "🚀 ${GREEN}Launching new round on $(date +%F\ %T)"
 	eval "${COMMAND_UP}"
