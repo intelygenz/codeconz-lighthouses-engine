@@ -40,12 +40,12 @@ func (e *Game) moveToPosition(p *player.Player, action *player.Action) error {
 	fmt.Printf("Player %d moving from %v to %v\n", p.ID, p.Position, action.Destination)
 	p.Position = action.Destination
 
-	for _, l := range e.gameMap.GetLightHouses() {
-		if l.Position.Equal(geom.XY, action.Destination) {
-			fmt.Printf("Player %d obtained lighthouse key for lighthouse %v\n", p.ID, l.Position)
-			p.LighthouseKeys = append(p.LighthouseKeys, l)
-			break
+	if e.gameMap.IsLighthouse(action.Destination) {
+		l, err := e.gameMap.GetLightHouse(action.Destination)
+		if err != nil {
+			return err
 		}
+		p.AddLighthouseKey(*l)
 	}
 
 	return nil

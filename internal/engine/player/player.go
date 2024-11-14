@@ -69,7 +69,18 @@ func (p *Player) GetPosition() (x, y int) {
 }
 
 func (p *Player) AddLighthouseKey(lighthouse lighthouse.Lighthouse) {
-	p.LighthouseKeys = append(p.LighthouseKeys, &lighthouse)
+	if !p.LighthouseKeyExists(lighthouse) {
+		p.LighthouseKeys = append(p.LighthouseKeys, &lighthouse)
+	}
+}
+
+func (p *Player) LighthouseKeyExists(lighthouse lighthouse.Lighthouse) bool {
+	for _, l := range p.LighthouseKeys {
+		if l.Position.Equal(geom.XY, lighthouse.Position) {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Player) RemoveLighthouseKey(lighthouse lighthouse.Lighthouse) {
