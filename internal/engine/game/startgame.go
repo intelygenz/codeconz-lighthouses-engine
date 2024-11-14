@@ -46,30 +46,7 @@ func (e *Game) StartGame() {
 		e.state.SetNewRound(roundId, round)
 
 		for _, p := range e.players {
-			// send message to each Player with the info
-			na, err := p.RequestNewTurn(player.Turn{
-				Position:    p.Position,
-				Score:       p.Score,
-				Energy:      p.Energy,
-				View:        e.gameMap.GetPlayerView(p),
-				Lighthouses: e.gameMap.GetLightHouses(),
-			})
-			if err != nil {
-				// handle error
-				fmt.Printf("Requesting Turn to Player %d has error %v\n", p.ID, err)
-				// if by any reason the player does not respond, we skip the turn
-				continue
-			}
-
-			err = e.execPlayerAction(p, na)
-			if err != nil {
-				fmt.Printf("Executing Player Action %d has error %v\n", p.ID, err)
-			}
-			fmt.Println("*************************************************")
-
-			// generate turn state and set into game state
-			turn := state.NewTurn(p, e.gameMap.GetLightHouses())
-			e.state.AddPlayerTurn(roundId, turn)
+			e.executeTurn(p, roundId)
 		}
 
 		e.CalcPlayersScores()
@@ -86,5 +63,41 @@ func (e *Game) StartGame() {
 	// dump to file the final state of the game in json format
 	if err := e.state.DumpToFileFinalStateInJson(); err != nil {
 		fmt.Printf("State to json could not be generated: %v\n", err)
+	}
+}
+
+func (e *Game) executeTurn(p *player.Player, roundId int) {
+	// Control panics from timeouts
+	defer recoverFromPanic()
+
+	// send message to each Player with the info
+	na, err := p.RequestNewTurn(player.Turn{
+		Position:    p.Position,
+		Score:       p.Score,
+		Energy:      p.Energy,
+		View:        e.gameMap.GetPlayerView(p),
+		Lighthouses: e.gameMap.GetLightHouses(),
+	})
+	if err != nil {
+		// handle error
+		fmt.Printf("Requesting Turn to Player %d has error %v\n", p.ID, err)
+		// if by any reason the player does not respond, we skip the turn
+		return
+	}
+
+	err = e.execPlayerAction(p, na)
+	if err != nil {
+		fmt.Printf("Executing Player Action %d has error %v\n", p.ID, err)
+	}
+	fmt.Println("*************************************************")
+
+	// generate turn state and set into game state
+	turn := state.NewTurn(p, e.gameMap.GetLightHouses())
+	e.state.AddPlayerTurn(roundId, turn)
+}
+
+func recoverFromPanic() {
+	if r := recover(); r != nil {
+		fmt.Println("Recovered from panic:", r)
 	}
 }

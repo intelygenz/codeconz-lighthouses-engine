@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"fmt"
 	"net"
-	"os"
 	"time"
 
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/game"
@@ -69,14 +68,13 @@ func (b *Bootstrap) Run() {
 func (b *Bootstrap) initializeConfiguration() {
 	viper.AutomaticEnv()
 
-	viper.AddConfigPath("./")
-	viper.SetConfigName("cfg")
-	viper.SetConfigType("yaml")
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		os.Exit(1)
-	}
+	viper.SetDefault("listen_address", ":50051")
+	viper.SetDefault("board_path", "./maps/island.txt")
+	viper.SetDefault("turns", 100)
+	viper.SetDefault("join_timeout", 5*time.Second)
+	viper.SetDefault("turn_request_timeout", 10*time.Millisecond)
+	viper.SetDefault("verbosity", true)
+	viper.SetDefault("time_between_rounds", 0*time.Second)
 
 	fmt.Println("Loaded configuration:")
 	for _, key := range viper.AllKeys() {
