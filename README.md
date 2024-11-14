@@ -4,7 +4,7 @@ Lighthouses AI Contest is a turn based game built by [Hector Martin aka "marcan"
 
 To start building a bot, you will need to take the following steps:
 
-## First steps
+## Prerequisites
 
 - Install [Docker](https://docs.docker.com/engine/install/#release-channels)
 - Make sure you have a [GitHub account](https://www.github.com)
@@ -22,6 +22,10 @@ Considerations:
 - Make sure the bot repository is owned by one of your team members.
 - The project can be public or private.
 - Only one repository is needed per bot.
+
+## Build an amazing bot!
+
+> "What we do in life, echoes in eternity." - Maximus Decimus Meridius
 
 ## Test your bot!
 
@@ -113,3 +117,20 @@ And updating your `game.cfg` file to include the new bots:
 bots=('ghcr.io/{username}/{repository}' 'local/local/bot-1' 'local/local/bot-2' 'anything/anything/bot-3')
 map=island.txt
 ```
+
+These tags will only be available locally and `./start-game.sh` will fail when trying to pull them.
+To overcome this, you can use the `-x` option: `./start-game.sh -xf game.cfg`.
+
+#### Configure the game
+
+There are several options you can use to configure the engine:
+- `turn_request_timeout`: the time the engine will wait for a bot to respond to a turn request.
+- `turns`: the number of turns the game will last.
+- `time_between_rounds`: the time the engine will wait between rounds.
+
+You can check what values will be used in the competition in the `cfg.yml` file at the root of the engine repository.
+
+There are several ways to change these values:
+- Providing it as an environment variable when running the engine: `TURNS=5 ./start-game.sh -f game.cfg`.
+- Exporting them as environment variables and then running the engine.
+- Updating the `cfg.yml` file and building the engine image again by passing the `-r` option: `./start-game.sh -rf game.cfg`.
