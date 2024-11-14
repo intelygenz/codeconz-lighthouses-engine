@@ -15,13 +15,13 @@ It will run three main services to manage the game:
 ## Loading game configuration
 The game engine will load the configuration from the environment variables or the configuration file.
 
-- `game.listen_address` (defaults to `50051`)
-- `game.join_timeout` (defaults to `5 seconds`)
-- `game.turn_request_timeout` (defaults to `100 milliseconds`)
-- `game.turns` (defaults to `15`)
-- `game.board_path` (defaults to `./maps/island_simple.txt`)
-- `game.verbosity` (defaults to `true`)
-- `game.time_between_rounds` (defaults to `1 second`)
+- `listen_address` (defaults to `50051`)
+- `join_timeout` (defaults to `5 seconds`)
+- `turn_request_timeout` (defaults to `100 milliseconds`)
+- `turns` (defaults to `15`)
+- `board_path` (defaults to `./maps/island_simple.txt`)
+- `verbosity` (defaults to `true`)
+- `time_between_rounds` (defaults to `1 second`)
 
 > You can check the default values at the [Configuration file](../cfg.yaml)
 
