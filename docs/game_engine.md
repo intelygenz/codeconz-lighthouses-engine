@@ -23,8 +23,6 @@ The game engine will load the configuration from the environment variables or th
 - `verbosity` (defaults to `true`)
 - `time_between_rounds` (defaults to `1 second`)
 
-> You can check the default values at the [Configuration file](../cfg.yaml)
-
 ## Joining the game
 The players bot will call the Join service on the game server.
 
