@@ -89,15 +89,15 @@ You will probably want to:
 
 To change the game configuration, you can edit the `game.cfg` file at the root of the engine repository:
 
-- `bots`: an array of bot images that will play the game. E.g.:  
+- `bots`: an array of bot images that will play the game:  
   `bots=('ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz')`
-- `map`: the map file that will be used in the game. E.g.:
+- `map`: the map file that will be used in the game:  
   `map=square.txt`
-- `turns`: the number of turns the game will last. E.g.:
+- `turns`: the number of turns the game will last:  
   `turns=500`
-- `turn_request_timeout`: the time the engine will wait for a bot to respond to a turn request. E.g.:
+- `turn_request_timeout`: the time the engine will wait for a bot to respond to a turn request:  
   `turn_request_timeout=100ms`
-- `time_between_rounds`: the time the engine will wait between rounds. E.g.:
+- `time_between_rounds`: the time the engine will wait between rounds:  
   `time_between_rounds=0s`
 
 #### Add more maps
