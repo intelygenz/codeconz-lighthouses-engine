@@ -11,7 +11,12 @@ the [Euskal Encounter](https://ee32.euskalencounter.org/) in Bilbao, Spain.
 We are proud to present the "Reloaded" version of the contest, which features a new engine from scratch written in Go
 and a proper GRPC API for the engine to communicate with the bots.
 
-You can find the Game mechanics and rules at our [Game Documentation](https://coda.io/@gabri-igz/lighthouses).
+- [Game Instructions](https://coda.io/@gabri-igz/lighthouses)
+- [Game Engine Documentation](docs/game_engine.md)
+- [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/)
+- [Map Generator](https://dovixman.github.io/lighthouses_map_generator/)
+- [Go bot template](https://github.com/intelygenz/codeconz-lighthouses-go-bot)
+- [Python random bot template](https://github.com/intelygenz/codeconz-lighthouses-py-bot)
 
 To start building a bot, you will need to take the following steps:
 
@@ -31,8 +36,9 @@ To start building a bot, you will need to take the following steps:
 Considerations:
 
 - Make sure the bot repository is owned by one of your team members.
-- The project can be public or private.
+- The repository can be public or private.
 - Only one repository is needed per bot.
+- The name of the bot that will show at the [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/) will be `{username}-{repository}`. E.g. `intelygenz-codeconz-lighthouses-py-bot`
 
 ## Build an amazing bot!
 
@@ -73,8 +79,10 @@ You can also run `./start-game.sh -h` to see the available options.
 
 ### Visualizing and diagnosing a game
 
-To visualize and analyze the game, you can upload a JSON file from the `/output` folder to the [Lighthouses Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/).
+To visualize and analyze the game, you can upload a JSON file from the `/output` folder to the [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/).
 This tool will help you check what your bot did during the game and how it performed.
+
+*Remember that the name of the bot in the [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/) will correspond with the name of the image `{username}/{repository}`*
 
 ### Customizing the game
 
@@ -90,7 +98,9 @@ You will probably want to:
 To change the game configuration, you can edit the `game.cfg` file at the root of the engine repository:
 
 - `bots`: an array of bot images that will play the game:  
-  `bots=('ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz')`
+  ```
+  bots=('ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz')
+  ```
 - `map`: the map file that will be used in the game:  
   `map=square.txt`
 - `turns`: the number of turns the game will last:  
@@ -108,7 +118,7 @@ You are expected to create your own maps to test your bot under different scenar
 
 To do so:
 
-- use the [Lighthouses Map Generator](https://dovixman.github.io/lighthouses_map_generator/) to generate a new map
+- use the [Map Generator](https://dovixman.github.io/lighthouses_map_generator/) to generate a new map
 - copy the generated map to the `/maps` folder in the engine repository
 - update the `game.cfg` file to use the new map: `map={map_name}.txt`
 
