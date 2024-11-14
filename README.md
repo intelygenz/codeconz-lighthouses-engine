@@ -97,18 +97,11 @@ You will probably want to:
 
 To change the game configuration, you can edit the `game.cfg` file at the root of the engine repository:
 
-- `bots`: an array of bot images that will play the game:  
-  ```
-  bots=('ghcr.io/john/bot-foo' 'docker.io/jane/bot-bar' ... 'quay.io/dave/bot-baz')
-  ```
-- `map`: the map file that will be used in the game:  
-  `map=square.txt`
-- `turns`: the number of turns the game will last:  
-  `turns=500`
-- `turn_request_timeout`: the time the engine will wait for a bot to respond to a turn request:  
-  `turn_request_timeout=100ms`
-- `time_between_rounds`: the time the engine will wait between rounds:  
-  `time_between_rounds=0s`
+- `bots`: an array of bot images that will play the game.
+- `map`: the map file that will be used in the game.
+- `turns`: the number of turns the game will last.
+- `turn_request_timeout`: the time the engine will wait for a bot to respond to a turn request.
+- `time_between_rounds`: the time the engine will wait between rounds.
 
 #### Add more maps
 
@@ -122,8 +115,7 @@ To do so:
 - copy the generated map to the `/maps` folder in the engine repository
 - update the `game.cfg` file to use the new map: `map={map_name}.txt`
 
-E.g., after downloading a map named `island.txt`, you would update the `game.cfg` file as follows:
-`map=island.txt`
+E.g., after downloading a map named `island.txt`, you would update the `game.cfg` file by setting `map=island.txt`
 
 *Remember that the competition will take place on a 43x23 grid!*
 *Also remember that the competition will take place on maps that will not be revealed until the contest starts!
@@ -140,14 +132,18 @@ To be able to add as many instances of this bot as you want, you need to follow 
 - Generate as many tags from the base image as you want: `docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest {}/{}/{}`.  
   You only need to replace the three `{}` with any string you want.
 
-E.g., by issuing the following commands:
+Example
 
-- `docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest local/local/bot-1`
-- `docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest local/local/bot-2`
-- `docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest anything/anything/bot-3`
+```bash
+docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest local/local/bot-1
+docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest local/local/bot-2
+docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest anything/anything/bot-3
+```
 
-And updating your `game.cfg` file to include the new bots:  
-`bots=('ghcr.io/{username}/{repository}' 'local/local/bot-1' 'local/local/bot-2' 'anything/anything/bot-3')`
+```cfg
+# game.cfg
+bots=('ghcr.io/{username}/{repository}' 'local/local/bot-1' 'local/local/bot-2' 'anything/anything/bot-3')
+```
 
 These tags will only be available locally and `./start-game.sh` will fail when trying to pull them.
 To overcome this, you can use the `-x` option: `./start-game.sh -xf game.cfg`.
