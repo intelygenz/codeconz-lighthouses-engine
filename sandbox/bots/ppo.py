@@ -52,6 +52,20 @@ class AgentMLP(nn.Module):
             nn.ReLU(),
             layer_init(nn.Linear(64, a_size), std=0.01),
         )
+        # self.critic = nn.Sequential(
+        #     layer_init(nn.Linear(np.array(s_size).prod(), 64)),
+        #     nn.Tanh(),
+        #     layer_init(nn.Linear(64, 64)),
+        #     nn.Tanh(),
+        #     layer_init(nn.Linear(64, 1), std=1.0),
+        # )
+        # self.actor = nn.Sequential(
+        #     layer_init(nn.Linear(np.array(s_size).prod(), 64)),
+        #     nn.Tanh(),
+        #     layer_init(nn.Linear(64, 64)),
+        #     nn.Tanh(),
+        #     layer_init(nn.Linear(64, a_size), std=0.01),
+        # )
 
     def get_value(self, x):
         return self.critic(x)
@@ -89,6 +103,27 @@ class AgentCNN(nn.Module):
             nn.ReLU(),
             layer_init(nn.Linear(256, a_size), std=0.01)
         )
+        # self.critic = nn.Sequential(
+        #     layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=7)),
+        #     nn.ReLU(),
+        #     layer_init(nn.Conv2d(16, 32, 5)),
+        #     nn.ReLU(),
+        #     nn.Flatten(),
+        #     layer_init(nn.Linear(32*33*13, 256)), 
+        #     nn.Tanh(),
+        #     layer_init(nn.Linear(256, 1), std=1)
+        # )
+
+        # self.actor = nn.Sequential(
+        #     layer_init(nn.Conv2d(in_channels=num_maps, out_channels=16, kernel_size=7)),
+        #     nn.ReLU(),
+        #     layer_init(nn.Conv2d(16, 32, 5)),
+        #     nn.ReLU(),
+        #     nn.Flatten(),
+        #     layer_init(nn.Linear(32*13*13, 256)), 
+        #     nn.Tanh(),
+        #     layer_init(nn.Linear(256, a_size), std=0.01)
+        # )
 
     def get_value(self, x):
         return self.critic(x)
