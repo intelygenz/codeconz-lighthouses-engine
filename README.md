@@ -82,7 +82,7 @@ You can also run `./start-game.sh -h` to see the available options.
 To visualize and analyze the game, you can upload a JSON file from the `/output` folder to the [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/).
 This tool will help you check what your bot did during the game and how it performed.
 
-*Remember that the name of the bot in the [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/) will correspond with the name of the image `{username}/{repository}`*
+*Remember that the name of the bot in the [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/) will correspond with the name of the image: `{username}-{repository}`*
 
 ### Customizing the game
 
