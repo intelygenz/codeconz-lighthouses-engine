@@ -73,6 +73,9 @@ Options:
 
     # map file. must exist into ./maps/ folder, ge:
     map=${YELLOW}square.txt${CLEAR}
+
+    # game turns
+    turns=${YELLOW}1000${CLEAR}
 "
 	exit ${1:-0}
 }
@@ -132,8 +135,16 @@ function load_config() {
 		_error "Map file '$(basename "${MAPS_DIR}")/${map}' not found. Check your configuration: ${1}"
 	fi
 	export THIS_MAP="${map}"
+
+	# check if turns is defined
+	if [[ ! "${turns}" ]]; then
+    _error "Game turns not defined"
+  fi
+	export THIS_GAME_TURNS="${turns}"
+
 	_info "📝 Loaded configfile: ${YELLOW}${1}"
 	_info "🗺️ Loaded game map: ${YELLOW}${map}"
+	_info "🗺️ Loaded game turns: ${YELLOW}${turns}"
 	_info "🤖 Loaded ${#bots[@]} bots: ${YELLOW}${bots[*]}"
 	# randomize bot list
 	botnum=$((${#bots[@]} - 1))
@@ -185,6 +196,7 @@ function add_game_server() {
     restart: no
     environment:
       BOARD_PATH: "/maps/${THIS_MAP}"
+      TURNS: "${THIS_GAME_TURNS}"
     volumes:
       - ${MAPS_DIR}:/maps:ro
       - ${OUTPUT_DIR}:/app/output:rw
