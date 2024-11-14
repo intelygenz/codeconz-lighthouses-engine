@@ -68,13 +68,13 @@ func (p *Player) GetPosition() (x, y int) {
 	return int(p.Position.X()), int(p.Position.Y())
 }
 
-func (p *Player) AddLighthouseKey(lighthouse lighthouse.Lighthouse) {
+func (p *Player) AddLighthouseKey(lighthouse *lighthouse.Lighthouse) {
 	if !p.LighthouseKeyExists(lighthouse) {
-		p.LighthouseKeys = append(p.LighthouseKeys, &lighthouse)
+		p.LighthouseKeys = append(p.LighthouseKeys, lighthouse)
 	}
 }
 
-func (p *Player) LighthouseKeyExists(lighthouse lighthouse.Lighthouse) bool {
+func (p *Player) LighthouseKeyExists(lighthouse *lighthouse.Lighthouse) bool {
 	for _, l := range p.LighthouseKeys {
 		if l.Position.Equal(geom.XY, lighthouse.Position) {
 			return true
