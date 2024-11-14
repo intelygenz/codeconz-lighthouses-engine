@@ -26,7 +26,8 @@
 # Configuration
 BOT_DEFAULT_PORT='3001'
 GAME_NETWORK_NAME='game_net'
-GAME_SERVER_NAME='game'
+GAME_IMAGE_NAME='intelygenz/codeconz-lighthouses-engine'
+GAME_CONTAINER_NAME='game'
 GAME_SERVER_PORT='50051'
 
 ###############################################################################
@@ -161,14 +162,14 @@ EOF
 
 function build_game_server() {
 	_info "👷 Building game server"
-	docker build -f ${DOCKERFILE_GAME} . -t ${GAME_SERVER_NAME} &>/dev/null || _error "Something went wrong whithin function ${FUNCNAME}"
+	docker build -f ${DOCKERFILE_GAME} . -t ${GAME_IMAGE_NAME} &>/dev/null || _error "Something went wrong whithin function ${FUNCNAME}"
 }
 
 function add_game_server() {
-	if (docker image inspect ${GAME_SERVER_NAME} &>/dev/null); then
+	if (docker image inspect ${GAME_IMAGE_NAME} &>/dev/null); then
 		if [[ ${REBUILD_SERVER} ]]; then
 			_info "🚩 force REBUILD_SERVER was set"
-			docker rmi -f $(docker images | awk "/^${GAME_SERVER_NAME}/ {print \$3}")
+			docker rmi -f $(docker images | awk "/^${GAME_IMAGE_NAME//\//\\/}/ {print \$3}")
 			build_game_server
 		fi
 	else
@@ -177,10 +178,10 @@ function add_game_server() {
 	# add the game-server to docker-compose file
 	cat <<EOF >>${DOCKER_COMPOSE_FILE}
 
-  ${GAME_SERVER_NAME}:
-    image: ${GAME_SERVER_NAME}
-    container_name: ${GAME_SERVER_NAME}
-    hostname: ${GAME_SERVER_NAME}
+  ${GAME_CONTAINER_NAME}:
+    image: ${GAME_IMAGE_NAME}
+    container_name: ${GAME_CONTAINER_NAME}
+    hostname: ${GAME_CONTAINER_NAME}
     restart: no
     environment:
       BOARD_PATH: "/maps/${THIS_MAP}"
@@ -229,7 +230,7 @@ function add_bot() {
     networks:
       - ${GAME_NETWORK_NAME}
     depends_on:
-      ${GAME_SERVER_NAME}:
+      ${GAME_CONTAINER_NAME}:
         condition: service_started
 EOF
 	_info "🤖 ${GREEN}Added ${YELLOW}${THIS_BOT_NAME}${CLEAR} from ${YELLOW}${THIS_IMAGE}"
