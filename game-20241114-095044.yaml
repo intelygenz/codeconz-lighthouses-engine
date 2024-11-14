@@ -1,0 +1,21 @@
+name: game
+
+networks:
+  game_net:
+
+services:
+
+  intelygenz-codeconz-lighthouses-py-bot:
+    environment:
+      BOT_NAME: intelygenz-codeconz-lighthouses-py-bot
+    image: ghcr.io/intelygenz/codeconz-lighthouses-py-bot
+    container_name: intelygenz-codeconz-lighthouses-py-bot
+    hostname: intelygenz-codeconz-lighthouses-py-bot
+    restart: no
+    ports:
+      - 3001
+    networks:
+      - game_net
+    depends_on:
+      game:
+        condition: service_started
