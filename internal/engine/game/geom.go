@@ -206,3 +206,24 @@ func renderTriangle(t Triangle) []geom.Coord {
 func pointIsInLine(p, lineEndpoint1, lineEndpoint2 geom.Coord) bool {
 	return (p[1]-lineEndpoint1[1])*(lineEndpoint2[0]-lineEndpoint1[0]) == (lineEndpoint2[1]-lineEndpoint1[1])*(p[0]-lineEndpoint1[0])
 }
+
+func linesIntersect(line1Start, line1End, line2Start, line2End geom.Coord) bool {
+	// Unpack the coordinates for easy access
+	x1, y1 := line1Start.X(), line1Start.Y()
+	x2, y2 := line1End.X(), line1End.Y()
+	x3, y3 := line2Start.X(), line2Start.Y()
+	x4, y4 := line2End.X(), line2End.Y()
+
+	// Calculate the direction of the lines
+	denominator := (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4)
+	if denominator == 0 {
+		return false // Lines are parallel or coincident
+	}
+
+	// Calculate the intersection point using the determinant
+	t := ((x1-x3)*(y3-y4) - (y1-y3)*(x3-x4)) / denominator
+	u := ((x1-x3)*(y1-y2) - (y1-y3)*(x1-x2)) / denominator
+
+	// If 0 <= t <= 1 and 0 <= u <= 1, there is an intersection
+	return t >= 0 && t <= 1 && u >= 0 && u <= 1
+}
