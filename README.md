@@ -27,6 +27,8 @@ Considerations:
 
 > "What we do in life, echoes in eternity." - Maximus Decimus Meridius
 
+If you are curious about the game engine internals, you can check the [Game Engine Documentation](docs/game_engine.md)
+
 ## Test your bot!
 
 ### Push your changes
