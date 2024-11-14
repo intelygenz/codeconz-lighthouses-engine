@@ -67,11 +67,8 @@
   };
 
   const initStage = async () => {
-    if (loadFile) {
-      return;
-    }
     if (!stageContainer.value) {
-      console.error("Stage container not found");
+      console.warn("Stage container not found");
       return;
     }
     stage.init(stageContainer.value, playback);
