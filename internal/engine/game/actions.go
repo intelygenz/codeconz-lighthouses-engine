@@ -136,7 +136,7 @@ func (e *Game) connectLighthouses(p *player.Player, action *player.Action) error
 		}
 
 		for _, c := range l.Connections {
-			if xy.DoLinesOverlap(l.Position, c.Position, curLighthousePos, destLighthousePos) && pointIsInLine(l.Position, curLighthousePos, destLighthousePos) {
+			if linesIntersect(l.Position, c.Position, curLighthousePos, destLighthousePos) || pointIsInLine(l.Position, curLighthousePos, destLighthousePos) {
 				return fmt.Errorf("connection cannot intersect another connection")
 			}
 		}
