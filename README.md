@@ -11,7 +11,7 @@ the [Euskal Encounter](https://ee32.euskalencounter.org/) in Bilbao, Spain.
 We are proud to present the "Reloaded" version of the contest, which features a new engine from scratch written in Go
 and a proper GRPC API for the engine to communicate with the bots.
 
-- [Game Instructions](https://coda.io/@gabri-igz/lighthouses).
+- [Game Instructions](https://coda.io/@gabri-igz/lighthouses)
 - [Game Engine Documentation](docs/game_engine.md)
 - [Game Visualizer](https://intelygenz.github.io/codeconz-lighthouses-engine/)
 - [Map Generator](https://dovixman.github.io/lighthouses_map_generator/)
