@@ -285,6 +285,65 @@ func (s *GameTestSuite) TestNormalizeTriangle() {
 	}
 }
 
+// LinesIntersect
+var testCasesLinesIntersect = []struct {
+	name              string
+	lineStart1        geom.Coord
+	lineEnd1          geom.Coord
+	lineStart2        geom.Coord
+	lineEnd2          geom.Coord
+	expectedIntersect bool
+}{
+	{
+		name:              "line 00,03 and line 30,33 NOT intersect",
+		lineStart1:        position00,
+		lineEnd1:          position03,
+		lineStart2:        position30,
+		lineEnd2:          position33,
+		expectedIntersect: false,
+	},
+	{
+		name:              "line 00,30 and line 03,33 NOT intersect",
+		lineStart1:        position00,
+		lineEnd1:          position30,
+		lineStart2:        position03,
+		lineEnd2:          position33,
+		expectedIntersect: false,
+	},
+	{
+		name:              "line 00,03 and line 03,33 intersect",
+		lineStart1:        position00,
+		lineEnd1:          position03,
+		lineStart2:        position03,
+		lineEnd2:          position33,
+		expectedIntersect: true,
+	},
+	{
+		name:              "line 00,33 and line 03,30 intersect",
+		lineStart1:        position00,
+		lineEnd1:          position33,
+		lineStart2:        position03,
+		lineEnd2:          position30,
+		expectedIntersect: true,
+	},
+	{
+		name:              "line 03,30 and line 00,33 intersect",
+		lineStart1:        position03,
+		lineEnd1:          position30,
+		lineStart2:        position00,
+		lineEnd2:          position33,
+		expectedIntersect: true,
+	},
+}
+
+func (s *GameTestSuite) TestlinesIntersect() {
+	for _, tc := range testCasesLinesIntersect {
+		s.Suite.Run(tc.name, func() {
+			assert.Equal(s.T(), linesIntersect(tc.lineStart1, tc.lineEnd1, tc.lineStart2, tc.lineEnd2), tc.expectedIntersect)
+		})
+	}
+}
+
 func TestGameSuite(t *testing.T) {
 	suite.Run(t, new(GameTestSuite))
 }
