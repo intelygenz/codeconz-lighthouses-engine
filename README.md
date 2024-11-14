@@ -57,6 +57,7 @@ For a quick start, you can create a `game.cfg` file with the following content (
 ```
 bots=('ghcr.io/{username}/{repository}')
 map=square.txt
+turns=1000
 ```
 
 You can now run the game engine by executing `./start-game.sh -f game.cfg`.
