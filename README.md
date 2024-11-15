@@ -4,8 +4,8 @@
 
 # Lighthouses AI Contest "Reloaded"
 
-Lighthouses AI Contest is a turn based game built by [Hector Martin aka "marcan"](https://github.com/marcan/lighthouses_aicontest), 
-as the challenge for the AI contest within one of the largest and oldest demoparty and LAN party, 
+Lighthouses AI Contest is a turn based game built by [Hector Martin aka "marcan"](https://github.com/marcan/lighthouses_aicontest),
+as the challenge for the AI contest within one of the largest and oldest demoparty and LAN party,
 the [Euskal Encounter](https://ee32.euskalencounter.org/) in Bilbao, Spain.
 
 We are proud to present the "Reloaded" version of the contest, which features a new engine from scratch written in Go
@@ -29,8 +29,9 @@ To start building a bot, you will need to take the following steps:
 ## Create a new bot repository
 
 - Create a new repository using one of the following templates (you can also start from scratch!):
-    - [Go bot template](https://github.com/new?owner=intelygenz&template_name=codeconz-lighthouses-go-bot&template_owner=intelygenz)
-    - [Python random bot template](https://github.com/new?owner=intelygenz&template_name=codeconz-lighthouses-py-bot&template_owner=intelygenz)
+
+  - [Go bot template](https://github.com/new?owner=intelygenz&template_name=codeconz-lighthouses-go-bot&template_owner=intelygenz)
+  - [Python random bot template](https://github.com/new?owner=intelygenz&template_name=codeconz-lighthouses-py-bot&template_owner=intelygenz)
 - Clone it in your local machine
 
 Considerations:
@@ -64,7 +65,7 @@ For the engine to be able to pull the bot image, you need to make it public.
 - In the package page, click on "Package Settings" at the bottom of the right column menu.
 - At the bottom of the Package Settings page there's a "Danger Zone" section. Click on "Change visibility" and make the package public.
 
-You can also take this opportunity to copy the label of the image, which should be something like `ghcr.io/{username}/{repository}`. 
+You can also take this opportunity to copy the label of the image, which should be something like `ghcr.io/{username}/{repository}`.
 There's no need to include the `:latest` tag.
 
 ### Run the game
@@ -72,6 +73,7 @@ There's no need to include the `:latest` tag.
 Go to the engine repository and folder and run `./start-game.sh -f game.cfg`.
 
 After the game ends, some resources will be generated:
+
 - `/logs`: logs of the game and each bot that participated.
 - `/output`: JSON files to be used for visualization.
 
@@ -90,6 +92,7 @@ If you are running the game with no changes at the `game.cfg` file, the game wil
 a single random python bot playing against itself and a simple map.
 
 You will probably want to:
+
 - Add your own bot to the game: `bots=('ghcr.io/{username}/{repository}' 'ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest')`
 - change the configuration to test your bot under different scenarios.
 
@@ -128,8 +131,9 @@ You can add more bots to the game by adding more elements to the `bots` array in
 
 The base python bot is a random bot that you can use for testing purposes.
 To be able to add as many instances of this bot as you want, you need to follow these steps:
+
 - Make sure you pulled the bot image: `docker pull ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest`
-- Generate as many tags from the base image as you want: `docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest {}/{}/{}`.  
+- Generate as many tags from the base image as you want: `docker tag ghcr.io/intelygenz/codeconz-lighthouses-py-bot:latest {}/{}/{}`.
   You only need to replace the three `{}` with any string you want.
 
 Example
@@ -147,3 +151,32 @@ bots=('ghcr.io/{username}/{repository}' 'local/local/bot-1' 'local/local/bot-2' 
 
 These tags will only be available locally and `./start-game.sh` will fail when trying to pull them.
 To overcome this, you can use the `-x` option: `./start-game.sh -xf game.cfg`.
+
+## Debugging
+
+You can run your engine and your bots locally to debug any issues you may
+encounter.
+
+First, you need to run the game server. To run the engine locally, you can use
+the following command:
+
+```bash
+make rungs
+```
+
+Then, you can run your bot locally. Instructions to run bots are available in
+the bot repositories.
+
+- [Go bot](https://github.com/intelygenz/codeconz-lighthouses-go-bot)
+- [Python random bot template](https://github.com/intelygenz/codeconz-lighthouses-py-bot)
+
+The engine has a timeout of 5 seconds, waiting for bots to join. After that, the
+game will start if there are any players available.
+
+In case you need to increase the timeout, you can do so by setting the
+`JOIN_TIMEOUT` environment variable:
+
+```bash
+export JOIN_TIMEOUT=10s
+make rungs
+```
