@@ -15,20 +15,20 @@ from bots.randbot import RandBot
 
 if __name__ == "__main__":
     # Map for training the bot. This can be one map or a list of maps that will 
-    cfg_files_train = ["./maps/map_43x23_1.txt", "./maps/map_43x23_2.txt", "./maps/map_43x23_3.txt"] 
+    cfg_files_train = ["./maps/map_23x43_1.txt", "./maps/map_23x43_2.txt", "./maps/map_23x43_3.txt"] 
     # Map for evaluating the bot.
-    cfg_file_eval = "./maps/map_43x23_1.txt"
+    cfg_file_eval = "./maps/map_23x43_1.txt"
 
-    NUM_EPISODES = 10 # Number of times to run the game. Game restarts with each new episode.
+    NUM_EPISODES = 1 # Number of times to run the game. Game restarts with each new episode.
     MAX_AGENT_UPDATES = 30 # Number of times to update (optimize parameters) the bot within an episode.
-    NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the bot.
+    NUM_STEPS_POLICY_UPDATE = 12 # Number of experiences to collect for each update to the bot.
     MAX_TOTAL_UPDATES = NUM_EPISODES * MAX_AGENT_UPDATES
-    TRAIN = False # Whether to run training or evaluation
+    TRAIN = True # Whether to run training or evaluation
     NUM_ENVS = 1 # Number of games to run at once. 
     MAX_EVALUATION_ROUNDS = 1000 # Number of rounds in a game to evaluate the bot.
-    USE_SAVED_MODEL = True# Whether to start training or evaluation from a previously saved model.
-    MODEL_FILENAME = "ppo_mlp_test_energy.pth" # Name of saved model to start training from and/or to save model to during training.
-    STATE_MAPS = False
+    USE_SAVED_MODEL = False # Whether to start training or evaluation from a previously saved model.
+    MODEL_FILENAME = "ppo_mlp_test.pth" # Name of saved model to start training from and/or to save model to during training.
+    STATE_MAPS = False # Set to True to use the state format of maps and architecture CNN and set to False for vector format and architecture MLP
     
 
     #######################################################################
@@ -42,7 +42,16 @@ if __name__ == "__main__":
              num_updates=MAX_TOTAL_UPDATES,
              train=TRAIN,
              model_filename = MODEL_FILENAME,
-             use_saved_model=USE_SAVED_MODEL),]
+             use_saved_model=USE_SAVED_MODEL), RandBot(), 
+             PPO(state_maps=STATE_MAPS,
+             num_envs=NUM_ENVS,
+             num_steps=NUM_STEPS_POLICY_UPDATE,
+             num_updates=MAX_TOTAL_UPDATES,
+             train=TRAIN,
+             model_filename = MODEL_FILENAME,
+             use_saved_model=USE_SAVED_MODEL),
+             RandBot()
+             ]
     
 
     if TRAIN:

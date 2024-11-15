@@ -113,6 +113,8 @@ class Interface(object):
                     return 0 
                 else: 
                     return -1
+            else:
+                return -1
         ### CONNECT ###
         elif action['command'] == "connect":   
             # If connect lighthouses
