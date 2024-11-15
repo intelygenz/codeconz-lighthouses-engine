@@ -11,14 +11,6 @@ build:
 rungs:
 	go run ./cmd/main.go
 
-# Run bot 1
-runbotgo:
-	go run ./examples/ranbot.go -bn=bot1 -la=:3001 -gs=:$(SERVER_PORT)
-
-# Run py bot
-runbotpy:
-	python -m examples.randbot --bn python-bot1 --la=localhost:3001 --gs=localhost:$(SERVER_PORT)
-
 # Run linter
 lint:
 	golangci-lint run
@@ -92,4 +84,4 @@ proto-py:
 proto-docs:
 	protoc --doc_out=./docs --doc_opt=markdown,protos.md proto/*.proto
 
-.PHONY: build rungs runbot1 runbot2 runbot3 lint test docker-net-up docker-net-down docker-build docker-game-simulation docker-destroy proto-go proto-py proto-docs
+.PHONY: build rungs lint test docker-net-up docker-net-down docker-build docker-game-simulation docker-destroy proto-go proto-py proto-docs
