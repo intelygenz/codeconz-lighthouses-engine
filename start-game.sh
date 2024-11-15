@@ -294,8 +294,6 @@ function create_player_log() {
 	for i in "${BOT_LIST[@]}"; do
 		local THIS_BOT_NAME="$(echo "${i}" | awk -F'/' '{print $2"-"$3}')"
 		local PLAYER_LOG_FILE="${LOG_DIR}/game-${GAME_TIMESTAMP}__${THIS_BOT_NAME}.log"
-		# "${i}"
-		# grep de c/bot-name y exportar a 1 file per player p/exportar
 		cat <<EOF >"${PLAYER_LOG_FILE}"
 # :::
 # ::: CodeconZ 2024
