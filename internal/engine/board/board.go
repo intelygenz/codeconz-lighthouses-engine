@@ -3,6 +3,11 @@ package board
 import (
 	"bufio"
 	"fmt"
+	"log"
+	"math"
+	"math/rand"
+	"os"
+
 	"github.com/fatih/color"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board/cell"
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/board/island"
@@ -10,10 +15,6 @@ import (
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/player"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/xy"
-	"log"
-	"math"
-	"math/rand"
-	"os"
 )
 
 const (
