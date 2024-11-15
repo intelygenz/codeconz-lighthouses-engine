@@ -84,14 +84,15 @@ class Interface(object):
         """
         The logic for estimating the reward is the following. The reward values should be between 1 and -1.
         1. if "status" is False: -1
-        2. if command is "move": -1
-        3. if "attack" and gain control of lighthouse: 0
-        4. if "attack" and do not gain control: -1
-        5. if "connect" and connect three lighthouses: 1 
-        6. if "connect" and connect two lighthouses: 0.2
-        7. if "connect" and do not connect lighthouses: -1
-        8. if command is "pass": -1
-        9. anything not covered by the above: -1
+        2. if command is "move" and no energy is gained: -1
+        3. if command is "move" and energy is gained: -0.75
+        4. if "attack" and gain control of lighthouse: 0
+        5. if "attack" and do not gain control: -1
+        6. if "connect" and connect three lighthouses: 1 
+        7. if "connect" and connect two lighthouses: 0.2
+        8. if "connect" and do not connect lighthouses: -1
+        9. if command is "pass": -1
+        10. anything not covered by the above: -1
         """
         state_lh = dict((tuple(lh["position"]), lh) for lh in state["lighthouses"])
         next_state_lh = dict((tuple(lh["position"]), lh) for lh in next_state["lighthouses"]) 
