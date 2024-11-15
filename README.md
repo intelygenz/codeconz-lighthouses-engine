@@ -17,6 +17,7 @@ and a proper GRPC API for the engine to communicate with the bots.
 - [Map Generator](https://dovixman.github.io/lighthouses_map_generator/)
 - [Go bot template](https://github.com/intelygenz/codeconz-lighthouses-go-bot)
 - [Python random bot template](https://github.com/intelygenz/codeconz-lighthouses-py-bot)
+- [Python Reinforcement Learning bot template](https://github.com/intelygenz/codeconz-lighthouses-py-rl-bot)
 
 To start building a bot, you will need to take the following steps:
 
