@@ -19,9 +19,9 @@ if __name__ == "__main__":
     # Map for evaluating the bot.
     cfg_file_eval = "./maps/map_23x43_1.txt"
 
-    NUM_EPISODES = 1 # Number of times to run the game. Game restarts with each new episode.
+    NUM_EPISODES = 5 # Number of times to run the game. Game restarts with each new episode.
     MAX_AGENT_UPDATES = 30 # Number of times to update (optimize parameters) the bot within an episode.
-    NUM_STEPS_POLICY_UPDATE = 12 # Number of experiences to collect for each update to the bot.
+    NUM_STEPS_POLICY_UPDATE = 128 # Number of experiences to collect for each update to the bot.
     MAX_TOTAL_UPDATES = NUM_EPISODES * MAX_AGENT_UPDATES
     TRAIN = True # Whether to run training or evaluation
     NUM_ENVS = 1 # Number of games to run at once. 
