@@ -86,6 +86,11 @@ function _error() {
 	exit 1
 }
 
+# check required tools
+(docker compose version &>/dev/null) || _error "Install docker compose first.${CLEAR}\n\thttps://docs.docker.com/compose/install/"
+(type shuf &>/dev/null) || _error "Install 'coreutils' package first (required: shuf)."
+(type awk &>/dev/null) || _error "Install 'awk' package first."
+
 function divider() {
 	[[ "${COLUMNS}" ]] || COLUMNS=80
 	eval printf '=%.0s' {1..$COLUMNS}
@@ -225,6 +230,7 @@ EOF
 }
 
 function pull_image() {
+	export DOCKER_DEFAULT_PLATFORM=linux/amd64
 	# pull the bot image from public registry
 	if [[ "${DEBUG}" ]]; then
 		docker pull "${1}" || _error "Cannot pull image ${YELLOW}${1}"
