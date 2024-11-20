@@ -26,6 +26,7 @@ DOCKERFILE_GAME="${REPO_DIR}/Dockerfile"
 DOCKER_COMPOSE_FILE="game-${GAME_TIMESTAMP}.yaml"
 LOG_FILE="${LOG_DIR}/game-${GAME_TIMESTAMP}.log"
 COMMAND_UP="docker compose -f ${DOCKER_COMPOSE_FILE} up --timestamps --abort-on-container-exit"
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
 
 # yay colors
 BLUE="\033[1;94m"
@@ -355,6 +356,7 @@ _info "🚀 ${GREEN}Starting game!"
 create_game_log
 print_header
 (
+	export DOCKER_DEFAULT_PLATFORM=linux/amd64
 	eval "${COMMAND_UP}"
 ) | tee -a "${LOG_FILE}"
 
