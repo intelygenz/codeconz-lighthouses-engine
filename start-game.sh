@@ -152,8 +152,10 @@ function load_config() {
 	# randomize bot list
 	botnum=$((${#bots[@]} - 1))
 	newseq=$(shuf -i 0-$botnum)
+
+	BOT_LIST=()
 	for i in ${newseq}; do
-		export BOT_LIST+=("${bots[$i]}")
+		BOT_LIST+=("${bots[$i]}")
 	done
 	# make sure log & output dir exists
 	for dir in log output; do
