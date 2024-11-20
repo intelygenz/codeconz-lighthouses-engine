@@ -260,11 +260,17 @@ function add_bot() {
 
   ${THIS_BOT_NAME}:
     environment:
+      NVIDIA_VISIBLE_DEVICES: all
       BOT_NAME: ${THIS_BOT_NAME}
     image: ${THIS_IMAGE}
     container_name: ${THIS_BOT_NAME}
     hostname: ${THIS_BOT_NAME}
     restart: no
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ["gpu"]
     ports:
       - ${BOT_DEFAULT_PORT}
     networks:
