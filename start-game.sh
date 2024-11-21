@@ -233,6 +233,7 @@ EOF
 }
 
 function pull_image() {
+	export DOCKER_DEFAULT_PLATFORM=linux/amd64
 	# pull the bot image from public registry
 	if [[ "${DEBUG}" ]]; then
 		docker pull "${1}" || _error "Cannot pull image ${YELLOW}${1}"
