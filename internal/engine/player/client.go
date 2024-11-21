@@ -3,6 +3,7 @@ package player
 import (
 	"context"
 	"fmt"
+	"github.com/jonasdacruz/lighthouses_aicontest/internal/engine/lighthouse"
 
 	"github.com/jonasdacruz/lighthouses_aicontest/internal/handler/coms"
 	"github.com/spf13/viper"
@@ -65,30 +66,40 @@ func (p *Player) getPlayerView(t Turn) []*coms.MapRow {
 
 func (p *Player) getLighthouses(t Turn) []*coms.Lighthouse {
 	lighthouses := make([]*coms.Lighthouse, 0)
-	for _, lighthouse := range t.Lighthouses {
-		haveKey := false
-		connections := make([]*coms.Position, 0)
-		for _, lKey := range p.LighthouseKeys {
-			if lKey.Position.Equal(geom.XY, lighthouse.Position) {
-				haveKey = true
-			}
-
-			connections = append(connections, &coms.Position{
-				X: int32(lKey.Position.X()),
-				Y: int32(lKey.Position.Y()),
-			})
-		}
-
+	for _, lg := range t.Lighthouses {
 		lighthouses = append(lighthouses, &coms.Lighthouse{
 			Position: &coms.Position{
-				X: int32(lighthouse.Position.X()),
-				Y: int32(lighthouse.Position.Y()),
+				X: int32(lg.Position.X()),
+				Y: int32(lg.Position.Y()),
 			},
-			Owner:       int32(lighthouse.Owner),
-			Energy:      int32(lighthouse.Energy),
-			Connections: connections,
-			HaveKey:     haveKey,
+			Owner:       int32(lg.Owner),
+			Energy:      int32(lg.Energy),
+			Connections: p.mapConnections(lg.Connections),
+			HaveKey:     p.mapHaveKeys(lg),
 		})
 	}
+
 	return lighthouses
+}
+
+func (p *Player) mapConnections(connections []*lighthouse.Lighthouse) []*coms.Position {
+	conns := make([]*coms.Position, 0)
+	for _, conn := range connections {
+		conns = append(conns, &coms.Position{
+			X: int32(conn.Position.X()),
+			Y: int32(conn.Position.Y()),
+		})
+	}
+
+	return conns
+}
+
+func (p *Player) mapHaveKeys(l *lighthouse.Lighthouse) bool {
+	for _, lKey := range p.LighthouseKeys {
+		if lKey.Position.Equal(geom.XY, l.Position) {
+			return true
+		}
+	}
+
+	return false
 }
