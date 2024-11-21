@@ -217,7 +217,7 @@ function add_game_server() {
     hostname: ${GAME_CONTAINER_NAME}
     restart: no
     environment:
-      BOARD_PATH: "./maps/${THIS_MAP}"
+      BOARD_PATH: "/maps/${THIS_MAP}"
       TURNS: "${THIS_GAME_TURNS}"
       TURN_REQUEST_TIMEOUT: "${THIS_GAME_REQ_TIMEOUT}"
       TIME_BETWEEN_ROUNDS: "${THIS_GAME_TIME_ROUNDS}"
