@@ -29,6 +29,7 @@ func (m *InMemoryState) SetNewRound(rId int, gStatus *GameStatus) {
 	r := Round{
 		Id:    rId,
 		Setup: gStatus,
+		Turns: []*Turn{},
 	}
 	m.GameState.Rounds = append(m.GameState.Rounds, r)
 }
