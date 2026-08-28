@@ -136,6 +136,12 @@ func (e *Game) connectLighthouses(p *player.Player, action *player.Action) error
 		}
 
 		for _, c := range l.Connections {
+			// ignore connections ending on curLighthousePos or destLighthousePos,
+			// they share that lighthouse with the new connection instead of crossing it
+			if c.Position.Equal(geom.XY, curLighthousePos) || c.Position.Equal(geom.XY, destLighthousePos) {
+				continue
+			}
+
 			if linesIntersect(l.Position, c.Position, curLighthousePos, destLighthousePos) {
 				return fmt.Errorf("connection cannot intersect another connection")
 			}
